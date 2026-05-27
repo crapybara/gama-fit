@@ -1,0 +1,27 @@
+# binaries
+build/
+bin/
+dist/
+
+# databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# env
+.env
+
+# logs
+*.log
+
+# node
+node_modules/
+
+# editors
+.vscode/
+.idea/
+
+# temp
+tmp/

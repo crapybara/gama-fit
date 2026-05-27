@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  gama-fit:
+    build: .
+    container_name: gama-fit-app
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

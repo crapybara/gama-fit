@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gama Fitness - Sleep & Recovery</title>
+
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+          colors: {
+            app: { bg: '#0a0508', surface: '#140a10', card: '#1f0d16', pink: '#ff00a0', pinkDark: '#b30070', yellow: '#fbff00', sleep: '#6366f1' }
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styling/sleep.css">
+<style>
+  html, body { background: #0a0508 !important; }
+  body { opacity: 0; transition: opacity .14s ease; }
+  body.app-ready { opacity: 1; }
+</style>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('app-ready');
+  });
+</script>
+</head>
+
+<body class="bg-app-bg text-zinc-300 antialiased min-h-screen flex flex-col md:flex-row selection:bg-app-pink selection:text-white">
+
+  <nav class="fixed bottom-0 left-0 right-0 z-50 md:sticky md:top-0 md:w-24 md:h-screen bg-app-surface/90 backdrop-blur-md md:bg-app-surface border-t md:border-t-0 md:border-r border-zinc-800/50 flex flex-row md:flex-col items-center justify-center px-6 md:px-0 py-3 md:py-8 shrink-0">
+    <div class="flex flex-row md:flex-col w-full md:w-auto justify-between md:justify-center items-center gap-1 md:gap-4">
+      <a href="index.html" class="group relative flex items-center justify-center w-12 h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+      <a href="workout.html" class="group relative flex items-center justify-center w-12 h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg></a>
+      <a href="caltrack.html" class="group relative flex items-center justify-center w-12 h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8c0-4.4-3.6-8-8-8S2 3.6 2 8c0 3.1 1.7 5.8 4.3 7.2l1.4 6.8c.2.8 1.3.8 1.5 0l1.4-6.8C13.3 13.8 18 11.1 18 8z"/><path d="M22 13.3V5c0-1.7-1.3-3-3-3v14.4c1.3-.4 2.4-1.3 2.8-2.5l.2-.6z"/></svg></a>
+      
+      <a href="sleep.html" class="group relative flex items-center justify-center w-12 h-12 rounded-xl bg-app-sleep/10 text-app-sleep md:bg-app-sleep md:text-white transition-all hover:scale-105 shadow-[0_0_15px_rgba(99,102,241,0.3)]"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></a>
+      
+      <a href="analytics.html" class="group relative flex items-center justify-center w-12 h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a>
+    </div>
+  </nav>
+
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pb-32 md:pb-8 overflow-y-auto overflow-x-hidden">
+    
+    <header class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 lg:mb-12 page-animate-fade">
+      <div>
+        <p class="text-app-sleep font-semibold tracking-wider text-xs uppercase mb-2">Recover The Machine</p>
+        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">Sleep</h1>
+        <p class="text-zinc-400 mt-2 text-sm sm:text-base max-w-xl">Muscles are torn in the gym, but built in bed.</p>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <div class="lg:col-span-12">
+        <div id="sleep-summary" class="glass-panel rounded-[2.5rem] p-8 lg:p-12 relative overflow-hidden page-animate-fade layout-delay" hx-get="/api/sleep/summary" hx-trigger="load">
+            
+            <div class="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-app-sleep/10 blur-[100px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+            
+            <div class="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+
+                <div class="relative flex-shrink-0">
+                    <div class="absolute inset-0 bg-app-sleep/20 blur-3xl rounded-full scale-90"></div>
+                    <div class="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
+                        <svg class="w-full h-full -rotate-90 drop-shadow-[0_0_25px_rgba(99,102,241,0.6)]" viewBox="0 0 100 100">
+                            <circle class="text-zinc-800/40" stroke-width="5" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
+                            <circle class="text-app-sleep sleep-ring" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-target="85"/>
+                        </svg>
+                        
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <span class="font-display font-black text-6xl sm:text-7xl text-white drop-shadow-lg tracking-tighter">85</span>
+                            <span class="text-[10px] uppercase font-bold text-app-sleep tracking-widest mt-1 bg-app-sleep/10 px-3 py-1 rounded-full border border-app-sleep/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">Optimal</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1 w-full grid grid-cols-2 gap-4">
+                    <div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 hover:border-app-sleep/30 transition-all duration-300 group">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-5 h-5 text-zinc-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Time Asleep</span>
+                        </div>
+                        <span class="font-display font-black text-3xl sm:text-4xl text-white">7<span class="text-xl text-zinc-500 font-bold">h</span> 45<span class="text-xl text-zinc-500 font-bold">m</span></span>
+                    </div>
+
+                    <div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 hover:border-app-yellow/30 transition-all duration-300 group">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-5 h-5 text-zinc-500 group-hover:text-app-yellow transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Efficiency</span>
+                        </div>
+                        <span class="font-display font-black text-3xl sm:text-4xl text-app-yellow">92<span class="text-xl text-zinc-500 font-bold">%</span></span>
+                    </div>
+
+                    <div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 hover:border-blue-400/30 transition-all duration-300 group">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-5 h-5 text-zinc-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Bedtime</span>
+                        </div>
+                        <span class="font-mono font-bold text-2xl sm:text-3xl text-zinc-300">11:30 <span class="text-sm text-zinc-500">PM</span></span>
+                    </div>
+
+                    <div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 hover:border-orange-400/30 transition-all duration-300 group">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-5 h-5 text-zinc-500 group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Wake up</span>
+                        </div>
+                        <span class="font-mono font-bold text-2xl sm:text-3xl text-zinc-300">07:15 <span class="text-sm text-zinc-500">AM</span></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-4 flex flex-col gap-6">
+        <div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden page-animate-fade delay-200 h-full">
+            <h3 class="text-white font-black uppercase tracking-wider text-sm mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5 text-app-sleep" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                Log Sleep
+            </h3>
+            
+            <form hx-post="/api/sleep" hx-target="#sleep-history-list" hx-swap="innerHTML" hx-on::after-request="this.reset(); window.triggerSleepRing();" class="flex flex-col gap-5 relative z-10">
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-1.5 block">Bedtime</label>
+                        <input type="time" name="bedtime" required class="w-full bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-white outline-none focus:border-app-sleep focus:ring-2 focus:ring-app-sleep/20 transition-all font-mono [color-scheme:dark]">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-1.5 block">Wake Time</label>
+                        <input type="time" name="waketime" required class="w-full bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-white outline-none focus:border-app-sleep focus:ring-2 focus:ring-app-sleep/20 transition-all font-mono [color-scheme:dark]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-2 block">Quality Rating</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="quality" value="poor" class="peer sr-only" required>
+                            <div class="bg-zinc-900/50 border border-zinc-700 text-zinc-500 peer-checked:border-red-500 peer-checked:text-red-500 peer-checked:bg-red-500/10 rounded-xl py-2.5 text-center text-xs font-bold uppercase transition-all">Poor</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="quality" value="avg" class="peer sr-only" checked>
+                            <div class="bg-zinc-900/50 border border-zinc-700 text-zinc-500 peer-checked:border-blue-400 peer-checked:text-blue-400 peer-checked:bg-blue-400/10 rounded-xl py-2.5 text-center text-xs font-bold uppercase transition-all">Avg</div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="quality" value="great" class="peer sr-only">
+                            <div class="bg-zinc-900/50 border border-zinc-700 text-zinc-500 peer-checked:border-app-yellow peer-checked:text-app-yellow peer-checked:bg-app-yellow/10 rounded-xl py-2.5 text-center text-xs font-bold uppercase transition-all">Great</div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="mt-2 w-full bg-app-sleep text-white font-black py-4 rounded-xl hover:bg-indigo-400 transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] uppercase tracking-widest text-sm">
+                    Save Log
+                </button>
+            </form>
+        </div>
+      </div>
+
+      <div class="lg:col-span-8">
+        <div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden page-animate-fade delay-300 h-full">
+            <h3 class="text-white font-black uppercase tracking-wider text-sm mb-6 relative z-10">History</h3>
+            
+            <div id="sleep-history-list" hx-get="/api/sleep/history" hx-trigger="load" hx-swap="innerHTML" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
+                <div class="text-zinc-500 text-sm py-4 font-mono animate-pulse col-span-full">Loading history...</div>
+                
+                <div class="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-5 hover:border-app-sleep/50 transition-colors group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-white font-bold text-sm block">Yesterday</span>
+                            <span class="text-app-yellow text-[10px] font-bold uppercase tracking-widest">Great</span>
+                        </div>
+                        <span class="font-display font-black text-2xl text-white">8<span class="text-sm text-zinc-500">h</span> 15<span class="text-sm text-zinc-500">m</span></span>
+                    </div>
+                    <div class="flex justify-between text-zinc-500 font-mono text-xs">
+                        <span>10:30 PM</span>
+                        <span>06:45 AM</span>
+                    </div>
+                </div>
+
+                <div class="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-5 hover:border-app-sleep/50 transition-colors group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-white font-bold text-sm block">Tuesday</span>
+                            <span class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Average</span>
+                        </div>
+                        <span class="font-display font-black text-2xl text-white">6<span class="text-sm text-zinc-500">h</span> 30<span class="text-sm text-zinc-500">m</span></span>
+                    </div>
+                    <div class="flex justify-between text-zinc-500 font-mono text-xs">
+                        <span>12:00 AM</span>
+                        <span>06:30 AM</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+      </div>
+
+    </div> 
+  </main>
+
+  <script src="scripts/sleep.js"></script>
+</body>
+</html>
