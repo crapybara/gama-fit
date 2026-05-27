@@ -85,7 +85,8 @@ func ConnectAndSetup() {
 		calories INTEGER NOT NULL,
 		protein INTEGER NOT NULL,
 		carbs INTEGER NOT NULL,
-		fats INTEGER NOT NULL
+		fats INTEGER NOT NULL,
+		weight INTEGER NOT NULL DEFAULT 100
 	);
 
 	CREATE TABLE IF NOT EXISTS daily_meals (

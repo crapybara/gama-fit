@@ -95,56 +95,57 @@ func HandleSleepSummary(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, `
 		<div class="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-app-sleep/10 blur-[100px] rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
-		<div class="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+		<div class="flex flex-col md:flex-row items-center justify-between gap-8 sm:gap-12 relative z-10">
 			<div class="relative flex-shrink-0">
 				<div class="absolute inset-0 bg-app-sleep/20 blur-3xl rounded-full scale-90"></div>
-				<div class="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center">
+				<div class="relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center">
 					<svg class="w-full h-full -rotate-90 drop-shadow-[0_0_25px_rgba(99,102,241,0.6)]" viewBox="0 0 100 100">
 						<circle class="text-zinc-800/40" stroke-width="5" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
 						<circle class="text-app-sleep sleep-ring" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-target="%d" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f; transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);"/>
 					</svg>
 					<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-						<span class="font-display font-black text-6xl sm:text-7xl text-white drop-shadow-lg tracking-tighter">%d</span>
-						<span class="text-[10px] uppercase font-bold text-app-sleep tracking-widest mt-1 bg-app-sleep/10 px-3 py-1 rounded-full border border-app-sleep/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">Score</span>
+						<span class="font-display font-black text-5xl sm:text-7xl text-white drop-shadow-lg tracking-tighter">%d</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-sleep tracking-widest mt-1 bg-app-sleep/10 px-2 sm:px-3 py-1 rounded-full border border-app-sleep/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">Score</span>
 					</div>
 				</div>
 			</div>
 
-			<div class="flex-1 w-full grid grid-cols-2 gap-4">
-				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 hover:border-app-sleep/30 transition-all duration-300 group">
-					<div class="flex items-center gap-2 mb-3">
-						<svg class="w-5 h-5 text-zinc-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-						<span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Time Asleep</span>
+			<div class="flex-1 w-full grid grid-cols-2 gap-3 sm:gap-4">
+				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-4 sm:p-6 hover:bg-zinc-900/80 hover:border-app-sleep/30 transition-all duration-300 group">
+					<div class="flex items-center gap-2 mb-2 sm:mb-3">
+						<svg class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+						<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-nowrap">Time Asleep</span>
 					</div>
-					<span class="font-display font-black text-3xl sm:text-4xl text-white">%d<span class="text-xl text-zinc-500 font-bold">h</span> %d<span class="text-xl text-zinc-500 font-bold">m</span></span>
+					<span class="font-display font-black text-2xl sm:text-4xl text-white">%d<span class="text-lg sm:text-xl text-zinc-500 font-bold">h</span> %d<span class="text-lg sm:text-xl text-zinc-500 font-bold">m</span></span>
 				</div>
 
-				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 transition-all duration-300 group">
-					<div class="flex items-center gap-2 mb-3">
-						<svg class="w-5 h-5 text-zinc-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-						<span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Quality</span>
+				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-4 sm:p-6 hover:bg-zinc-900/80 transition-all duration-300 group">
+					<div class="flex items-center gap-2 mb-2 sm:mb-3">
+						<svg class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+						<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-nowrap">Quality</span>
 					</div>
-					<span class="font-display font-black text-2xl sm:text-3xl %s">%s</span>
+					<span class="font-display font-black text-xl sm:text-3xl %s">%s</span>
 				</div>
 
-				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 hover:border-blue-400/30 transition-all duration-300 group">
-					<div class="flex items-center gap-2 mb-3">
-						<svg class="w-5 h-5 text-zinc-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-						<span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Bedtime</span>
+				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-4 sm:p-6 hover:bg-zinc-900/80 hover:border-blue-400/30 transition-all duration-300 group">
+					<div class="flex items-center gap-2 mb-2 sm:mb-3">
+						<svg class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+						<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-nowrap">Bedtime</span>
 					</div>
-					<span class="font-mono font-bold text-2xl sm:text-3xl text-zinc-300">%s</span>
+					<span class="font-mono font-bold text-xl sm:text-3xl text-zinc-300">%s</span>
 				</div>
 
-				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-6 hover:bg-zinc-900/80 hover:border-orange-400/30 transition-all duration-300 group">
-					<div class="flex items-center gap-2 mb-3">
-						<svg class="w-5 h-5 text-zinc-500 group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-						<span class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Wake up</span>
+				<div class="bg-zinc-900/50 border border-white/5 rounded-[1.5rem] p-4 sm:p-6 hover:bg-zinc-900/80 hover:border-orange-400/30 transition-all duration-300 group">
+					<div class="flex items-center gap-2 mb-2 sm:mb-3">
+						<svg class="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 group-hover:text-orange-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+						<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-nowrap">Wake up</span>
 					</div>
-					<span class="font-mono font-bold text-2xl sm:text-3xl text-zinc-300">%s</span>
+					<span class="font-mono font-bold text-xl sm:text-3xl text-zinc-300">%s</span>
 				</div>
 			</div>
 		</div>
 	`, score, circumference, offset, score, hrs, mins, qualityColor, qualityText, formatTime12h(bedtime), formatTime12h(waketime))
+
 }
 
 func HandleSleep(w http.ResponseWriter, r *http.Request) {

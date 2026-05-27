@@ -91,32 +91,31 @@
             </h3>
             
             <form hx-post="/api/meals" hx-target="#food-catalog-container" hx-swap="none" hx-on::after-request="this.reset();" class="flex flex-col gap-3 relative z-10">
-                <input type="text" name="quick_name" required placeholder="e.g. Eating Out / Unknown" class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-white outline-none focus:border-app-pink transition-all">
+                <input type="text" name="quick_name" required placeholder="Meal name or description..." class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-white outline-none focus:border-app-pink transition-all">
                 <div class="flex gap-2">
-                    <input type="number" name="quick_calories" required placeholder="Kcal" class="flex-1 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow font-mono">
-                    <input type="number" name="quick_protein" placeholder="Pro (opt)" class="w-20 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-pink font-mono hidden sm:block">
-                    <input type="number" name="quick_carbs" placeholder="Carb (opt)" class="w-20 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-blue-500 font-mono hidden sm:block">
-                    <input type="number" name="quick_fats" placeholder="Fat (opt)" class="w-20 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-emerald-500 font-mono hidden sm:block">
+                    <input type="number" name="quick_protein" placeholder="Protein" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-pink font-mono">
+                    <input type="number" name="quick_carbs" placeholder="Carbs" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-blue-500 font-mono">
+                    <input type="number" name="quick_fats" placeholder="Fats" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-emerald-500 font-mono">
                 </div>
-                <button type="submit" class="mt-1 bg-app-pink text-white font-black py-3.5 rounded-xl hover:bg-pink-500 transition-all shadow-[0_0_15px_rgba(255,0,160,0.3)] uppercase tracking-wider text-xs">Fast Log</button>
+                <button type="submit" class="mt-1 bg-app-pink text-white font-black py-3.5 rounded-xl hover:bg-pink-500 transition-all shadow-[0_0_15px_rgba(255,0,160,0.3)] uppercase tracking-wider text-xs">Fast Log Meal</button>
             </form>
         </div>
       </div>
 
       <div class="lg:col-span-12 flex flex-col gap-6">
         <div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden page-animate-fade delay-300">
-            <h3 class="text-zinc-400 font-bold uppercase tracking-wider text-xs mb-4">Create New Food Item (Adds to Catalogue)</h3>
+            <h3 class="text-zinc-400 font-bold uppercase tracking-wider text-xs mb-4">Create New Food Item (Catalogue Only)</h3>
             <form hx-post="/api/meals" hx-target="#food-catalog-container" hx-swap="innerHTML" hx-on::after-request="this.reset();" class="flex flex-col lg:flex-row gap-4 relative z-10">
                 <div class="flex-1">
                     <input type="text" name="name" required placeholder="New Food Name (e.g. Greek Yogurt)" class="w-full bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-white outline-none focus:border-app-yellow transition-all">
                 </div>
                 <div class="flex gap-2">
-                    <input type="number" name="calories" required placeholder="Kcal" class="w-20 sm:w-24 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow font-mono">
-                    <input type="number" name="protein" required placeholder="Pro" class="w-16 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-pink font-mono">
-                    <input type="number" name="carbs" required placeholder="Carb" class="w-16 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-blue-500 font-mono">
-                    <input type="number" name="fats" required placeholder="Fat" class="w-16 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-emerald-500 font-mono">
+                    <input type="number" name="weight" required placeholder="Grams" value="100" class="w-24 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow font-mono">
+                    <input type="number" name="protein" required placeholder="Pro" class="flex-1 min-w-0 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-pink font-mono">
+                    <input type="number" name="carbs" required placeholder="Carb" class="flex-1 min-w-0 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-blue-500 font-mono">
+                    <input type="number" name="fats" required placeholder="Fat" class="flex-1 min-w-0 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-emerald-500 font-mono">
                 </div>
-                <button type="submit" class="bg-zinc-800 text-white hover:text-black font-bold px-6 py-3.5 rounded-xl hover:bg-yellow-400 transition-all uppercase tracking-wider text-xs whitespace-nowrap">Save & Log</button>
+                <button type="submit" class="bg-zinc-800 text-white hover:text-black font-bold px-6 py-3.5 rounded-xl hover:bg-app-yellow transition-all uppercase tracking-wider text-xs whitespace-nowrap">Save to Catalogue</button>
             </form>
         </div>
       </div>

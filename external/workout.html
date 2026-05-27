@@ -62,13 +62,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       <div class="lg:col-span-8 flex flex-col gap-6">
-            <div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden page-animate-fade layout-delay">
+            <div class="glass-panel rounded-[2rem] p-5 sm:p-6 lg:p-8 relative overflow-hidden page-animate-fade layout-delay">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-app-pink/10 blur-3xl rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
                 
                 <div class="flex items-center justify-between mb-6 relative z-10">
                   <h3 class="text-white font-black uppercase tracking-wider text-sm">Workout Plan</h3>
                   
-                  <div class="relative min-w-[140px]">
+                  <div class="relative min-w-[130px] sm:min-w-[140px]">
                       <select name="day" hx-get="/api/plans" hx-target="#plans-container" hx-trigger="load, change" class="w-full bg-zinc-900 border border-zinc-700 hover:border-app-pink text-zinc-300 pl-4 pr-10 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-colors appearance-none cursor-pointer outline-none shadow-sm">
                           <option value="1" selected>Monday</option>
                           <option value="2">Tuesday</option>
@@ -91,7 +91,7 @@
         </div>
 
       <div class="lg:col-span-4 flex flex-col gap-6">
-            <div class="glass-panel rounded-[2rem] p-6 flex-1 flex flex-col relative overflow-hidden page-animate-fade layout-delay">
+            <div class="glass-panel rounded-[2rem] p-5 sm:p-6 flex-1 flex flex-col relative overflow-hidden page-animate-fade layout-delay">
                 <div class="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-blue-500/20 to-transparent pointer-events-none opacity-60"></div>
 
                 <div class="flex items-center justify-between mb-4 relative z-10">
@@ -110,7 +110,7 @@
         </div>
 
        <div class="lg:col-span-12">
-            <div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden page-animate-fade delay-200">
+            <div class="glass-panel rounded-[2rem] p-5 sm:p-6 lg:p-8 relative overflow-hidden page-animate-fade delay-200">
                 <div class="absolute top-0 left-0 w-64 h-64 bg-app-yellow/10 blur-3xl rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
 
                 <div class="flex items-center justify-between mb-6 relative z-10">
@@ -130,10 +130,12 @@
                             </div>
                         </div>
 
-                        <div class="flex gap-3">
-                            <input type="number" name="weight" placeholder="KG" step="0.5" required class="w-24 bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
-                            <input type="number" name="reps" placeholder="Reps" required class="w-24 bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
-                            <button type="submit" class="bg-app-yellow text-black font-black px-8 rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_20px_rgba(251,255,0,0.3)] hover:shadow-[0_0_30px_rgba(251,255,0,0.5)] uppercase tracking-wider text-sm">Log</button>
+                        <div class="flex gap-2 sm:gap-3 flex-1">
+                            <input type="number" name="weight" placeholder="KG" step="0.5" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 sm:px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
+                            <input type="number" name="reps" placeholder="Reps" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 sm:px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
+                            <button type="submit" class="bg-app-yellow text-black font-black px-5 rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_20px_rgba(251,255,0,0.3)] hover:shadow-[0_0_30px_rgba(251,255,0,0.5)] flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </button>
                         </div>
                     </form>
 

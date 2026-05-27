@@ -226,7 +226,7 @@ func renderAreaChart(points []ChartPoint) string {
 		.neon-path { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: drawLine 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 	</style>
 	<div class="w-full mt-6">
-		<div class="relative w-full h-[300px]">
+		<div class="relative w-full h-[220px] sm:h-[300px]">
 			<svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
 				<path d="` + pathArea.String() + `" fill="#ff00a0" fill-opacity="0.1" />
 				<path d="` + pathLine.String() + `" fill="none" stroke="#ff00a0" stroke-width="3px" vector-effect="non-scaling-stroke" class="neon-path" />

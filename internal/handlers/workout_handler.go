@@ -124,10 +124,10 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 			html += fmt.Sprintf(`
 		<div class="flex items-center justify-between bg-zinc-900/40 border border-white/5 rounded-xl p-3 hover:bg-zinc-900/80 transition-colors">
 			<span class="text-zinc-300 text-sm font-medium">%s</span>
-			<div class="flex items-center gap-3">
-				<span class="text-[10px] font-bold uppercase tracking-wider text-app-blue bg-app-blue/10 px-2 py-1 rounded">%d Sets</span>
+			<div class="flex items-center gap-2 sm:gap-3">
+				<span class="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-400/10 px-2 py-1 rounded">%d Sets</span>
 				<span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-800 px-2 py-1 rounded">%s Reps</span>
-				<button hx-delete="/api/plans?day=%d&id=%d" hx-target="#plans-container" class="text-zinc-600 hover:text-red-500"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+				<button hx-delete="/api/plans?day=%d&id=%d" hx-target="#plans-container" class="text-zinc-600 hover:text-red-500 transition-colors"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
 			</div>
 		</div>`, name, sets, reps, day, id)
 		}
@@ -143,11 +143,15 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 		formHtml = `<div class="text-app-pink text-xs font-bold text-center mt-4">Max limit of 15 exercises reached for this day.</div>`
 	} else {
 		formHtml = fmt.Sprintf(`
-		<form hx-post="/api/plans?day=%d" hx-target="#plans-container" hx-on::after-request="this.reset()" class="flex gap-2 mt-5">
-			<input type="text" name="exercise" placeholder="Exercise..." required class="flex-1 bg-zinc-900/50 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-app-pink">
-			<input type="number" name="sets" placeholder="Sets" value="3" min="1" max="10" required class="w-16 bg-zinc-900/50 border border-zinc-700 rounded-lg px-2 py-2 text-sm text-center text-white outline-none focus:border-app-pink">
-			<input type="text" name="reps" placeholder="e.g. 8-10" value="8-10" required class="w-20 bg-zinc-900/50 border border-zinc-700 rounded-lg px-2 py-2 text-sm text-center text-white outline-none focus:border-app-pink">
-			<button type="submit" class="bg-app-pink text-white font-bold px-4 rounded-lg hover:bg-pink-500 transition-all pink-glow-btn">+</button>
+		<form hx-post="/api/plans?day=%d" hx-target="#plans-container" hx-on::after-request="this.reset()" class="flex flex-col sm:flex-row gap-3 mt-6">
+			<input type="text" name="exercise" placeholder="Exercise name..." required class="flex-[3] bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-app-pink transition-colors">
+			<div class="flex gap-2 flex-1">
+				<input type="number" name="sets" placeholder="Sets" value="3" min="1" max="10" required class="flex-1 min-w-0 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3 text-sm text-center text-white outline-none focus:border-app-pink transition-colors font-mono">
+				<input type="text" name="reps" placeholder="Reps" value="8-10" required class="flex-1 min-w-0 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3 text-sm text-center text-white outline-none focus:border-app-pink transition-colors font-mono">
+				<button type="submit" class="bg-app-pink text-white font-bold px-5 rounded-xl hover:bg-pink-500 transition-all shadow-[0_0_15px_rgba(255,0,160,0.2)] flex items-center justify-center shrink-0">
+					<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+				</button>
+			</div>
 		</form>`, day)
 	}
 

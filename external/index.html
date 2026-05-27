@@ -60,11 +60,11 @@
 
   <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 overflow-y-auto overflow-x-hidden">
 
-    <header class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 lg:mb-12 animate-fade-in-up">
+    <header class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 lg:mb-12 animate-fade-in-up px-1 sm:px-0">
       <div>
-        <p class="text-app-pink font-semibold tracking-wider text-xs uppercase mb-2">Welcome Legend</p>
-        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">Dashboard</h1>
-        <p class="text-zinc-400 mt-2 text-sm sm:text-base max-w-xl">Be Jacked & Smart</p>
+        <p class="text-app-pink font-semibold tracking-wider text-xs uppercase mb-1 sm:mb-2">Welcome Legend</p>
+        <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">Dashboard</h1>
+        <p class="text-zinc-400 mt-1 sm:mt-2 text-xs sm:text-base max-w-xl">Be Jacked & Smart</p>
       </div>
 
       <div id="coin-widget" hx-get="/api/coins" hx-trigger="load"></div>
@@ -76,35 +76,35 @@
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           
-          <div class="glass-panel rounded-[2rem] p-6 relative overflow-hidden animate-fade-in-up">
+          <div class="glass-panel rounded-[2rem] p-5 sm:p-6 relative overflow-hidden animate-fade-in-up">
             <div class="absolute top-0 right-0 w-32 h-32 bg-app-pink/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
             <div class="flex justify-between items-start mb-4 relative z-10">
-              <h3 class="text-zinc-400 text-sm font-bold tracking-wide uppercase">Fitness Score</h3>
+              <h3 class="text-zinc-400 text-xs sm:text-sm font-bold tracking-wide uppercase">Fitness Score</h3>
               <svg class="w-5 h-5 text-app-pink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             </div>
-            <div class="flex flex-col items-center justify-center py-4 relative z-10">
-              <div class="relative w-36 h-36 flex items-center justify-center">
+            <div class="flex flex-col items-center justify-center py-2 sm:py-4 relative z-10">
+              <div class="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
                 <svg class="absolute inset-0 w-full h-full" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#3d162a" stroke-width="8" /><circle id="scoreRing" class="progress-ring__circle" cx="60" cy="60" r="50" fill="none" stroke="#ff00a0" stroke-width="8" stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="314.159" /></svg>
                 
                 <div class="absolute flex flex-col items-center justify-center" hx-get="/api/score" hx-trigger="load, updateRings from:body">
-                  <span class="font-display text-5xl font-black text-zinc-600">--</span>
+                  <span class="font-display text-4xl sm:text-5xl font-black text-zinc-600">--</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="glass-panel rounded-[2rem] p-6 relative overflow-hidden animate-fade-in-up delay-100">
+          <div class="glass-panel rounded-[2rem] p-5 sm:p-6 relative overflow-hidden animate-fade-in-up delay-100">
             <div class="absolute top-0 right-0 w-32 h-32 bg-app-yellow/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
             <div class="flex justify-between items-start mb-4 relative z-10">
-              <h3 class="text-zinc-400 text-sm font-bold tracking-wide uppercase">Active Streak</h3>
+              <h3 class="text-zinc-400 text-xs sm:text-sm font-bold tracking-wide uppercase">Active Streak</h3>
               <svg class="w-5 h-5 text-app-yellow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
             </div>
-            <div class="flex flex-col items-center justify-center py-4 relative z-10">
-              <div class="relative w-36 h-36 flex items-center justify-center">
+            <div class="flex flex-col items-center justify-center py-2 sm:py-4 relative z-10">
+              <div class="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
                 <svg class="absolute inset-0 w-full h-full" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#3d3616" stroke-width="8" /><circle id="streakRing" class="progress-ring__circle" cx="60" cy="60" r="50" fill="none" stroke="#fbff00" stroke-width="8" stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="314.159" /></svg>
                 
                 <div class="absolute flex flex-col items-center justify-center" hx-get="/api/streak" hx-trigger="load, updateRings from:body">
-                  <span id="streak-days" class="font-display text-5xl font-black text-zinc-600">--</span>
+                  <span id="streak-days" class="font-display text-4xl sm:text-5xl font-black text-zinc-600">--</span>
                 </div>
               </div>
             </div>
