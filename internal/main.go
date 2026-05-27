@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"gama-fit/database"
 	"gama-fit/handlers"
@@ -11,10 +10,6 @@ import (
 
 func main() {
 	database.ConnectAndSetup()
-
-	if os.Getenv("SEED_DEMO") == "1" {
-		database.SeedDemoData()
-	}
 
 	// Core HTMX Endpoints
 	http.HandleFunc("/api/goals", handlers.HandleGoals)
@@ -24,7 +19,7 @@ func main() {
 	http.HandleFunc("/api/score", handlers.GetFitnessScore)
 	http.HandleFunc("/api/plans", handlers.HandleWorkoutPlan)
 	http.HandleFunc("/api/freestyle", handlers.HandleFreestyle)
-	http.HandleFunc("/api/creatine", handlers.HandleCreatine)
+	http.HandleFunc("/api/bodyweight", handlers.HandleBodyWeight)
 	http.HandleFunc("/api/streak", handlers.GetStreak)
 //shop endpoints 
 http.HandleFunc("/api/shop", handlers.HandleShop)

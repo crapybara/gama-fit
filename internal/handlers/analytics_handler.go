@@ -20,6 +20,7 @@ type ChartPoint struct {
 
 func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 	timeframe := normalizeTimeframe(r.URL.Query().Get("timeframe"))
+	weightTimeframe := normalizeTimeframe(r.URL.Query().Get("weightTimeframe"))
 	selectedExercise := strings.TrimSpace(r.URL.Query().Get("exercise"))
 	if selectedExercise == "" {
 		selectedExercise = "all"
@@ -37,12 +38,12 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 			%s
 		</div>
 	`,
-		statCard("Avg Sleep", fmt.Sprintf("%.1f", avgSleepHours), "hours", "rgba(99,102,241,0.12)", "text-app-sleep"),
+		statCard("Avg Sleep", fmt.Sprintf("%.2f", avgSleepHours), "hours", "rgba(99,102,241,0.12)", "text-app-sleep"),
 		statCard("Avg Calories", fmt.Sprintf("%d", avgCalories), "kcal", "rgba(251,255,0,0.10)", "text-app-yellow"),
 		statCard("Avg Protein", fmt.Sprintf("%d", avgProtein), "g", "rgba(255,0,160,0.10)", "text-app-pink"),
 	)
 
-	fragment := fmt.Sprintf(`
+	fmt.Fprintf(w, `
 		<div class="space-y-6">
 			<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
 				<div>
@@ -82,17 +83,44 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 					%s
 				</div>
 			</div>
+
+			<div class="glass-panel rounded-[2.5rem] p-5 lg:p-7 relative overflow-hidden border border-zinc-800/80 shadow-2xl mt-6">
+				<div class="absolute top-0 right-0 w-96 h-96 rounded-full blur-[150px] pointer-events-none" style="background:rgba(59,130,246,0.05);"></div>
+
+				<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 relative z-10">
+					<div>
+						<h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2 mb-1">
+							<span style="color:#3b82f6">⚖️</span> Body Weight Trend
+						</h3>
+						<p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Body Weight (kg) vs Time</p>
+					</div>
+
+					<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+						<div class="grid grid-cols-3 sm:flex gap-2">
+							%s
+							%s
+							%s
+						</div>
+					</div>
+				</div>
+
+				<div class="relative z-10 w-full">
+					%s
+				</div>
+			</div>
 		</div>
 	`,
 		statsHTML,
 		buildExerciseOptions(selectedExercise),
-		timeframeButton("week", timeframe),
-		timeframeButton("month", timeframe),
-		timeframeButton("year", timeframe),
-		renderAreaChart(fetchGraphPoints(timeframe, selectedExercise, now)),
+		timeframeButton("week", timeframe, "progression"),
+		timeframeButton("month", timeframe, "progression"),
+		timeframeButton("year", timeframe, "progression"),
+		renderAreaChart(fetchGraphPoints(timeframe, selectedExercise, now), "#ff00a0", "text-app-pink", "bg-app-pink", false),
+		timeframeButton("week", weightTimeframe, "weight"),
+		timeframeButton("month", weightTimeframe, "weight"),
+		timeframeButton("year", weightTimeframe, "weight"),
+		renderAreaChart(fetchBodyWeightPoints(weightTimeframe, now), "#3b82f6", "text-blue-400", "bg-blue-500", true),
 	)
-
-	fmt.Fprint(w, fragment)
 }
 
 func normalizeTimeframe(value string) string {
@@ -102,6 +130,50 @@ func normalizeTimeframe(value string) string {
 	default:
 		return "week"
 	}
+}
+
+func fetchBodyWeightPoints(timeframe string, now time.Time) []ChartPoint {
+	var points []ChartPoint
+	if timeframe == "week" {
+		for i := 6; i >= 0; i-- {
+			day := now.AddDate(0, 0, -i)
+			where := "log_date = ?"
+			weight := queryBodyWeight(where, day.Format("2006-01-02"))
+			if weight > 0 && !math.IsNaN(weight) && !math.IsInf(weight, 0) {
+				points = append(points, ChartPoint{Label: day.Format("Mon"), Weight: weight})
+			}
+		}
+	} else if timeframe == "month" {
+		for i := 3; i >= 0; i-- {
+			start := now.AddDate(0, 0, -((i+1)*7 - 1))
+			end := start.AddDate(0, 0, 6)
+			where := "log_date >= ? AND log_date <= ?"
+			weight := queryBodyWeight(where, start.Format("2006-01-02"), end.Format("2006-01-02"))
+			if weight > 0 && !math.IsNaN(weight) && !math.IsInf(weight, 0) {
+				points = append(points, ChartPoint{Label: fmt.Sprintf("W%d", 4-i), Weight: weight})
+			}
+		}
+	} else if timeframe == "year" {
+		for i := 11; i >= 0; i-- {
+			month := now.AddDate(0, -i, 0)
+			where := "log_date LIKE ?"
+			weight := queryBodyWeight(where, month.Format("2006-01")+"%")
+			if weight > 0 && !math.IsNaN(weight) && !math.IsInf(weight, 0) {
+				points = append(points, ChartPoint{Label: month.Format("Jan"), Weight: weight})
+			}
+		}
+	}
+	return points
+}
+
+func queryBodyWeight(where string, args ...any) float64 {
+	query := "SELECT AVG(weight) FROM body_weight_logs WHERE " + where
+	var w sql.NullFloat64
+	err := database.DB.QueryRow(query, args...).Scan(&w)
+	if err != nil || !w.Valid {
+		return 0
+	}
+	return w.Float64
 }
 
 func fetchGraphPoints(timeframe, exercise string, now time.Time) []ChartPoint {
@@ -164,7 +236,7 @@ func queryMaxSet(where string, args ...any) (float64, int) {
 	return w.Float64, int(r.Int64)
 }
 
-func renderAreaChart(points []ChartPoint) string {
+func renderAreaChart(points []ChartPoint, hexColor, textClass, bgClass string, isWeight bool) string {
 	var validPoints []ChartPoint
 	for _, p := range points {
 		if !math.IsNaN(p.Weight) && !math.IsInf(p.Weight, 0) {
@@ -228,8 +300,8 @@ func renderAreaChart(points []ChartPoint) string {
 	<div class="w-full mt-6">
 		<div class="relative w-full h-[220px] sm:h-[300px]">
 			<svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-				<path d="` + pathArea.String() + `" fill="#ff00a0" fill-opacity="0.1" />
-				<path d="` + pathLine.String() + `" fill="none" stroke="#ff00a0" stroke-width="3px" vector-effect="non-scaling-stroke" class="neon-path" />
+				<path d="` + pathArea.String() + `" fill="` + hexColor + `" fill-opacity="0.1" />
+				<path d="` + pathLine.String() + `" fill="none" stroke="` + hexColor + `" stroke-width="3px" vector-effect="non-scaling-stroke" class="neon-path" />
 			</svg>
 	`)
 
@@ -241,21 +313,26 @@ func renderAreaChart(points []ChartPoint) string {
 		if i == 0 { ttPos = "left-0 -translate-x-[10%%]" }
 		if i == len(validPoints)-1 { ttPos = "right-0 translate-x-[10%%]" }
 
+		repsHtml := ""
+		if !isWeight {
+			repsHtml = fmt.Sprintf(`<div class="text-zinc-400 font-bold text-xs uppercase tracking-widest mt-1">× %d Reps</div>`, p.Reps)
+		}
+
 		b.WriteString(fmt.Sprintf(`
 			<div class="absolute z-30 group" style="left: %.2f%%; top: %.2f%%; transform: translate(-50%%, -50%%);">
 				
 				<div class="w-12 h-12 flex items-center justify-center">
-					<div class="w-3 h-3 md:w-4 md:h-4 rounded-full bg-app-pink shadow-[0_0_10px_#ff00a0] group-hover:scale-[1.8] transition-transform"></div>
+					<div class="w-3 h-3 md:w-4 md:h-4 rounded-full %s shadow-[0_0_10px_%s] group-hover:scale-[1.8] transition-transform"></div>
 				</div>
 				
-				<div class="absolute bottom-full mb-1 bg-zinc-900 border border-app-pink/50 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity min-w-max text-center %s">
-					<div class="text-white font-black text-xl">%s <span class="text-xs text-app-pink">KG</span></div>
-					<div class="text-zinc-400 font-bold text-xs uppercase tracking-widest mt-1">× %d Reps</div>
+				<div class="absolute bottom-full mb-1 bg-zinc-900 border border-zinc-700 hover:border-zinc-500 p-3 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity min-w-max text-center %s">
+					<div class="text-white font-black text-xl">%s <span class="text-xs %s">KG</span></div>
+					%s
 					<div class="text-zinc-600 font-bold text-[10px] uppercase mt-2">%s</div>
 				</div>
 
 			</div>
-		`, c.X, c.Y, ttPos, formatKg(p.Weight), p.Reps, p.Label))
+		`, c.X, c.Y, bgClass, hexColor, ttPos, formatKg(p.Weight), textClass, repsHtml, p.Label))
 	}
 
 	b.WriteString(`</div>`)
@@ -269,12 +346,17 @@ func renderAreaChart(points []ChartPoint) string {
 	
 	return b.String()
 }
-func timeframeButton(value, active string) string {
+func timeframeButton(value, active, chart string) string {
 	base := "px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap text-center flex-1 sm:flex-none"
+	colorClass := "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:text-white"
 	if value == active {
-		return fmt.Sprintf(`<button type="button" data-timeframe="%s" class="%s bg-app-pink text-white shadow-[0_0_15px_rgba(255,0,160,0.35)]">%s</button>`, value, base, strings.Title(value))
+		if chart == "progression" {
+			colorClass = "bg-app-pink text-white shadow-[0_0_15px_rgba(255,0,160,0.35)]"
+		} else {
+			colorClass = "bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.35)] border-blue-400"
+		}
 	}
-	return fmt.Sprintf(`<button type="button" data-timeframe="%s" class="%s bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:text-white">%s</button>`, value, base, strings.Title(value))
+	return fmt.Sprintf(`<button type="button" data-timeframe="%s" data-chart="%s" class="%s %s">%s</button>`, value, chart, base, colorClass, strings.Title(value))
 }
 
 func fetchAverageSleepHours() float64 {

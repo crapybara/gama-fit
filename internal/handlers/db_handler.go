@@ -15,7 +15,7 @@ func HandleExportDB(w http.ResponseWriter, r *http.Request) {
 		_ = database.DB.Close()
 	}
 
-	dbPath := "./gamafit.db"
+	dbPath := database.GetDBPath()
 	file, err := os.Open(dbPath)
 	if err != nil {
 		http.Error(w, "Could not open database file", http.StatusInternalServerError)
@@ -52,7 +52,7 @@ func HandleImportDB(w http.ResponseWriter, r *http.Request) {
 		_ = database.DB.Close()
 	}
 
-	dbPath := "./gamafit.db"
+	dbPath := database.GetDBPath()
 	// Backup current DB just in case
 	_ = os.Rename(dbPath, dbPath+".bak")
 

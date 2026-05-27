@@ -70,11 +70,11 @@
 
   <script>
     const shell = document.getElementById('analytics-shell');
-    const state = { timeframe: 'week', exercise: 'all' };
+    const state = { timeframe: 'week', weightTimeframe: 'week', exercise: 'all' };
 
     async function loadAnalytics() {
       shell.classList.add('loading-state');
-      const url = `/api/analytics/metrics?timeframe=${encodeURIComponent(state.timeframe)}&exercise=${encodeURIComponent(state.exercise)}`;
+      const url = `/api/analytics/metrics?timeframe=${encodeURIComponent(state.timeframe)}&weightTimeframe=${encodeURIComponent(state.weightTimeframe)}&exercise=${encodeURIComponent(state.exercise)}`;
       try {
         const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -92,7 +92,15 @@
       const btn = e.target.closest('[data-timeframe]');
       if (btn) {
         e.preventDefault(); 
-        state.timeframe = btn.getAttribute('data-timeframe');
+        const chartType = btn.getAttribute('data-chart');
+        const tf = btn.getAttribute('data-timeframe');
+        
+        if (chartType === 'weight') {
+          state.weightTimeframe = tf;
+        } else {
+          state.timeframe = tf;
+        }
+        
         loadAnalytics();
       }
     });

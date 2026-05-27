@@ -158,31 +158,38 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(html + formHtml))
 }
 
-// --- 3. CREATINE LOGGING ---
-func HandleCreatine(w http.ResponseWriter, r *http.Request) {
+// --- 3. BODY WEIGHT TRACKER ---
+func HandleBodyWeight(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		_, _ = database.DB.Exec("INSERT OR IGNORE INTO creatine_tracker_final (log_date) VALUES (date('now'))")
+		weight, _ := strconv.ParseFloat(r.FormValue("weight"), 64)
+		if weight > 0 {
+			_, _ = database.DB.Exec("INSERT INTO body_weight_logs (weight, log_date) VALUES (?, date('now')) ON CONFLICT(log_date) DO UPDATE SET weight=excluded.weight", weight)
+		}
+	} else if r.Method == http.MethodDelete {
+		_, _ = database.DB.Exec("DELETE FROM body_weight_logs WHERE log_date = date('now')")
 	}
 
-	var taken bool
-	_ = database.DB.QueryRow("SELECT EXISTS(SELECT 1 FROM creatine_tracker_final WHERE log_date = date('now'))").Scan(&taken)
+	var todayWeight float64
+	err := database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE log_date = date('now')").Scan(&todayWeight)
 
-	if taken {
-		fmt.Fprint(w, `
-			<button disabled class="w-28 h-28 rounded-full border-4 border-blue-500 bg-blue-500/20 flex flex-col items-center justify-center transition-all duration-300 shadow-[0_0_40px_rgba(59,130,246,0.3)] cursor-not-allowed">
-				<div class="flex flex-col items-center justify-center text-blue-400 animate-[bounce_0.5s_ease-in-out]">
-					<svg class="w-10 h-10 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+	if err == nil {
+		fmt.Fprintf(w, `
+			<div id="bodyweight-content" class="relative z-10 flex-1 flex flex-col items-center justify-center py-4 w-full">
+				<div class="flex flex-col items-center justify-center transition-all duration-300 w-full">
+					<span class="font-display text-5xl sm:text-6xl font-black text-white group-hover:text-blue-400 transition-colors">%.1f<span class="text-2xl sm:text-3xl text-blue-400 ml-1">kg</span></span>
+					<span class="text-[10px] sm:text-xs uppercase font-bold text-zinc-500 tracking-wider mt-2">Today's Weight</span>
+					<button hx-delete="/api/bodyweight" hx-swap="outerHTML" hx-target="#bodyweight-content" class="mt-4 bg-zinc-900 border border-zinc-700 hover:border-red-500 text-zinc-400 hover:text-red-500 px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors">Reset</button>
 				</div>
-			</button>
-		`)
+			</div>
+		`, todayWeight)
 	} else {
 		fmt.Fprint(w, `
-			<button hx-post="/api/creatine" hx-swap="outerHTML" onclick="playPowerSound()" class="w-28 h-28 rounded-full border-4 border-zinc-800 bg-zinc-900/50 flex flex-col items-center justify-center hover:border-blue-500 hover:bg-blue-500/10 transition-all duration-300 group shadow-[0_0_15px_rgba(59,130,246,0)] hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] relative overflow-hidden">
-				<div class="flex flex-col items-center justify-center transition-all duration-300">
-					<span class="font-display text-3xl font-black text-white group-hover:text-blue-400 transition-colors">5g</span>
-					<span class="text-[10px] uppercase font-bold text-zinc-500 tracking-wider mt-1 group-hover:text-blue-400/70">Log Dose</span>
-				</div>
-			</button>
+			<div id="bodyweight-content" class="relative z-10 flex-1 flex flex-col items-center justify-center py-4 w-full">
+				<form hx-post="/api/bodyweight" hx-swap="outerHTML" hx-target="#bodyweight-content" class="flex flex-col items-center justify-center gap-3 w-full max-w-[200px] mx-auto px-4">
+					<input type="number" name="weight" step="0.1" placeholder="00.0" required class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3 text-2xl sm:text-3xl text-center text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono">
+					<button type="submit" class="w-full bg-blue-500 text-black font-black py-3 rounded-xl hover:bg-blue-400 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] uppercase tracking-wider text-xs">Log Weight</button>
+				</form>
+			</div>
 		`)
 	}
 }

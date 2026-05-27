@@ -95,16 +95,16 @@
                 <div class="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-blue-500/20 to-transparent pointer-events-none opacity-60"></div>
 
                 <div class="flex items-center justify-between mb-4 relative z-10">
-                    <h3 class="text-white font-black uppercase tracking-wider text-sm">Creatine Tracker</h3>
-                    <svg class="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                    <h3 class="text-white font-black uppercase tracking-wider text-sm">Body Weight</h3>
+                    <svg class="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                 </div>
 
-               <div class="relative z-10 flex-1 flex flex-col items-center justify-center py-6" hx-get="/api/creatine" hx-trigger="load" hx-swap="innerHTML">
+               <div id="bodyweight-content" class="relative z-10 flex-1 flex flex-col items-center justify-center py-4 w-full" hx-get="/api/bodyweight" hx-trigger="load" hx-swap="outerHTML">
                    <div class="animate-pulse text-zinc-500 text-center py-3 text-sm font-bold tracking-widest uppercase">SYNCING...</div>
                </div>
                
                <div class="relative z-10 mt-auto bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center backdrop-blur-sm">
-                    <p class="text-blue-300 text-xs font-semibold tracking-wide">💧 Make sure you drink enough water!</p>
+                    <p class="text-blue-300 text-xs font-semibold tracking-wide">Consistency is key!</p>
                 </div>
             </div>
         </div>

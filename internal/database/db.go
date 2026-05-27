@@ -3,16 +3,34 @@ package database
 import (
 	"database/sql"
 	"log"
+	"os"
+	"path/filepath"
 
 	_ "modernc.org/sqlite"
 )
 
 var DB *sql.DB
 
+func GetDBPath() string {
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "./data/gamafit.db"
+	}
+	return dbPath
+}
+
 func ConnectAndSetup() {
 	var err error
 
-	DB, err = sql.Open("sqlite", "./gamafit.db")
+	dbPath := GetDBPath()
+
+	// Ensure directory exists
+	dir := filepath.Dir(dbPath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		_ = os.MkdirAll(dir, 0755)
+	}
+
+	DB, err = sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -98,6 +116,12 @@ func ConnectAndSetup() {
 		fats INTEGER NOT NULL,
 		log_date TEXT NOT NULL DEFAULT (date('now')),
 		log_time TEXT NOT NULL DEFAULT (time('now'))
+	);
+
+	CREATE TABLE IF NOT EXISTS body_weight_logs (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		weight REAL NOT NULL,
+		log_date TEXT UNIQUE NOT NULL
 	);
 
 	CREATE TABLE IF NOT EXISTS sleep_logs (

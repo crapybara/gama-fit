@@ -58,8 +58,8 @@ func seedVisibleDemoData(rng *rand.Rand, now time.Time) {
 		seedFreestyleLogs(rng, now)
 	}
 
-	if err := DB.QueryRow("SELECT COUNT(*) FROM creatine_tracker_final").Scan(&count); err == nil && count == 0 {
-		seedCreatineTracker(now)
+	if err := DB.QueryRow("SELECT COUNT(*) FROM body_weight_logs").Scan(&count); err == nil && count == 0 {
+		seedBodyWeightLogs(rng, now)
 	}
 
 	if err := DB.QueryRow("SELECT COUNT(*) FROM user_stats").Scan(&count); err == nil && count == 0 {
@@ -297,12 +297,18 @@ func seedFreestyleLogs(rng *rand.Rand, now time.Time) {
 	}
 }
 
-func seedCreatineTracker(now time.Time) {
-	for i := 0; i < 12; i++ {
+func seedBodyWeightLogs(rng *rand.Rand, now time.Time) {
+	for i := 0; i < 365; i++ {
+		if rng.Float64() < 0.6 { // Don't log every single day
+			continue
+		}
 		date := now.AddDate(0, 0, -i).Format("2006-01-02")
-		_, err := DB.Exec(`INSERT OR IGNORE INTO creatine_tracker_final (log_date) VALUES (?)`, date)
+		// Simulate a slow weight loss journey over a year
+		progress := float64(i) / 365.0
+		weight := 85.0 - (progress * 10) + (rng.Float64()-0.5)*1.5
+		_, err := DB.Exec(`INSERT OR IGNORE INTO body_weight_logs (log_date, weight) VALUES (?, ?)`, date, math.Round(weight*10)/10)
 		if err != nil {
-			log.Printf("seed creatine warning: %v", err)
+			log.Printf("seed body weight warning: %v", err)
 		}
 	}
 }

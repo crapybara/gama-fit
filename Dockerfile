@@ -3,14 +3,10 @@
 # ==========================================
 FROM golang:1.21-alpine AS builder
 
-# Install GCC and musl-dev (Required for SQLite CGO compilation)
-RUN apk add --no-cache gcc musl-dev
-
 # Set the working directory inside the container
 WORKDIR /app
 
 # Copy the Go module files and download dependencies
-# (Doing this first caches the downloads to speed up future builds)
 COPY internal/go.mod internal/go.sum ./internal/
 RUN cd internal && go mod download
 
@@ -20,15 +16,15 @@ COPY . .
 # Move into the internal directory to build the binary
 WORKDIR /app/internal
 
-# Build the binary with CGO enabled
-RUN CGO_ENABLED=1 GOOS=linux go build -o gamafit-server main.go
+# Build the binary (CGO is NOT required for modernc.org/sqlite)
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gamafit-server main.go
 
 # ==========================================
 # STAGE 2: Create the Lightweight Runner
 # ==========================================
 FROM alpine:latest
 
-# Add timezone data and certificates (good practice for servers)
+# Add timezone data and certificates
 RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /app
