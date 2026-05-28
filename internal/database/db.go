@@ -54,12 +54,12 @@ func ConnectAndSetup() {
 
 	CREATE TABLE IF NOT EXISTS user_stats (
 		id INTEGER PRIMARY KEY,
-		total_coins INTEGER NOT NULL DEFAULT 4250,
+		total_coins INTEGER NOT NULL DEFAULT 0,
 		current_streak INTEGER NOT NULL DEFAULT 0
 	);
 
 	INSERT OR IGNORE INTO user_stats (id, total_coins, current_streak)
-	VALUES (1, 4250, 0);
+	VALUES (1, 0, 0);
 
 	CREATE TABLE IF NOT EXISTS checkins (
 		checkin_date TEXT PRIMARY KEY

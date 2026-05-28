@@ -72,7 +72,7 @@ func seedVisibleDemoData(rng *rand.Rand, now time.Time) {
 }
 
 func seedUserStats() {
-	_, _ = DB.Exec(`INSERT OR REPLACE INTO user_stats (id, total_coins, current_streak) VALUES (1, 4250, 7)`)
+	_, _ = DB.Exec(`INSERT OR REPLACE INTO user_stats (id, total_coins, current_streak) VALUES (1, 0, 7)`)
 }
 
 func seedMacros() {
