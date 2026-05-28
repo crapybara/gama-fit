@@ -1,0 +1,159 @@
+/* =========================================
+   GAMA FITNESS GLOBAL STYLES
+   Consolidated & Mobile Optimized
+========================================= */
+
+/* --- Root Variables --- */
+:root {
+  --app-bg: #0a0508;
+  --app-surface: #140a10;
+  --app-card: #1f0d16;
+  --app-pink: #ff00a0;
+  --app-pink-dark: #b30070;
+  --app-yellow: #fbff00;
+  --app-sleep: #6366f1;
+  --app-blue: #3b82f6;
+  --glass-bg: rgba(20, 10, 16, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+}
+
+/* --- Base & Scrollbar --- */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: -webkit-fill-available;
+}
+
+body {
+  overflow-x: hidden;
+  background-color: var(--app-bg);
+  background: 
+    radial-gradient(circle at top left, rgba(255, 0, 160, 0.08), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(251, 255, 0, 0.05), transparent 25%);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f1a2e;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--app-pink);
+}
+
+/* --- Typography --- */
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* --- Components --- */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (hover: hover) {
+  .glass-panel:hover {
+    border-color: rgba(255, 0, 160, 0.15);
+    box-shadow: 0 12px 38px rgba(0, 0, 0, 0.55), 0 0 18px rgba(255, 0, 160, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+/* --- Animations --- */
+.page-animate-fade {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.layout-delay { animation-delay: 100ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Accessibility & Focus --- */
+:focus-visible {
+  outline: 2px solid var(--app-pink);
+  outline-offset: 2px;
+}
+
+/* --- Mobile Specific Tweaks --- */
+@media (max-width: 640px) {
+  .glass-panel {
+    border-radius: 1.5rem !important;
+  }
+  
+  input, select, button {
+    font-size: 16px !important;
+    min-height: 48px; /* Slightly larger for better touch */
+  }
+
+  /* Refine Bottom Nav for Mobile */
+  nav.fixed {
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .contribution-graph {
+    padding-bottom: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Form Helper Classes */
+.form-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 400px) {
+  .form-input-group {
+    flex-wrap: wrap;
+  }
+  .form-input-group > * {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+  .form-input-group > button {
+    flex: 1 1 100%;
+  }
+}
+
+/* Custom Scrollbar for horizontal containers */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}

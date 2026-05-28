@@ -22,14 +22,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styling/global.css">
   <link rel="stylesheet" href="styling/analytics.css">
 
   <style>
     /* Smooth transition matrix for the SVG Area Graph */
     #analytics-shell { transition: opacity 0.3s ease-in-out; }
     .loading-state { opacity: 0.3; pointer-events: none; filter: grayscale(50%); }
-    html, body { background: #0a0508 !important; }
+    body { opacity: 0; transition: opacity .14s ease; }
+    body.app-ready { opacity: 1; }
   </style>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('app-ready');
+  });
+</script>
 </head>
 
 <body class="bg-[#0a0508] text-zinc-300 antialiased min-h-screen flex flex-col md:flex-row selection:bg-app-pink selection:text-white">

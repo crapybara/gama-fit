@@ -24,9 +24,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
   
+  <link rel="stylesheet" href="styling/global.css">
   <link rel="stylesheet" href="styling/workout.css">
 <style>
-  html, body { background: #0a0508 !important; }
   body { opacity: 0; transition: opacity .14s ease; }
   body.app-ready { opacity: 1; }
 </style>
@@ -130,7 +130,7 @@
                             </div>
                         </div>
 
-                        <div class="flex gap-2 sm:gap-3 flex-1">
+                        <div class="form-input-group flex-1">
                             <input type="number" name="weight" placeholder="KG" step="0.5" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 sm:px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
                             <input type="number" name="reps" placeholder="Reps" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 sm:px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
                             <button type="submit" class="bg-app-yellow text-black font-black px-5 rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_20px_rgba(251,255,0,0.3)] hover:shadow-[0_0_30px_rgba(251,255,0,0.5)] flex items-center justify-center shrink-0">

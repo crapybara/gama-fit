@@ -21,9 +21,9 @@
   </script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styling/global.css">
   <link rel="stylesheet" href="styling/caltrack.css">
 <style>
-  html, body { background: #0a0508 !important; }
   body { opacity: 0; transition: opacity .14s ease; }
   body.app-ready { opacity: 1; }
 </style>
@@ -92,7 +92,7 @@
             
             <form hx-post="/api/meals" hx-target="#food-catalog-container" hx-swap="none" hx-on::after-request="this.reset();" class="flex flex-col gap-3 relative z-10">
                 <input type="text" name="quick_name" required placeholder="Meal name or description..." class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-white outline-none focus:border-app-pink transition-all">
-                <div class="flex gap-2">
+                <div class="form-input-group">
                     <input type="number" name="quick_protein" placeholder="Protein" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-pink font-mono">
                     <input type="number" name="quick_carbs" placeholder="Carbs" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-blue-500 font-mono">
                     <input type="number" name="quick_fats" placeholder="Fats" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-emerald-500 font-mono">
@@ -109,7 +109,7 @@
                 <div class="flex-1">
                     <input type="text" name="name" required placeholder="New Food Name (e.g. Greek Yogurt)" class="w-full bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-3.5 text-sm text-white outline-none focus:border-app-yellow transition-all">
                 </div>
-                <div class="flex gap-2">
+                <div class="form-input-group">
                     <input type="number" name="weight" required placeholder="Grams" value="100" class="w-24 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow font-mono">
                     <input type="number" name="protein" required placeholder="Pro" class="flex-1 min-w-0 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-app-pink font-mono">
                     <input type="number" name="carbs" required placeholder="Carb" class="flex-1 min-w-0 sm:w-20 bg-zinc-900/50 border border-zinc-700 rounded-xl px-2 py-3.5 text-sm text-center text-white outline-none focus:border-blue-500 font-mono">

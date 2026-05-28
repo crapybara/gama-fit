@@ -1,60 +1,8 @@
 /* =========================================
-   SCROLLBAR
+   WORKOUT SPECIFIC
 ========================================= */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #3f1a2e; /* Deep magenta */
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #ff00a0; /* Hot pink */
-}
-
-/* =========================================
-   GLOBAL BACKGROUND TEXTURES
-========================================= */
-body {
-  overflow-x: hidden;
-  background:
-    radial-gradient(circle at top left, rgba(255, 0, 160, 0.08), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(251, 255, 0, 0.05), transparent 25%);
-  background-color: #0a0508;
-}
-
-/* =========================================
-   MODULAR GLASS CONTAINERS
-========================================= */
-.glass-panel {
-  background: rgba(20, 10, 16, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.02);
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.glass-panel:hover {
-  border-color: rgba(255, 0, 160, 0.15); /* Pink hover accent */
-  box-shadow:
-    0 12px 38px rgba(0, 0, 0, 0.55),
-    0 0 18px rgba(255, 0, 160, 0.08);
-  transform: translateY(-2px);
-}
-
-/* =========================================
-   BUTTON GLOW EFFECTS
-========================================= */
+/* --- Button Glow Effects --- */
 .pink-glow-btn {
   transition: all 0.2s ease-in-out;
 }
@@ -62,37 +10,10 @@ body {
 .pink-glow-btn:hover {
   box-shadow:
     0 0 18px rgba(255, 0, 160, 0.4),
-    0 0 32px rgba(4, 199, 213, 0.1); /* Subtle yellow undertone */
+    0 0 32px rgba(4, 199, 213, 0.1);
 }
 
-/* =========================================
-   LAYOUT RENDERING ANIMATIONS
-========================================= */
-.page-animate-fade {
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.layout-delay {
-  animation-delay: 100ms;
-}
-
-.delay-200 {
-  animation-delay: 200ms;
-}
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-/* =========================================
-   CREATINE HYDRO-SURGE FULL PAGE EFFECT
-========================================= */
+/* --- Creatine Hydro-Surge Effect --- */
 body::after {
   content: '';
   position: fixed;
@@ -114,9 +35,17 @@ body.creatine-surge-active::after {
   transition: opacity 0.05s ease-in, box-shadow 0.05s ease-in;
 }
 
-/* Make all glass panels glow blue momentarily during the surge */
 body.creatine-surge-active .glass-panel {
   border-color: rgba(59, 130, 246, 0.4);
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.2);
   transition: border-color 0.1s ease-in, box-shadow 0.1s ease-in;
+}
+
+/* --- Plan List Styling --- */
+.plan-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.plan-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  transform: translateX(4px);
 }
