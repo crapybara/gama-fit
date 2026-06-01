@@ -57,17 +57,98 @@ func getQualityScore(quality string, totalMinutes int) int {
 	return baseScore
 }
 
+func calculate14DaySleepScore(userID int) int {
+	rows, err := database.DB.Query(`
+		SELECT quality, duration_mins 
+		FROM sleep_logs 
+		WHERE user_id = $1
+		ORDER BY log_date DESC 
+		LIMIT 14
+	`, userID)
+	if err != nil {
+		return 0
+	}
+	defer rows.Close()
+
+	var logs []struct {
+		quality  string
+		duration int
+	}
+	totalDurationMins := 0
+	for rows.Next() {
+		var q string
+		var d int
+		if err := rows.Scan(&q, &d); err == nil {
+			logs = append(logs, struct {
+				quality  string
+				duration int
+			}{q, d})
+			totalDurationMins += d
+		}
+	}
+
+	numLogs := len(logs)
+	if numLogs == 0 {
+		return 0
+	}
+
+	avgDurationHours := float64(totalDurationMins) / float64(numLogs) / 60.0
+
+	avgOrBetterCount := 0
+	greatCount := 0
+	allEightPlus := true
+	if numLogs < 13 { // Need at least 13 logs for the high scores
+		allEightPlus = false
+	}
+
+	for _, log := range logs {
+		if log.quality == "avg" || log.quality == "great" {
+			avgOrBetterCount++
+		}
+		if log.quality == "great" {
+			greatCount++
+		}
+		if log.duration < 480 { // 8 hours = 480 mins
+			allEightPlus = false
+		}
+	}
+
+	// Special cases (Need at least 13-14 logs)
+	if allEightPlus && greatCount >= 14 && numLogs >= 14 {
+		return 100
+	}
+	if allEightPlus && greatCount >= 13 && numLogs >= 13 {
+		return 98
+	}
+
+	score := 0
+	if greatCount > 13 {
+		score = 70
+	} else if avgOrBetterCount > 10 {
+		score = 50
+	}
+
+	if avgDurationHours > 6.5 {
+		score += 15
+	}
+
+	if score > 100 {
+		return 100
+	}
+	return score
+}
+
 func HandleSleepSummary(w http.ResponseWriter, r *http.Request) {
 	userID, _ := GetUserID(r)
 	var bedtime, waketime, quality string
-	var durationMins, score int
+	var durationMins, oldScore int
 
 	err := database.DB.QueryRow(`
 		SELECT bedtime, waketime, quality, duration_mins, score 
 		FROM sleep_logs 
 		WHERE user_id = $1
 		ORDER BY log_date DESC LIMIT 1
-	`, userID).Scan(&bedtime, &waketime, &quality, &durationMins, &score)
+	`, userID).Scan(&bedtime, &waketime, &quality, &durationMins, &oldScore)
 
 	if err != nil {
 		fmt.Fprintf(w, `
@@ -77,6 +158,9 @@ func HandleSleepSummary(w http.ResponseWriter, r *http.Request) {
 		`)
 		return
 	}
+
+	// New 14-day cumulative score
+	score := calculate14DaySleepScore(userID)
 
 	hrs := durationMins / 60
 	mins := durationMins % 60
@@ -107,7 +191,7 @@ func HandleSleepSummary(w http.ResponseWriter, r *http.Request) {
 					</svg>
 					<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
 						<span class="font-display font-black text-5xl sm:text-7xl text-white drop-shadow-lg tracking-tighter">%d</span>
-						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-sleep tracking-widest mt-1 bg-app-sleep/10 px-2 sm:px-3 py-1 rounded-full border border-app-sleep/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">Score</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-sleep tracking-widest mt-1 bg-app-sleep/10 px-2 sm:px-3 py-1 rounded-full border border-app-sleep/20 shadow-[0_0_10px_rgba(99,102,241,0.2)]">14D Index</span>
 					</div>
 				</div>
 			</div>

@@ -60,23 +60,23 @@
             <div class="flex flex-col sm:flex-row items-center gap-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
                 <div class="flex bg-zinc-900/80 p-1 rounded-xl border border-white/5">
                     <button hx-get="/analytics.html?range=1w&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
-                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML"
                        class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "1w"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">1W</button>
                     <button hx-get="/analytics.html?range=1m&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
-                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML"
                        class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "1m"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">1M</button>
                     <button hx-get="/analytics.html?range=3m&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
-                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML"
                        class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "3m"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">3M</button>
                     <button hx-get="/analytics.html?range=6m&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
-                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML"
                        class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "6m"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">6M</button>
                     <button hx-get="/analytics.html?range=year&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
-                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML"
                        class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if or (eq .SelectedRange "year") (eq .SelectedRange "")}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">Year</button>
                 </div>
 
-                <form class="flex gap-1 sm:gap-2" method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true">
+                <form class="flex gap-1 sm:gap-2" method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML">
                     <input type="hidden" name="exercise" value="{{.SelectedExercise}}">
                     <input type="hidden" name="range" value="{{.SelectedRange}}">
                     <div class="relative group">
@@ -136,7 +136,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Exercise:</span>
-                    <form method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true">
+                    <form method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML">
                         <input type="hidden" name="year" value="{{.SelectedYear}}">
                         <input type="hidden" name="range" value="{{.SelectedRange}}">
                         <div class="relative group">

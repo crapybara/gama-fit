@@ -78,11 +78,11 @@ func seedVisibleDemoData(rng *rand.Rand, now time.Time) {
 }
 
 func seedUserStats() {
-	_, _ = DB.Exec(`INSERT INTO user_stats (id, total_coins, current_streak) VALUES (1, 0, 7) ON CONFLICT (id) DO UPDATE SET total_coins = EXCLUDED.total_coins, current_streak = EXCLUDED.current_streak`)
+	_, _ = DB.Exec(`INSERT INTO user_stats (user_id, total_coins, current_streak, height) VALUES (1, 0, 7, 175.0) ON CONFLICT (user_id) DO UPDATE SET total_coins = EXCLUDED.total_coins, current_streak = EXCLUDED.current_streak, height = EXCLUDED.height`)
 }
 
 func seedMacros() {
-	_, _ = DB.Exec(`INSERT INTO user_macros_final (id, calories, protein, carbs, fats) VALUES (1, 2500, 200, 300, 70) ON CONFLICT (id) DO UPDATE SET calories = EXCLUDED.calories, protein = EXCLUDED.protein, carbs = EXCLUDED.carbs, fats = EXCLUDED.fats`)
+	_, _ = DB.Exec(`INSERT INTO user_macros_final (user_id, calories, protein, carbs, fats) VALUES (1, 2500, 200, 300, 70) ON CONFLICT (user_id) DO UPDATE SET calories = EXCLUDED.calories, protein = EXCLUDED.protein, carbs = EXCLUDED.carbs, fats = EXCLUDED.fats`)
 }
 
 func seedGoals(now time.Time) {

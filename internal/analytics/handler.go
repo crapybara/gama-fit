@@ -50,7 +50,7 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 
 	rangeParam := r.URL.Query().Get("range") // "1w", "1m", "3m", "6m", "year"
 	if rangeParam == "" {
-		rangeParam = "year"
+		rangeParam = "1w"
 	}
 
 	selectedExercise := r.URL.Query().Get("exercise")
