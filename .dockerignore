@@ -1,0 +1,12 @@
+# Ignore Git history
+.git
+.gitignore
+
+# Ignore local database files so you start fresh (or map them via volumes later)
+internal/*.db
+internal/*.db-wal
+internal/*.db-shm
+
+# Ignore local executables if you compiled on your machine
+internal/main
+internal/gamafit-server

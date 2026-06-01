@@ -1,0 +1,591 @@
+@import "tailwindcss";
+
+/* =========================================
+   GAMA FITNESS GLOBAL STYLES
+   Consolidated & Mobile Optimized
+========================================= */
+
+/* --- Root Variables & Themes --- */
+:root {
+  --app-bg: #0a0508;
+  --app-surface: #140a10;
+  --app-card: #1f0d16;
+  --app-pink: #ff00a0;
+  --app-pink-dark: #b30070;
+  --app-yellow: #fbff00;
+  --app-sleep: #6366f1;
+  --app-blue: #3b82f6;
+  --glass-bg: rgba(20, 10, 16, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --bg-gradient: radial-gradient(circle at top left, rgba(255, 0, 160, 0.08), transparent 30%),
+                 radial-gradient(circle at bottom right, rgba(251, 255, 0, 0.05), transparent 25%);
+}
+
+[data-theme="dracula"] {
+  --app-bg: #282a36;
+  --app-surface: #44475a;
+  --app-card: #6272a4;
+  --app-pink: #ff79c6;
+  --app-pink-dark: #bd93f9;
+  --app-yellow: #f1fa8c;
+  --app-blue: #8be9fd;
+  --glass-bg: rgba(68, 71, 90, 0.7);
+  --bg-gradient: radial-gradient(circle at top left, rgba(189, 147, 249, 0.1), transparent 30%),
+                 radial-gradient(circle at bottom right, rgba(255, 121, 198, 0.05), transparent 25%);
+}
+
+[data-theme="synthwave"] {
+  --app-bg: #241b2f;
+  --app-surface: #262335;
+  --app-card: #2e2a40;
+  --app-pink: #ff7edb;
+  --app-pink-dark: #b310ad;
+  --app-yellow: #fede5d;
+  --app-blue: #36f9f6;
+  --glass-bg: rgba(38, 35, 53, 0.7);
+  --bg-gradient: radial-gradient(circle at top left, rgba(255, 126, 219, 0.1), transparent 30%),
+                 radial-gradient(circle at bottom right, rgba(54, 249, 246, 0.05), transparent 25%);
+}
+
+[data-theme="material"] {
+  --app-bg: #121212;
+  --app-surface: #1e1e1e;
+  --app-card: #2c2c2c;
+  --app-pink: #bb86fc;
+  --app-pink-dark: #3700b3;
+  --app-yellow: #03dac6;
+  --app-blue: #3700b3;
+  --glass-bg: rgba(30, 30, 30, 0.7);
+  --bg-gradient: radial-gradient(circle at top left, rgba(187, 134, 252, 0.08), transparent 30%);
+}
+
+[data-theme="gruvbox"] {
+  --app-bg: #282828;
+  --app-surface: #3c3836;
+  --app-card: #504945;
+  --app-pink: #fb4934;
+  --app-pink-dark: #cc241d;
+  --app-yellow: #fabd2f;
+  --app-blue: #83a598;
+  --glass-bg: rgba(60, 56, 54, 0.7);
+  --bg-gradient: radial-gradient(circle at top left, rgba(251, 73, 52, 0.05), transparent 30%);
+}
+
+[data-theme="catppuccin"] {
+  --app-bg: #1e1e2e;
+  --app-surface: #313244;
+  --app-card: #45475a;
+  --app-pink: #f5c2e7;
+  --app-pink-dark: #cba6f7;
+  --app-yellow: #f9e2af;
+  --app-blue: #89b4fa;
+  --glass-bg: rgba(49, 50, 68, 0.7);
+  --bg-gradient: radial-gradient(circle at top left, rgba(245, 194, 231, 0.08), transparent 30%);
+}
+
+/* --- Base & Scrollbar --- */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  height: -webkit-fill-available;
+}
+
+body {
+  overflow-x: hidden;
+  background-color: var(--app-bg) !important;
+  background-image: var(--bg-gradient) !important;
+  background-attachment: fixed;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f1a2e;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--app-pink);
+}
+
+/* --- Typography --- */
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* --- Components --- */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (hover: hover) {
+  .glass-panel:hover {
+    border-color: rgba(255, 0, 160, 0.15);
+    box-shadow: 0 12px 38px rgba(0, 0, 0, 0.55), 0 0 18px rgba(255, 0, 160, 0.08);
+    transform: translateY(-2px);
+  }
+}
+
+/* --- Animations --- */
+.page-animate-fade {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.layout-delay { animation-delay: 100ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Accessibility & Focus --- */
+:focus-visible {
+  outline: 2px solid var(--app-pink);
+  outline-offset: 2px;
+}
+
+/* --- Mobile Specific Tweaks --- */
+@media (max-width: 640px) {
+  .glass-panel {
+    border-radius: 1.5rem !important;
+  }
+  
+  input, select, button {
+    font-size: 16px !important;
+    min-height: 48px; /* Slightly larger for better touch */
+  }
+
+  /* Refine Bottom Nav for Mobile */
+  nav.fixed {
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .contribution-graph {
+    padding-bottom: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Form Helper Classes */
+.form-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 400px) {
+  .form-input-group {
+    flex-wrap: wrap;
+  }
+  .form-input-group > * {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+  .form-input-group > button {
+    flex: 1 1 100%;
+  }
+}
+
+/* Custom Scrollbar for horizontal containers */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* =========================================
+   Runtime Theme Layer
+   Applies app themes across existing utility markup.
+========================================= */
+:root {
+  --app-bg: #0a0508;
+  --app-nav: #140a10;
+  --app-surface: #140a10;
+  --app-card: #1f0d16;
+  --app-card-elevated: #2a1420;
+  --app-input: #12070d;
+  --app-text: #fff7fb;
+  --app-text-soft: #d8c8d1;
+  --app-muted: #9b8793;
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-pink: #ff00a0;
+  --app-pink-dark: #b30070;
+  --app-yellow: #fbff00;
+  --app-blue: #3b82f6;
+  --app-sleep: #6366f1;
+  --app-success: #22c55e;
+  --app-danger: #ef4444;
+  --app-warning: #f97316;
+  --app-on-accent: #08060a;
+  --app-accent-glow: rgba(255, 0, 160, 0.32);
+  --app-blue-glow: rgba(59, 130, 246, 0.28);
+  --app-yellow-glow: rgba(251, 255, 0, 0.26);
+  --app-sleep-glow: rgba(99, 102, 241, 0.28);
+  --glass-bg: rgba(20, 10, 16, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --bg-gradient:
+    radial-gradient(circle at 10% 5%, color-mix(in srgb, var(--app-pink) 14%, transparent), transparent 32%),
+    radial-gradient(circle at 92% 86%, color-mix(in srgb, var(--app-yellow) 9%, transparent), transparent 28%);
+}
+
+[data-theme="dracula"] {
+  --app-bg: #282a36;
+  --app-nav: #21222c;
+  --app-surface: #343746;
+  --app-card: #44475a;
+  --app-card-elevated: #4e5268;
+  --app-input: #21222c;
+  --app-text: #f8f8f2;
+  --app-text-soft: #d9dcf2;
+  --app-muted: #9aa4ce;
+  --app-border: rgba(98, 114, 164, 0.52);
+  --app-pink: #ff79c6;
+  --app-pink-dark: #bd93f9;
+  --app-yellow: #f1fa8c;
+  --app-blue: #8be9fd;
+  --app-sleep: #bd93f9;
+  --app-success: #50fa7b;
+  --app-danger: #ff5555;
+  --app-warning: #ffb86c;
+  --app-on-accent: #282a36;
+  --app-accent-glow: rgba(255, 121, 198, 0.34);
+  --app-blue-glow: rgba(139, 233, 253, 0.26);
+  --app-yellow-glow: rgba(241, 250, 140, 0.25);
+  --app-sleep-glow: rgba(189, 147, 249, 0.3);
+  --glass-bg: rgba(68, 71, 90, 0.72);
+  --glass-border: rgba(248, 248, 242, 0.08);
+  --bg-gradient:
+    radial-gradient(circle at 12% 8%, rgba(189, 147, 249, 0.16), transparent 34%),
+    radial-gradient(circle at 90% 86%, rgba(255, 121, 198, 0.11), transparent 30%);
+}
+
+[data-theme="synthwave"],
+[data-theme="synthwave84"],
+[data-theme="syntwave84"] {
+  --app-bg: #05010a;
+  --app-nav: #0a0714;
+  --app-surface: #130d22;
+  --app-card: #1a1530;
+  --app-card-elevated: #241b42;
+  --app-input: #0a0714;
+  --app-text: #ffffff;
+  --app-text-soft: #c7c2da;
+  --app-muted: #8a82a7;
+  --app-border: rgba(157, 77, 255, 0.36);
+  --app-pink: #ff2fa8;
+  --app-pink-dark: #9d4dff;
+  --app-yellow: #ffe45e;
+  --app-blue: #00e5ff;
+  --app-sleep: #9d4dff;
+  --app-success: #50fa7b;
+  --app-danger: #ff4f7b;
+  --app-warning: #ff8a3d;
+  --app-on-accent: #05010a;
+  --app-accent-glow: rgba(255, 47, 168, 0.55);
+  --app-blue-glow: rgba(0, 229, 255, 0.5);
+  --app-yellow-glow: rgba(255, 228, 94, 0.4);
+  --app-sleep-glow: rgba(157, 77, 255, 0.45);
+  --glass-bg: rgba(26, 21, 48, 0.74);
+  --glass-border: rgba(157, 77, 255, 0.24);
+  --bg-gradient:
+    radial-gradient(circle at 14% 9%, rgba(255, 47, 168, 0.22), transparent 34%),
+    radial-gradient(circle at 84% 18%, rgba(0, 229, 255, 0.15), transparent 30%),
+    radial-gradient(circle at 75% 88%, rgba(157, 77, 255, 0.18), transparent 34%);
+}
+
+[data-theme="material"],
+[data-theme="materialui"] {
+  --app-bg: #0b0911;
+  --app-nav: #121223;
+  --app-surface: #171727;
+  --app-card: #24253a;
+  --app-card-elevated: #2c2e47;
+  --app-input: #121223;
+  --app-text: #f5f5f7;
+  --app-text-soft: #c9ccda;
+  --app-muted: #a4a7b8;
+  --app-border: rgba(255, 255, 255, 0.07);
+  --app-pink: #ff2fa8;
+  --app-pink-dark: #f5c8e8;
+  --app-yellow: #f7c948;
+  --app-blue: #4d82ff;
+  --app-sleep: #8b5cf6;
+  --app-success: #35d07f;
+  --app-danger: #ff5c72;
+  --app-warning: #ff9f43;
+  --app-on-accent: #0b0911;
+  --app-accent-glow: rgba(255, 47, 168, 0.35);
+  --app-blue-glow: rgba(77, 130, 255, 0.35);
+  --app-yellow-glow: rgba(247, 201, 72, 0.3);
+  --app-sleep-glow: rgba(139, 92, 246, 0.32);
+  --glass-bg: rgba(36, 37, 58, 0.74);
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --bg-gradient:
+    radial-gradient(circle at 13% 7%, rgba(255, 47, 168, 0.15), transparent 34%),
+    radial-gradient(circle at 92% 84%, rgba(77, 130, 255, 0.12), transparent 30%);
+}
+
+[data-theme="gruvbox"] {
+  --app-bg: #282828;
+  --app-nav: #1d2021;
+  --app-surface: #32302f;
+  --app-card: #3c3836;
+  --app-card-elevated: #504945;
+  --app-input: #1d2021;
+  --app-text: #ebdbb2;
+  --app-text-soft: #d5c4a1;
+  --app-muted: #a89984;
+  --app-border: rgba(168, 153, 132, 0.32);
+  --app-pink: #fe8019;
+  --app-pink-dark: #fb4934;
+  --app-yellow: #fabd2f;
+  --app-blue: #83a598;
+  --app-sleep: #8ec07c;
+  --app-success: #b8bb26;
+  --app-danger: #fb4934;
+  --app-warning: #fe8019;
+  --app-on-accent: #1d2021;
+  --app-accent-glow: rgba(254, 128, 25, 0.3);
+  --app-blue-glow: rgba(131, 165, 152, 0.26);
+  --app-yellow-glow: rgba(250, 189, 47, 0.26);
+  --app-sleep-glow: rgba(142, 192, 124, 0.28);
+  --glass-bg: rgba(60, 56, 54, 0.76);
+  --glass-border: rgba(235, 219, 178, 0.09);
+  --bg-gradient:
+    radial-gradient(circle at 12% 8%, rgba(254, 128, 25, 0.12), transparent 34%),
+    radial-gradient(circle at 88% 84%, rgba(184, 187, 38, 0.1), transparent 30%);
+}
+
+[data-theme="catppuccin"],
+[data-theme="catapuccin"] {
+  --app-bg: #1e1e2e;
+  --app-nav: #181825;
+  --app-surface: #181825;
+  --app-card: #313244;
+  --app-card-elevated: #45475a;
+  --app-input: #11111b;
+  --app-text: #cdd6f4;
+  --app-text-soft: #bac2de;
+  --app-muted: #a6adc8;
+  --app-border: rgba(88, 91, 112, 0.58);
+  --app-pink: #f5c2e7;
+  --app-pink-dark: #cba6f7;
+  --app-yellow: #f9e2af;
+  --app-blue: #89b4fa;
+  --app-sleep: #b4befe;
+  --app-success: #a6e3a1;
+  --app-danger: #f38ba8;
+  --app-warning: #fab387;
+  --app-on-accent: #1e1e2e;
+  --app-accent-glow: rgba(245, 194, 231, 0.28);
+  --app-blue-glow: rgba(137, 180, 250, 0.28);
+  --app-yellow-glow: rgba(249, 226, 175, 0.24);
+  --app-sleep-glow: rgba(180, 190, 254, 0.28);
+  --glass-bg: rgba(49, 50, 68, 0.72);
+  --glass-border: rgba(205, 214, 244, 0.08);
+  --bg-gradient:
+    radial-gradient(circle at 12% 8%, rgba(245, 194, 231, 0.12), transparent 34%),
+    radial-gradient(circle at 88% 84%, rgba(137, 180, 250, 0.1), transparent 30%);
+}
+
+body:not(.study-mode) {
+  color: var(--app-text-soft);
+}
+
+body:not(.study-mode) .glass-panel:hover {
+  border-color: color-mix(in srgb, var(--app-pink) 34%, var(--glass-border)) !important;
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.52), 0 0 24px var(--app-accent-glow) !important;
+}
+
+.bg-app-bg { background-color: var(--app-bg) !important; }
+.bg-app-surface { background-color: var(--app-surface) !important; }
+.bg-app-card { background-color: var(--app-card) !important; }
+.bg-app-pink { background-color: var(--app-pink) !important; }
+.bg-app-yellow { background-color: var(--app-yellow) !important; }
+.bg-app-blue { background-color: var(--app-blue) !important; }
+.bg-app-sleep { background-color: var(--app-sleep) !important; }
+.bg-app-surface\/50 { background-color: color-mix(in srgb, var(--app-surface) 50%, transparent) !important; }
+.bg-app-surface\/80 { background-color: color-mix(in srgb, var(--app-surface) 80%, transparent) !important; }
+.bg-app-surface\/90 { background-color: color-mix(in srgb, var(--app-surface) 90%, transparent) !important; }
+.bg-app-card\/80 { background-color: color-mix(in srgb, var(--app-card) 80%, transparent) !important; }
+.bg-app-pink\/10 { background-color: color-mix(in srgb, var(--app-pink) 10%, transparent) !important; }
+.bg-app-pink\/80 { background-color: color-mix(in srgb, var(--app-pink) 80%, transparent) !important; }
+.bg-app-yellow\/10 { background-color: color-mix(in srgb, var(--app-yellow) 10%, transparent) !important; }
+.bg-app-yellow\/20 { background-color: color-mix(in srgb, var(--app-yellow) 20%, transparent) !important; }
+.bg-app-sleep\/10 { background-color: color-mix(in srgb, var(--app-sleep) 10%, transparent) !important; }
+.bg-app-sleep\/20 { background-color: color-mix(in srgb, var(--app-sleep) 20%, transparent) !important; }
+
+.text-app-pink { color: var(--app-pink) !important; }
+.text-app-yellow { color: var(--app-yellow) !important; }
+.text-app-blue { color: var(--app-blue) !important; }
+.text-app-sleep { color: var(--app-sleep) !important; }
+.border-app-pink { border-color: var(--app-pink) !important; }
+.border-app-yellow { border-color: var(--app-yellow) !important; }
+.border-app-blue { border-color: var(--app-blue) !important; }
+.border-app-sleep { border-color: var(--app-sleep) !important; }
+.border-app-pink\/20 { border-color: color-mix(in srgb, var(--app-pink) 20%, transparent) !important; }
+.border-app-yellow\/20 { border-color: color-mix(in srgb, var(--app-yellow) 20%, transparent) !important; }
+.border-app-sleep\/20 { border-color: color-mix(in srgb, var(--app-sleep) 20%, transparent) !important; }
+.border-app-sleep\/30 { border-color: color-mix(in srgb, var(--app-sleep) 30%, transparent) !important; }
+.selection\:bg-app-pink::selection { background-color: var(--app-pink) !important; }
+.selection\:text-white::selection { color: var(--app-on-accent) !important; }
+
+.hover\:bg-app-pink\/80:hover { background-color: color-mix(in srgb, var(--app-pink) 80%, transparent) !important; }
+.hover\:border-app-pink:hover,
+.hover\:border-app-pink\/50:hover { border-color: color-mix(in srgb, var(--app-pink) 55%, transparent) !important; }
+.hover\:border-app-yellow:hover,
+.hover\:border-app-yellow\/50:hover { border-color: color-mix(in srgb, var(--app-yellow) 55%, transparent) !important; }
+.hover\:border-app-sleep\/50:hover { border-color: color-mix(in srgb, var(--app-sleep) 55%, transparent) !important; }
+.hover\:text-app-pink:hover { color: var(--app-pink) !important; }
+.hover\:text-app-yellow:hover { color: var(--app-yellow) !important; }
+.focus\:border-app-pink:focus { border-color: var(--app-pink) !important; }
+.focus\:border-app-yellow:focus { border-color: var(--app-yellow) !important; }
+.focus\:border-app-sleep:focus { border-color: var(--app-sleep) !important; }
+.focus\:ring-app-yellow\/20:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--app-yellow) 20%, transparent) !important; }
+.focus\:ring-app-sleep\/20:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--app-sleep) 20%, transparent) !important; }
+
+@media (min-width: 48rem) {
+  .md\:bg-app-surface { background-color: var(--app-surface) !important; }
+  .md\:bg-app-pink { background-color: var(--app-pink) !important; }
+  .md\:text-white { color: var(--app-on-accent) !important; }
+}
+
+body:not(.study-mode) nav {
+  background-color: color-mix(in srgb, var(--app-nav) 92%, transparent) !important;
+  border-color: var(--app-border) !important;
+}
+
+body:not(.study-mode) .text-white { color: var(--app-text) !important; }
+body:not(.study-mode) .text-zinc-100,
+body:not(.study-mode) .text-zinc-200,
+body:not(.study-mode) .text-zinc-300 { color: var(--app-text-soft) !important; }
+body:not(.study-mode) .text-zinc-400 { color: color-mix(in srgb, var(--app-text-soft) 82%, var(--app-muted)) !important; }
+body:not(.study-mode) .text-zinc-500 { color: var(--app-muted) !important; }
+body:not(.study-mode) .text-zinc-600 { color: color-mix(in srgb, var(--app-muted) 68%, transparent) !important; }
+body:not(.study-mode) .text-blue-300,
+body:not(.study-mode) .text-blue-400,
+body:not(.study-mode) .text-blue-500,
+body:not(.study-mode) .text-blue-600 { color: var(--app-blue) !important; }
+body:not(.study-mode) .text-indigo-400 { color: var(--app-sleep) !important; }
+body:not(.study-mode) .text-fuchsia-500,
+body:not(.study-mode) .text-pink-500 { color: var(--app-pink) !important; }
+body:not(.study-mode) .text-emerald-400,
+body:not(.study-mode) .text-emerald-500,
+body:not(.study-mode) .text-green-500 { color: var(--app-success) !important; }
+body:not(.study-mode) .text-red-400,
+body:not(.study-mode) .text-red-500 { color: var(--app-danger) !important; }
+body:not(.study-mode) .text-orange-400 { color: var(--app-warning) !important; }
+body:not(.study-mode) .text-yellow-400 { color: var(--app-yellow) !important; }
+
+body:not(.study-mode) .bg-zinc-950,
+body:not(.study-mode) .bg-zinc-900 { background-color: var(--app-input) !important; }
+body:not(.study-mode) .bg-zinc-900\/20 { background-color: color-mix(in srgb, var(--app-input) 20%, transparent) !important; }
+body:not(.study-mode) .bg-zinc-900\/30 { background-color: color-mix(in srgb, var(--app-input) 30%, transparent) !important; }
+body:not(.study-mode) .bg-zinc-900\/50 { background-color: color-mix(in srgb, var(--app-input) 55%, transparent) !important; }
+body:not(.study-mode) .bg-zinc-900\/60 { background-color: color-mix(in srgb, var(--app-input) 62%, transparent) !important; }
+body:not(.study-mode) .bg-zinc-900\/70 { background-color: color-mix(in srgb, var(--app-input) 72%, transparent) !important; }
+body:not(.study-mode) .bg-zinc-900\/80 { background-color: color-mix(in srgb, var(--app-input) 82%, transparent) !important; }
+body:not(.study-mode) .bg-zinc-800 { background-color: var(--app-card-elevated) !important; }
+body:not(.study-mode) .bg-zinc-800\/50 { background-color: color-mix(in srgb, var(--app-card-elevated) 52%, transparent) !important; }
+body:not(.study-mode) .bg-zinc-100,
+body:not(.study-mode) .bg-zinc-50,
+body:not(.study-mode) .bg-white { background-color: var(--app-text) !important; }
+body:not(.study-mode) .bg-white\/5 { background-color: color-mix(in srgb, var(--app-text) 5%, transparent) !important; }
+body:not(.study-mode) .bg-white\/10 { background-color: color-mix(in srgb, var(--app-text) 10%, transparent) !important; }
+body:not(.study-mode) .bg-blue-400,
+body:not(.study-mode) .bg-blue-500,
+body:not(.study-mode) .bg-blue-600 { background-color: var(--app-blue) !important; }
+body:not(.study-mode) .bg-blue-400\/10,
+body:not(.study-mode) .bg-blue-500\/10 { background-color: color-mix(in srgb, var(--app-blue) 10%, transparent) !important; }
+body:not(.study-mode) .bg-red-500,
+body:not(.study-mode) .hover\:bg-red-500:hover { background-color: var(--app-danger) !important; }
+body:not(.study-mode) .bg-red-500\/10,
+body:not(.study-mode) .bg-red-500\/20 { background-color: color-mix(in srgb, var(--app-danger) 14%, transparent) !important; }
+
+body:not(.study-mode) .border-zinc-700,
+body:not(.study-mode) .border-zinc-800,
+body:not(.study-mode) .border-zinc-800\/50,
+body:not(.study-mode) .border-zinc-800\/80,
+body:not(.study-mode) .border-white\/5,
+body:not(.study-mode) .border-white\/10 { border-color: var(--app-border) !important; }
+body:not(.study-mode) .border-blue-400,
+body:not(.study-mode) .border-blue-500,
+body:not(.study-mode) .border-blue-500\/20,
+body:not(.study-mode) .border-blue-400\/30 { border-color: color-mix(in srgb, var(--app-blue) 44%, transparent) !important; }
+body:not(.study-mode) .border-red-500 { border-color: var(--app-danger) !important; }
+
+body:not(.study-mode) input:not([type="range"]),
+body:not(.study-mode) select,
+body:not(.study-mode) textarea {
+  background-color: color-mix(in srgb, var(--app-input) 78%, transparent) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+
+body:not(.study-mode) ::placeholder {
+  color: color-mix(in srgb, var(--app-muted) 72%, transparent) !important;
+}
+
+body:not(.study-mode) .hover\:bg-zinc-700:hover,
+body:not(.study-mode) .hover\:bg-zinc-800:hover,
+body:not(.study-mode) .hover\:bg-zinc-900\/80:hover {
+  background-color: var(--app-card-elevated) !important;
+}
+body:not(.study-mode) .hover\:bg-pink-500:hover { background-color: var(--app-pink-dark) !important; }
+body:not(.study-mode) .hover\:bg-yellow-400:hover { background-color: color-mix(in srgb, var(--app-yellow) 82%, white) !important; }
+body:not(.study-mode) .hover\:bg-blue-400:hover { background-color: color-mix(in srgb, var(--app-blue) 82%, white) !important; }
+body:not(.study-mode) .hover\:border-zinc-500:hover,
+body:not(.study-mode) .hover\:border-zinc-600:hover,
+body:not(.study-mode) .hover\:border-zinc-700:hover {
+  border-color: color-mix(in srgb, var(--app-text) 28%, var(--app-border)) !important;
+}
+body:not(.study-mode) .hover\:text-white:hover { color: var(--app-text) !important; }
+body:not(.study-mode) .hover\:text-red-500:hover { color: var(--app-danger) !important; }
+body:not(.study-mode) .group:hover .group-hover\:text-white { color: var(--app-text) !important; }
+body:not(.study-mode) .group:hover .group-hover\:text-app-yellow { color: var(--app-yellow) !important; }
+body:not(.study-mode) .group:hover .group-hover\:text-app-sleep { color: var(--app-sleep) !important; }
+body:not(.study-mode) .group:hover .group-hover\:text-blue-400 { color: var(--app-blue) !important; }
+body:not(.study-mode) .group:hover .group-hover\:text-orange-400 { color: var(--app-warning) !important; }
+
+.peer:checked ~ .peer-checked\:border-app-yellow { border-color: var(--app-yellow) !important; }
+.peer:checked ~ .peer-checked\:text-app-yellow { color: var(--app-yellow) !important; }
+.peer:checked ~ .peer-checked\:bg-app-yellow\/10 { background-color: color-mix(in srgb, var(--app-yellow) 10%, transparent) !important; }
+.peer:checked ~ .peer-checked\:border-blue-400 { border-color: var(--app-blue) !important; }
+.peer:checked ~ .peer-checked\:text-blue-400 { color: var(--app-blue) !important; }
+.peer:checked ~ .peer-checked\:bg-blue-400\/10 { background-color: color-mix(in srgb, var(--app-blue) 10%, transparent) !important; }
+.peer:checked ~ .peer-checked\:border-red-500 { border-color: var(--app-danger) !important; }
+.peer:checked ~ .peer-checked\:text-red-500 { color: var(--app-danger) !important; }
+.peer:checked ~ .peer-checked\:bg-red-500\/10 { background-color: color-mix(in srgb, var(--app-danger) 10%, transparent) !important; }
+
+.accent-blue-500 { accent-color: var(--app-blue) !important; }
+.accent-app-pink { accent-color: var(--app-pink) !important; }

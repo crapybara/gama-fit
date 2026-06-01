@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gama Fitness - Workout Plan</title>
+
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Outfit', 'sans-serif'] },
+          colors: {
+            app: { 
+              bg: 'var(--app-bg)', 
+              surface: 'var(--app-surface)', 
+              card: 'var(--app-card)', 
+              pink: 'var(--app-pink)', 
+              pinkDark: 'var(--app-pink-dark)', 
+              yellow: 'var(--app-yellow)' 
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styling/output.css">
+  <link rel="stylesheet" href="styling/workout.css">
+  <link rel="stylesheet" href="styling/muscle-map.css">
+<style>
+  body { opacity: 0; transition: opacity .14s ease; }
+  body.app-ready { opacity: 1; }
+</style>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('app-ready');
+  });
+</script>
+<script>
+  (function() {
+    const savedTheme = localStorage.getItem('app-theme') || 'default';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  })();
+</script>
+</head>
+
+<body class="bg-app-bg text-zinc-300 antialiased min-h-screen flex flex-col md:flex-row selection:bg-app-pink selection:text-white">
+
+  <nav class="fixed bottom-0 left-0 right-0 z-50 md:sticky md:top-0 md:w-24 md:h-screen bg-app-surface/90 backdrop-blur-md md:bg-app-surface border-t md:border-t-0 md:border-r border-zinc-800/50 flex flex-row md:flex-col items-center justify-center px-4 md:px-0 py-3 md:py-8 shrink-0 overflow-x-auto md:overflow-x-visible custom-scrollbar">
+    <div class="flex flex-row md:flex-col w-full md:w-auto justify-between md:justify-start items-center gap-2 md:gap-4 px-2 md:px-0">
+      <a href="index.html" class="nav-link-index group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Home"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+      <a href="workout.html" class="nav-link-workout group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-app-pink/10 text-app-pink md:bg-app-pink md:text-white transition-all hover:scale-105 shadow-[0_0_15px_rgba(255,0,160,0.3)]" title="Workout"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg></a>
+      <a href="caltrack.html" class="nav-link-caltrack group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Nutrition"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8c0-4.4-3.6-8-8-8S2 3.6 2 8c0 3.1 1.7 5.8 4.3 7.2l1.4 6.8c.2.8 1.3.8 1.5 0l1.4-6.8C13.3 13.8 18 11.1 18 8z"/><path d="M22 13.3V5c0-1.7-1.3-3-3-3v14.4c1.3-.4 2.4-1.3 2.8-2.5l.2-.6z"/></svg></a>
+      <a href="sleep.html" class="nav-link-sleep group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Sleep"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></a>
+      <a href="analytics.html" class="nav-link-analytics group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Analytics"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a>
+      <a href="study.html" class="nav-link-study group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Study Mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></a>
+      <a href="settings.html" class="nav-link-settings group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></a>
+    </div>
+  </nav>
+
+  <main class="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pb-32 md:pb-8 overflow-y-auto overflow-x-hidden">
+
+    <header class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 lg:mb-12 page-animate-fade">
+      <div>
+        <p class="text-app-pink font-semibold tracking-wider text-xs uppercase mb-2">Welcome Legend</p>
+        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">Workout Plan</h1>
+        <p class="text-zinc-400 mt-2 text-sm sm:text-base max-w-xl">Be Jacked & Smart</p>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <div class="lg:col-span-8 flex flex-col gap-6">
+            <div class="glass-panel rounded-[2rem] p-5 sm:p-6 lg:p-8 relative overflow-hidden page-animate-fade layout-delay">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-app-pink/10 blur-3xl rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
+                
+                <div class="flex items-center justify-between mb-6 relative z-10">
+                  <h3 class="text-white font-black uppercase tracking-wider text-sm">Workout Plan</h3>
+                  
+                  <div class="relative min-w-[130px] sm:min-w-[140px]">
+                      <select name="day" hx-get="/api/plans" hx-target="#plans-container" hx-trigger="load, change" class="w-full bg-zinc-900 border border-zinc-700 hover:border-app-pink text-zinc-300 pl-4 pr-10 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-colors appearance-none cursor-pointer outline-none shadow-sm">
+                          <option value="1" selected>Monday</option>
+                          <option value="2">Tuesday</option>
+                          <option value="3">Wednesday</option>
+                          <option value="4">Thursday</option>
+                          <option value="5">Friday</option>
+                          <option value="6">Saturday</option>
+                          <option value="7">Sunday</option>
+                      </select>
+                      <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                          <svg class="w-4 h-4 text-app-pink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </div>
+                  </div>
+                </div>
+
+                <div id="plans-container" class="relative z-10">
+                   <div class="text-zinc-500 text-sm text-center py-8 font-mono">Loading plan...</div>
+                </div>
+            </div>
+        </div>
+
+      <div class="lg:col-span-4 flex flex-col gap-6">
+            <div class="glass-panel rounded-[2rem] p-5 sm:p-6 flex-1 flex flex-col relative overflow-hidden page-animate-fade layout-delay">
+                <div class="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-blue-500/20 to-transparent pointer-events-none opacity-60"></div>
+
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-white font-black uppercase tracking-wider text-sm">Body Weight</h3>
+                    <svg class="w-5 h-5 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.5)]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                </div>
+
+               <div id="bodyweight-content" class="relative z-10 flex-1 flex flex-col items-center justify-center py-4 w-full" 
+                    hx-get="/api/bodyweight" 
+                    hx-trigger="load" 
+                    hx-vals='js:{local_date: new Date().toISOString().split("T")[0]}'
+                    hx-swap="outerHTML">
+                   <div class="animate-pulse text-zinc-500 text-center py-3 text-sm font-bold tracking-widest uppercase">SYNCING...</div>
+               </div>
+               
+               <div class="relative z-10 mt-auto bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-center backdrop-blur-sm">
+                    <p class="text-blue-300 text-xs font-semibold tracking-wide">Consistency is key!</p>
+                </div>
+            </div>
+        </div>
+
+       <div class="lg:col-span-12 flex flex-col gap-6">
+            <!-- Freestyle Tracker -->
+            <div class="glass-panel rounded-[2rem] p-5 sm:p-6 lg:p-8 relative overflow-hidden page-animate-fade delay-200">
+                <div class="absolute top-0 left-0 w-64 h-64 bg-app-yellow/10 blur-3xl rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+
+                <div class="flex items-center justify-between mb-6 relative z-10">
+                    <h3 class="text-white font-black uppercase tracking-wider text-sm">Freestyle Tracker</h3>
+                    <span class="text-zinc-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest bg-zinc-900/80 px-3 py-1.5 rounded-lg border border-white/5 text-app-yellow/80">Unstructured Session</span>
+                </div>
+
+                <div class="relative z-10">
+                    <form id="freestyle-form" hx-post="/api/freestyle" hx-target="#freestyle-list" 
+                          hx-vals='js:{local_date: new Date().toISOString().split("T")[0], local_time: new Date().toTimeString().split(" ")[0]}'
+                          hx-on::after-request="this.reset()" class="flex flex-col sm:flex-row gap-3 mb-8">
+                        
+                        <div class="relative flex-1">
+                            <input id="exercise-selector" name="exercise" list="exercise-list" required placeholder="Select or type exercise..." autocomplete="off" class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-5 py-3.5 text-sm text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-bold">
+                        </div>
+
+                        <div class="form-input-group flex-1 flex gap-3">
+                            <input type="number" name="weight" placeholder="KG" step="0.5" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 sm:px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
+                            <input type="number" name="reps" placeholder="Reps" required class="flex-1 min-w-0 bg-zinc-900/80 border border-zinc-700 rounded-xl px-2 sm:px-4 py-3.5 text-sm text-center text-white outline-none focus:border-app-yellow focus:ring-2 focus:ring-app-yellow/20 transition-all font-mono">
+                            <button type="submit" class="bg-app-yellow text-black font-black px-5 rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_20px_rgba(251,255,0,0.3)] hover:shadow-[0_0_30px_rgba(251,255,0,0.5)] flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="freestyle-list" hx-get="/api/freestyle" 
+                         hx-trigger="load" 
+                         hx-vals='js:{local_date: new Date().toISOString().split("T")[0]}'
+                         class="flex flex-col">
+                        <div class="text-zinc-500 text-sm text-center py-4 font-mono">Loading your sets...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Muscle Map Selection - AT THE BOTTOM -->
+            <div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden page-animate-fade delay-300 mt-6">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-app-pink/5 blur-3xl rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none"></div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 relative z-10 gap-4">
+                    <div>
+                        <h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2">
+                            <span style="color:var(--app-pink)">🧬</span> Interactive Muscle Map
+                        </h3>
+                        <p class="text-zinc-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest mt-1">Volume Heatmap Strategy</p>
+                    </div>
+                    
+                    <div class="flex bg-zinc-900/80 p-1 rounded-xl border border-white/5">
+                        <button onclick="setHeatmapScope('week')" id="scope-week" class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all bg-app-pink text-white shadow-[0_0_15px_rgba(255,0,160,0.3)]">Weekly Volume</button>
+                        <button onclick="setHeatmapScope('day')" id="scope-day" class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:text-white">This Day</button>
+                    </div>
+                </div>
+                <div id="muscle-map-workout" class="relative z-10 min-h-[500px]"></div>
+            </div>
+        </div>
+    </div> 
+  </main>
+
+  <script src="scripts/workout.js"></script>
+  <script src="scripts/muscle-map.js"></script>
+  <script>
+    let currentHeatmapScope = 'week';
+
+    function setHeatmapScope(scope) {
+        currentHeatmapScope = scope;
+        
+        // Update UI buttons
+        const weekBtn = document.getElementById('scope-week');
+        const dayBtn = document.getElementById('scope-day');
+        
+        if (scope === 'week') {
+            weekBtn.classList.add('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
+            weekBtn.classList.remove('text-zinc-500', 'hover:text-white');
+            dayBtn.classList.remove('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
+            dayBtn.classList.add('text-zinc-500', 'hover:text-white');
+        } else {
+            dayBtn.classList.add('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
+            dayBtn.classList.remove('text-zinc-500', 'hover:text-white');
+            weekBtn.classList.remove('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
+            weekBtn.classList.add('text-zinc-500', 'hover:text-white');
+        }
+        
+        refreshHeatmap();
+    }
+
+    function refreshHeatmap() {
+        const daySel = document.querySelector('select[name="day"]');
+        const day = daySel ? daySel.value : (new Date().getDay() || 7);
+        fetch(`/api/plans/heatmap?scope=${currentHeatmapScope}&day=${day}`)
+            .then(res => res.json())
+            .then(data => {
+                if (typeof updateHeatmap === 'function') {
+                    updateHeatmap('muscle-map-workout', data, currentHeatmapScope);
+                }
+            })
+            .catch(err => console.error('Error fetching heatmap:', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const daySel = document.querySelector('select[name="day"]');
+      if (daySel) {
+        let day = new Date().getDay(); // 0 (Sun) to 6 (Sat)
+        if (day === 0) day = 7; // Map Sun to 7
+        daySel.value = day.toString();
+        htmx.trigger(daySel, 'change');
+      }
+      
+      if (typeof initMuscleMap === 'function') {
+        initMuscleMap('muscle-map-workout', (muscle) => {
+            // Find dropdown in plans-container (the new location)
+            const muscleDropdown = document.querySelector('#plans-container select[name="muscle"]');
+            if (muscleDropdown) {
+                const option = Array.from(muscleDropdown.options).find(opt => opt.value.toLowerCase() === muscle.toLowerCase());
+                if (option) {
+                    muscleDropdown.value = option.value;
+                }
+            }
+        });
+      }
+
+      // Refresh heatmap when plans change
+      document.body.addEventListener('htmx:afterOnLoad', (evt) => {
+          if (evt.detail.target.id === 'plans-container') {
+              refreshHeatmap();
+          }
+      });
+      
+      // Initial heatmap load
+      setTimeout(refreshHeatmap, 500);
+    });
+  </script>
+  <datalist id="exercise-list">
+    <option value="#Traps - Behind-the-Back Shrug"></option>
+    <option value="#Traps - Kelso Shrug"></option>
+    <option value="#Traps - Trap Bar Carry"></option>
+    <option value="#Traps - Overhead Carry"></option>
+    <option value="#Traps - Y-Raise"></option>
+    <option value="#Shoulders - Dumbbell Front Raise"></option>
+    <option value="#Shoulders - Plate Front Raise"></option>
+    <option value="#Shoulders - Cable Front Raise"></option>
+    <option value="#Shoulders - Upright Cable Row"></option>
+    <option value="#Shoulders - Machine Lateral Raise"></option>
+    <option value="#Shoulders - Dumbbell Y-Raise"></option>
+    <option value="#Shoulders - Bent-Over Lateral Raise"></option>
+    <option value="#Shoulders - Handstand Push-Up"></option>
+    <option value="#Shoulders - Pike Push-Up"></option>
+    <option value="#Shoulders - Push Press"></option>
+    <option value="#Chest - Incline Push-Up"></option>
+    <option value="#Chest - Decline Push-Up"></option>
+    <option value="#Chest - Archer Push-Up"></option>
+    <option value="#Chest - Wide-Grip Push-Up"></option>
+    <option value="#Chest - Diamond Push-Up"></option>
+    <option value="#Chest - Dumbbell Pullover Press"></option>
+    <option value="#Chest - Floor Press"></option>
+    <option value="#Chest - Hex Press"></option>
+    <option value="#Chest - Smith Machine Bench Press"></option>
+    <option value="#Chest - Ring Dip"></option>
+    <option value="#Back - Kroc Row"></option>
+    <option value="#Back - Seal Row"></option>
+    <option value="#Back - Rope Pulldown"></option>
+    <option value="#Back - Close-Grip Pulldown"></option>
+    <option value="#Back - Wide-Grip Pulldown"></option>
+    <option value="#Back - Assisted Pull-Up"></option>
+    <option value="#Back - Weighted Pull-Up"></option>
+    <option value="#Back - Weighted Chin-Up"></option>
+    <option value="#Back - Muscle-Up"></option>
+    <option value="#Back - Renegade Row"></option>
+    <option value="#Back - Landmine Row"></option>
+    <option value="#Back - Gorilla Row"></option>
+    <option value="#Back - Reverse Hyperextension"></option>
+    <option value="#Back - Jefferson Deadlift"></option>
+    <option value="#Back - Deficit Deadlift"></option>
+    <option value="#Biceps - Cross-Body Hammer Curl"></option>
+    <option value="#Biceps - Cable Hammer Curl"></option>
+    <option value="#Biceps - Machine Curl"></option>
+    <option value="#Biceps - EZ-Bar Curl"></option>
+    <option value="#Biceps - One-Arm Preacher Curl"></option>
+    <option value="#Biceps - Reverse Preacher Curl"></option>
+    <option value="#Biceps - Drag EZ-Bar Curl"></option>
+    <option value="#Biceps - Rope Curl"></option>
+    <option value="#Biceps - High Cable Curl"></option>
+    <option value="#Biceps - Isometric Curl Hold"></option>
+    <option value="#Triceps - Diamond Bench Press"></option>
+    <option value="#Triceps - Ring Dip Extension"></option>
+    <option value="#Triceps - Single-Arm Pushdown"></option>
+    <option value="#Triceps - Cable Kickback"></option>
+    <option value="#Triceps - PJR Pullover"></option>
+    <option value="#Triceps - Dumbbell Floor Extension"></option>
+    <option value="#Triceps - Bodyweight Tricep Extension"></option>
+    <option value="#Triceps - Ring Tricep Extension"></option>
+    <option value="#Triceps - Band Pushdown"></option>
+    <option value="#Triceps - Tate Press Variation"></option>
+    <option value="#Forearms - Rice Bucket Training"></option>
+    <option value="#Forearms - Captains of Crush Grippers"></option>
+    <option value="#Forearms - Fat Grip Dead Hang"></option>
+    <option value="#Forearms - Barbell Finger Roll"></option>
+    <option value="#Forearms - Lever Bar Rotation"></option>
+    <option value="#Forearms - Wrist Pronation"></option>
+    <option value="#Forearms - Wrist Supination"></option>
+    <option value="#Forearms - Sledgehammer Lever Lift"></option>
+    <option value="#Forearms - Pinch Grip Carry"></option>
+    <option value="#Forearms - Fingertip Push-Up"></option>
+    <option value="#Abs - Crunch"></option>
+    <option value="#Abs - Sit-Up"></option>
+    <option value="#Abs - Bicycle Crunch"></option>
+    <option value="#Abs - Reverse Crunch"></option>
+    <option value="#Abs - V-Up"></option>
+    <option value="#Abs - Dragon Flag"></option>
+    <option value="#Abs - L-Sit"></option>
+    <option value="#Abs - Hollow Body Hold"></option>
+    <option value="#Abs - Toes-to-Bar"></option>
+    <option value="#Abs - Cable Crunch"></option>
+    <option value="#Glutes - Glute Bridge"></option>
+    <option value="#Glutes - Single-Leg Hip Thrust"></option>
+    <option value="#Glutes - Cable Kickback"></option>
+    <option value="#Glutes - Frog Pump"></option>
+    <option value="#Glutes - Step-Up"></option>
+    <option value="#Quads - Sissy Squat"></option>
+    <option value="#Quads - Hack Squat"></option>
+    <option value="#Quads - Goblet Squat"></option>
+    <option value="#Quads - Split Squat"></option>
+    <option value="#Quads - Step-Up"></option>
+    <option value="#Quads - Leg Extension"></option>
+    <option value="#Quads - Cyclist Squat"></option>
+    <option value="#Quads - Pistol Squat"></option>
+    <option value="#Quads - Smith Machine Squat"></option>
+    <option value="#Quads - Zercher Squat"></option>
+    <option value="#Hamstrings - Nordic Curl"></option>
+    <option value="#Hamstrings - Single-Leg Romanian Deadlift"></option>
+    <option value="#Hamstrings - Glute-Ham Raise"></option>
+    <option value="#Hamstrings - Kettlebell Swing"></option>
+    <option value="#Hamstrings - Stability Ball Leg Curl"></option>
+    <option value="#Calves - Donkey Calf Raise"></option>
+    <option value="#Calves - Single-Leg Calf Raise"></option>
+    <option value="#Calves - Leg Press Calf Raise"></option>
+    <option value="#Calves - Jump Rope"></option>
+    <option value="#Calves - Tibialis Raise"></option>
+    <option value="#Calves - Seated Tibialis Raise"></option>
+    <option value="#Calves - Heel Walk"></option>
+    <option value="#Calves - Box Jump"></option>
+    <option value="#Calves - Pogo Jump"></option>
+    <option value="#Calves - Depth Jump"></option>
+  </datalist>
+</body>
+</html>

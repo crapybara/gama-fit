@@ -1,0 +1,11 @@
+2026/05/31 18:45:17 Failed to connect to postgres (attempt 1): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:19 Failed to connect to postgres (attempt 2): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:21 Failed to connect to postgres (attempt 3): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:23 Failed to connect to postgres (attempt 4): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:25 Failed to connect to postgres (attempt 5): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:27 Failed to connect to postgres (attempt 6): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:29 Failed to connect to postgres (attempt 7): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:31 Failed to connect to postgres (attempt 8): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:33 Failed to connect to postgres (attempt 9): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:35 Failed to connect to postgres (attempt 10): dial tcp [::1]:5433: connect: connection refused
+2026/05/31 18:45:37 Failed to connect to database after retries:dial tcp [::1]:5433: connect: connection refused

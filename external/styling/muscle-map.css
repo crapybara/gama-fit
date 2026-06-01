@@ -1,0 +1,108 @@
+.muscle-map-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 24px;
+  width: 100%;
+  padding: 20px 10px;
+}
+
+.muscle-map-view {
+  flex: 1;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.view-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-align: center;
+  margin: 0;
+}
+
+.body-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Body silhouette background */
+.body-silhouette {
+  fill: #18181b;
+  stroke: #27272a;
+  stroke-width: 1;
+}
+
+/* Default muscle part - slightly lighter than bg */
+.muscle-part {
+  fill: #27272a;
+  stroke: #3f3f46;
+  stroke-width: 0.8;
+  transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;
+}
+
+/* Hover on a muscle group */
+.muscle-group {
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.muscle-group:hover .muscle-part {
+  fill: #52525b;
+  stroke: #71717a;
+}
+
+/* Heatmap Glow Levels - Theme Aware */
+.muscle-group.glow-1 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 15%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 20%, transparent); }
+.muscle-group.glow-2 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 30%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 40%, transparent); }
+.muscle-group.glow-3 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 50%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 60%, transparent); }
+.muscle-group.glow-4 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 70%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 80%, transparent); filter: drop-shadow(0 0 4px var(--app-pink)); }
+.muscle-group.glow-5 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 85%, transparent) !important; stroke: var(--app-pink); filter: drop-shadow(0 0 8px var(--app-pink)); }
+.muscle-group.glow-6 .muscle-part { 
+  fill: var(--app-pink) !important; 
+  stroke: #fff;
+  filter: drop-shadow(0 0 15px var(--app-pink)) drop-shadow(0 0 30px var(--app-pink)) brightness(1.5); 
+  animation: neon-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes neon-pulse {
+  from { filter: drop-shadow(0 0 10px var(--app-pink)) drop-shadow(0 0 20px var(--app-pink)) brightness(1.2); }
+  to { filter: drop-shadow(0 0 20px var(--app-pink)) drop-shadow(0 0 40px var(--app-pink)) brightness(1.8); }
+}
+
+.muscle-group.missed-muscle .muscle-part {
+  fill: #450a0a !important; 
+  stroke: #991b1b;
+  opacity: 0.6;
+}
+
+/* Selected muscle group */
+.muscle-group.selected .muscle-part {
+  fill: var(--app-pink, #ff00a0) !important;
+  stroke: rgba(255, 0, 160, 0.4) !important;
+  stroke-width: 1;
+  filter: drop-shadow(0 0 8px var(--app-pink));
+}
+
+/* Analytics Mode Styling */
+.analytics-mode .muscle-group.selected .muscle-part {
+  fill: var(--app-blue, #3b82f6) !important;
+  stroke: rgba(59, 130, 246, 0.4) !important;
+  filter: drop-shadow(0 0 8px var(--app-blue));
+}
+
+@media (max-width: 640px) {
+  .muscle-map-container {
+    gap: 12px;
+    padding: 10px 4px;
+  }
+  .muscle-map-view {
+    max-width: none;
+  }
+}

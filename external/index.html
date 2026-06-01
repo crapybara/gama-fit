@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gama Fitness - Dashboard</title>
+
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styling/output.css">
+  
+  <link rel="stylesheet" href="styling/dashboard.css">
+<style>
+  body { opacity: 0; transition: opacity .14s ease; }
+  body.app-ready { opacity: 1; }
+</style>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('app-ready');
+  });
+</script>
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('app-theme') || 'default';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+
+<body class="bg-app-bg text-zinc-300 antialiased min-h-screen flex flex-col md:flex-row selection:bg-app-pink selection:text-white">
+
+  <nav class="fixed bottom-0 left-0 right-0 z-50 md:sticky md:top-0 md:w-24 md:h-screen bg-app-surface/90 backdrop-blur-md md:bg-app-surface border-t md:border-t-0 md:border-r border-zinc-800/50 flex flex-row md:flex-col items-center justify-center px-4 md:px-0 py-3 md:py-8 shrink-0 overflow-x-auto md:overflow-x-visible custom-scrollbar">
+    <div class="flex flex-row md:flex-col w-full md:w-auto justify-between md:justify-start items-center gap-2 md:gap-4 px-2 md:px-0">
+      <a href="index.html" class="nav-link-index group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-app-pink/10 text-app-pink md:bg-app-pink md:text-white transition-all hover:scale-105 shadow-[0_0_15px_rgba(255,0,160,0.3)]" title="Home"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+      <a href="workout.html" class="nav-link-workout group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Workout"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg></a>
+      <a href="caltrack.html" class="nav-link-caltrack group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Nutrition"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8c0-4.4-3.6-8-8-8S2 3.6 2 8c0 3.1 1.7 5.8 4.3 7.2l1.4 6.8c.2.8 1.3.8 1.5 0l1.4-6.8C13.3 13.8 18 11.1 18 8z"/><path d="M22 13.3V5c0-1.7-1.3-3-3-3v14.4c1.3-.4 2.4-1.3 2.8-2.5l.2-.6z"/></svg></a>
+      <a href="sleep.html" class="nav-link-sleep group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Sleep"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></a>
+      <a href="analytics.html" class="nav-link-analytics group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Analytics"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a>
+      <a href="study.html" class="nav-link-study group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Study Mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></a>
+      <a href="settings.html" class="nav-link-settings group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></a>
+    </div>
+  </nav>
+
+  <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 overflow-y-auto overflow-x-hidden">
+
+    <header class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8 lg:mb-12 animate-fade-in-up px-1 sm:px-0">
+      <div>
+        <p class="text-app-pink font-semibold tracking-wider text-xs uppercase mb-1 sm:mb-2">Welcome Legend</p>
+        <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">Dashboard</h1>
+        <p class="text-zinc-400 mt-1 sm:mt-2 text-xs sm:mt-base max-w-xl">Be Jacked & Smart</p>
+      </div>
+
+      <div id="coin-widget" hx-get="/api/coins" hx-trigger="load"></div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <div class="lg:col-span-8 flex flex-col gap-6">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          
+          <div class="glass-panel rounded-[2rem] p-5 sm:p-6 relative overflow-hidden animate-fade-in-up">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-app-pink/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+              <h3 class="text-zinc-400 text-xs sm:text-sm font-bold tracking-wide uppercase">Fitness Score</h3>
+              <svg class="w-5 h-5 text-app-pink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div class="flex flex-col items-center justify-center py-2 sm:py-4 relative z-10">
+              <div class="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#3d162a" stroke-width="8" /><circle id="scoreRing" class="progress-ring__circle" cx="60" cy="60" r="50" fill="none" stroke="#ff00a0" stroke-width="8" stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="314.159" /></svg>
+                
+                <div class="absolute flex flex-col items-center justify-center" 
+                     hx-get="/api/score" 
+                     hx-trigger="load, updateRings from:body"
+                     hx-vals='js:{local_date: new Date().toISOString().split("T")[0]}'>
+                  <span class="font-display text-4xl sm:text-5xl font-black text-zinc-600">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-panel rounded-[2rem] p-5 sm:p-6 relative overflow-hidden animate-fade-in-up delay-100">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-app-yellow/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2"></div>
+            <div class="flex justify-between items-start mb-4 relative z-10">
+              <h3 class="text-zinc-400 text-xs sm:text-sm font-bold tracking-wide uppercase">Active Streak</h3>
+              <svg class="w-5 h-5 text-app-yellow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </div>
+            <div class="flex flex-col items-center justify-center py-2 sm:py-4 relative z-10">
+              <div class="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
+                <svg class="absolute inset-0 w-full h-full" viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#3d3616" stroke-width="8" /><circle id="streakRing" class="progress-ring__circle" cx="60" cy="60" r="50" fill="none" stroke="#fbff00" stroke-width="8" stroke-linecap="round" stroke-dasharray="314.159" stroke-dashoffset="314.159" /></svg>
+                
+                <div class="absolute flex flex-col items-center justify-center" 
+                     hx-get="/api/streak" 
+                     hx-trigger="load, updateRings from:body"
+                     hx-vals='js:{local_date: new Date().toISOString().split("T")[0]}'>
+                  <span id="streak-days" class="font-display text-4xl sm:text-5xl font-black text-zinc-600">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div> 
+        
+        <div class="glass-panel rounded-[2rem] p-6 relative overflow-hidden animate-fade-in-up delay-100">
+          <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-3xl rounded-full translate-x-1/3 -translate-y-1/3"></div>
+          
+          <div class="flex items-center justify-between mb-4 relative z-10">
+            <div>
+              <h3 class="text-white font-black uppercase tracking-wider text-sm">Daily Check-ins</h3>
+              <p class="text-zinc-500 text-xs mt-1">Consistency is everything. Click to log today.</p>
+            </div>
+          </div>
+
+          <div id="checkin-board-container" 
+               hx-get="/api/checkins" 
+               hx-trigger="load" 
+               hx-vals='js:{local_date: new Date().toISOString().split("T")[0]}'
+               class="relative z-10">
+            <div class="text-zinc-500 text-sm text-center py-8">Loading your calendar...</div>
+          </div>
+        </div>
+
+      </div> 
+      
+      <div class="lg:col-span-4 flex flex-col gap-6">
+        
+        <div class="glass-panel rounded-[2rem] p-6 flex-1 flex flex-col animate-fade-in-up delay-200">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-white font-black uppercase tracking-wider text-sm">Goals</h3>
+          </div>
+
+          <form hx-post="/api/goals" hx-target="#goals-container" 
+                hx-vals='js:{local_date: new Date().toISOString().split("T")[0]}'
+                hx-on::after-request="this.reset()" class="flex items-center gap-3 mb-6">
+            <input type="text" name="title" placeholder="Goal name..." required class="flex-1 min-w-0 bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-app-pink transition-colors">
+            <div class="relative w-24 shrink-0">
+              <input type="number" name="reward" value="50" min="1" class="w-full bg-zinc-900/50 border border-zinc-700 rounded-xl pl-3 pr-8 py-3 text-sm text-white outline-none focus:border-app-pink transition-colors text-center font-mono">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500 font-bold pointer-events-none">GC</span>
+            </div>
+            <button type="submit" class="bg-app-pink text-white font-bold px-6 py-3 rounded-xl hover:bg-pink-500 transition-all shadow-[0_0_12px_rgba(255,0,160,0.25)] flex items-center justify-center shrink-0">
+              <span class="text-xs uppercase font-black tracking-wider">Add</span>
+            </button>
+          </form>
+
+          <div id="goals-container" hx-get="/api/goals" hx-trigger="load" class="space-y-3 flex-1">
+            <div class="text-zinc-500 text-sm text-center py-4">Loading goals...</div>
+          </div>
+        </div>
+
+      </div> 
+      
+    </div> 
+<div class="glass-panel rounded-[2rem] p-6 lg:p-8 mt-6 lg:mt-8 animate-fade-in-up delay-300" id="shop-container" hx-get="/api/shop" hx-trigger="load">
+  <div class="text-zinc-500 text-sm text-center py-10">Loading shop...</div>
+</div>
+
+  </main>
+
+  <script src="scripts/dashboard.js"></script>
+</body>
+</html>

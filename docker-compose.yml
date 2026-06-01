@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: gama-fit-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=gamafit
+    ports:
+      - "0.0.0.0:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d gamafit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gama-fit:
+    build: .
+    container_name: gama-fit-app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "0.0.0.0:8080:8080"
+    environment:
+      - DB_DSN=host=db port=5432 user=user password=password dbname=gamafit sslmode=disable
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
