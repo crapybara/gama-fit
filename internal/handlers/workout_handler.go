@@ -196,6 +196,7 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 					<option value="calves">Calves</option>
 					<option value="abs">Abs</option>
 					<option value="obliques">Obliques/Hips</option>
+					<option value="erectors">Erectors (Lower Back)</option>
 					<option value="traps">Traps</option>
 					<option value="neck">Neck</option>
 					<option value="cardio">Cardio</option>
