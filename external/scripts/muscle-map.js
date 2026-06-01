@@ -214,49 +214,46 @@ function updateHeatmap(containerId, heatmapData, scope = 'week') {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Reset all glows
-    container.querySelectorAll('.muscle-group').forEach(group => {
-        group.classList.remove('glow-1', 'glow-2', 'glow-3', 'glow-4', 'glow-5', 'glow-6', 'missed-muscle');
-    });
+    // Visual feedback that update is happening
+    container.style.opacity = '0.5';
+    
+    setTimeout(() => {
+        // Reset all glows and status classes
+        container.querySelectorAll('.muscle-group').forEach(group => {
+            group.classList.remove('glow-1', 'glow-2', 'glow-3', 'glow-4', 'glow-5', 'glow-6', 'missed-muscle');
+        });
 
-    const smallMuscles = ['triceps', 'biceps', 'calves', 'forearms'];
+        const entries = Object.entries(heatmapData);
+        if (entries.length > 0) {
+            // Find maximum volume to normalize intensity
+            const maxVolume = Math.max(...entries.map(([, volume]) => volume));
+            
+            if (maxVolume > 0) {
+                for (const [muscle, volume] of entries) {
+                    const groups = container.querySelectorAll(`.muscle-group[data-muscle="${muscle.toLowerCase()}"]`);
+                    if (volume === 0) {
+                        groups.forEach(g => g.classList.add('missed-muscle'));
+                        continue;
+                    }
 
-    for (const [muscle, sets] of Object.entries(heatmapData)) {
-        const groups = container.querySelectorAll(`.muscle-group[data-muscle="${muscle}"]`);
-        if (sets === 0) {
-            groups.forEach(g => g.classList.add('missed-muscle'));
-            continue;
-        }
+                    // Calculate intensity level 1-6
+                    let level = 1;
+                    const ratio = volume / maxVolume;
 
-        let level = 0;
-        if (scope === 'week') {
-            const isSmall = smallMuscles.includes(muscle.toLowerCase());
-            const threshold = isSmall ? 15 : 25;
-            const maxSets = 50;
+                    if (ratio >= 0.9) level = 6;
+                    else if (ratio >= 0.7) level = 5;
+                    else if (ratio >= 0.5) level = 4;
+                    else if (ratio >= 0.3) level = 3;
+                    else if (ratio >= 0.1) level = 2;
+                    else level = 1;
 
-            if (sets >= maxSets) {
-                level = 6;
-            } else if (sets >= threshold) {
-                // Scale 1 to 6 between threshold and maxSets
-                level = Math.floor(1 + (sets - threshold) * 5 / (maxSets - threshold));
-            } else {
-                // Very dim or no glow below threshold? Let's say no glow if below start threshold
-                level = 0;
+                    groups.forEach(g => g.classList.add(`glow-${level}`));
+                }
             }
-        } else {
-            // Day scope: "anything above 12 sets will glow"
-            if (sets >= 12) {
-                level = 6;
-            } else {
-                // Scale 1 to 6 linearly up to 12
-                level = Math.ceil(sets / 2); // 1-2 sets = level 1, 11-12 sets = level 6
-            }
         }
-
-        if (level > 0) {
-            groups.forEach(g => g.classList.add(`glow-${Math.min(level, 6)}`));
-        }
-    }
+        
+        container.style.opacity = '1';
+    }, 50);
 }
 
 window.initMuscleMap = initMuscleMap;

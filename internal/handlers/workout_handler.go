@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -14,6 +16,7 @@ func HandleFreestyle(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("action") == "options" {
 		rows, err := database.DB.Query("SELECT DISTINCT exercise_name FROM workout_plans WHERE user_id = $1 AND exercise_name != '' ORDER BY exercise_name ASC", userID)
 		if err != nil {
+			log.Printf("Error fetching exercise options: %v", err)
 			w.Write([]byte("<option disabled>No exercises found</option>"))
 			return
 		}
@@ -30,7 +33,7 @@ func HandleFreestyle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == "POST" {
+	if r.Method == http.MethodPost {
 		localDate, localTime := getLocalTime(r)
 		exercise := r.FormValue("exercise")
 		weightStr := r.FormValue("weight")
@@ -40,17 +43,24 @@ func HandleFreestyle(w http.ResponseWriter, r *http.Request) {
 			weight, err1 := strconv.ParseFloat(weightStr, 64)
 			reps, err2 := strconv.Atoi(repsStr)
 			if err1 == nil && err2 == nil {
-				_, _ = database.DB.Exec("INSERT INTO freestyle_logs (user_id, exercise_name, weight, reps, logged_date, logged_time) VALUES ($1, $2, $3, $4, $5, $6)", userID, exercise, weight, reps, localDate, localTime)
+				_, err := database.DB.Exec("INSERT INTO freestyle_logs (user_id, exercise_name, weight, reps, logged_date, logged_time) VALUES ($1, $2, $3, $4, $5, $6)", userID, exercise, weight, reps, localDate, localTime)
+				if err != nil {
+					log.Printf("Error inserting freestyle log: %v", err)
+				}
 			}
 		}
-	} else if r.Method == "DELETE" {
+	} else if r.Method == http.MethodDelete {
 		id := r.URL.Query().Get("id")
-		_, _ = database.DB.Exec("DELETE FROM freestyle_logs WHERE id = $1 AND user_id = $2", id, userID)
+		_, err := database.DB.Exec("DELETE FROM freestyle_logs WHERE id = $1 AND user_id = $2", id, userID)
+		if err != nil {
+			log.Printf("Error deleting freestyle log: %v", err)
+		}
 	}
 
 	localDate, _ := getLocalTime(r)
-	rows, err := database.DB.Query("SELECT id, exercise_name, weight, reps FROM freestyle_logs WHERE user_id = $1 AND logged_date = $2 ORDER BY id ASC", userID, localDate)
+	rows, err := database.DB.Query("SELECT id, exercise_name, weight, reps FROM freestyle_logs WHERE user_id = $1 AND logged_date = $2 ORDER BY id DESC", userID, localDate)
 	if err != nil {
+		log.Printf("Error fetching freestyle logs: %v", err)
 		w.Write([]byte(""))
 		return
 	}
@@ -70,10 +80,14 @@ func HandleFreestyle(w http.ResponseWriter, r *http.Request) {
 				<span class="text-zinc-400">%v KG</span>
 				<span class="text-zinc-600">×</span>
 				<span class="text-zinc-400">%d Reps</span>
-				<button hx-delete="/api/freestyle?id=%d" hx-target="#freestyle-list" class="ml-2 text-zinc-600 hover:text-red-500"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+				<button hx-delete="/api/freestyle?id=%d" hx-target="#freestyle-list" hx-confirm="Delete this set?" class="ml-2 text-zinc-600 hover:text-red-500"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
 			</div>
 		</div>`, name, weight, reps, id)
 		}
+	}
+
+	if html == "" {
+		html = `<div class="text-zinc-500 text-xs font-mono text-center py-4 border-2 border-dashed border-zinc-800/50 rounded-2xl uppercase tracking-widest">No sets recorded for today</div>`
 	}
 
 	w.Write([]byte(html))
@@ -90,7 +104,10 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 		var count int
-		_ = database.DB.QueryRow("SELECT COUNT(*) FROM workout_plans WHERE user_id = $1 AND day_of_week = $2", userID, day).Scan(&count)
+		err := database.DB.QueryRow("SELECT COUNT(*) FROM workout_plans WHERE user_id = $1 AND day_of_week = $2", userID, day).Scan(&count)
+		if err != nil {
+			log.Printf("Error counting workout plans: %v", err)
+		}
 
 		if count < 15 {
 			exercise := r.FormValue("exercise")
@@ -104,16 +121,23 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if exercise != "" {
-				_, _ = database.DB.Exec("INSERT INTO workout_plans (user_id, day_of_week, exercise_name, sets, reps, muscle) VALUES ($1, $2, $3, $4, $5, $6)", userID, day, exercise, sets, reps, muscle)
+				_, err = database.DB.Exec("INSERT INTO workout_plans (user_id, day_of_week, exercise_name, sets, reps, muscle) VALUES ($1, $2, $3, $4, $5, $6)", userID, day, exercise, sets, reps, muscle)
+				if err != nil {
+					log.Printf("Error inserting workout plan: %v", err)
+				}
 			}
 		}
 	} else if r.Method == "DELETE" {
 		id := r.URL.Query().Get("id")
-		_, _ = database.DB.Exec("DELETE FROM workout_plans WHERE id = $1 AND user_id = $2", id, userID)
+		_, err := database.DB.Exec("DELETE FROM workout_plans WHERE id = $1 AND user_id = $2", id, userID)
+		if err != nil {
+			log.Printf("Error deleting workout plan: %v", err)
+		}
 	}
 
 	rows, err := database.DB.Query("SELECT id, exercise_name, sets, reps, muscle FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 ORDER BY id ASC", userID, day)
 	if err != nil {
+		log.Printf("Error fetching workout plans: %v", err)
 		w.Write([]byte(`<div class="text-zinc-500 text-sm text-center py-6">Rest day or no exercises added yet.</div>`))
 		return
 	}
@@ -189,62 +213,49 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 
 func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
 	userID, _ := GetUserID(r)
-	scope := r.URL.Query().Get("scope") // "week" or "day"
+	scope := r.URL.Query().Get("scope")
 	dayStr := r.URL.Query().Get("day")
 
-	var query string
-	var args []interface{}
+	repsCalc := `(
+		CASE 
+			WHEN reps LIKE '%-%' THEN (CAST(split_part(reps, '-', 1) AS DOUBLE PRECISION) + CAST(split_part(reps, '-', 2) AS DOUBLE PRECISION)) / 2.0
+			WHEN reps ~ '^[0-9]+$' THEN CAST(reps AS DOUBLE PRECISION)
+			ELSE 0
+		END
+	)`
+
+	query := fmt.Sprintf("SELECT muscle, SUM(sets * %s) FROM workout_plans WHERE user_id = $1", repsCalc)
+	args := []interface{}{userID}
 
 	if scope == "day" && dayStr != "" {
-		day, _ := strconv.Atoi(dayStr)
-		query = `SELECT muscle, SUM(sets * (
-			CASE 
-				WHEN reps LIKE '%-%' THEN (CAST(split_part(reps, '-', 1) AS INTEGER) + CAST(split_part(reps, '-', 2) AS INTEGER)) / 2.0
-				WHEN reps ~ '^[0-9]+$' THEN CAST(reps AS INTEGER)
-				ELSE 0
-			END
-		)) FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 GROUP BY muscle`
-		args = []interface{}{userID, day}
-	} else {
-		// Default to week
-		query = `SELECT muscle, SUM(sets * (
-			CASE 
-				WHEN reps LIKE '%-%' THEN (CAST(split_part(reps, '-', 1) AS INTEGER) + CAST(split_part(reps, '-', 2) AS INTEGER)) / 2.0
-				WHEN reps ~ '^[0-9]+$' THEN CAST(reps AS INTEGER)
-				ELSE 0
-			END
-		)) FROM workout_plans WHERE user_id = $1 GROUP BY muscle`
-		args = []interface{}{userID}
+		if day, err := strconv.Atoi(dayStr); err == nil {
+			query += " AND day_of_week = $2"
+			args = append(args, day)
+		}
 	}
+
+	query += " GROUP BY muscle"
 
 	rows, err := database.DB.Query(query, args...)
 	if err != nil {
+		log.Printf("Heatmap query error: %v", err)
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte("{}"))
 		return
 	}
 	defer rows.Close()
 
-	heatmap := make(map[string]int)
+	heatmap := make(map[string]float64)
 	for rows.Next() {
 		var muscle string
-		var totalSets int
-		if err := rows.Scan(&muscle, &totalSets); err == nil && muscle != "" {
-			heatmap[muscle] = totalSets
+		var totalVolume float64
+		if err := rows.Scan(&muscle, &totalVolume); err == nil && muscle != "" {
+			heatmap[muscle] = totalVolume
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	var jsonStr string
-	for m, s := range heatmap {
-		jsonStr += fmt.Sprintf(`"%s": %d,`, m, s)
-	}
-	if len(jsonStr) > 0 {
-		jsonStr = "{" + jsonStr[:len(jsonStr)-1] + "}"
-	} else {
-		jsonStr = "{}"
-	}
-	w.Write([]byte(jsonStr))
+	json.NewEncoder(w).Encode(heatmap)
 }
 
 // --- 3. BODY WEIGHT TRACKER ---

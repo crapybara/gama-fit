@@ -11,12 +11,16 @@
   <link rel="stylesheet" href="styling/output.css">
   <link rel="stylesheet" href="styling/analytics.css">
   <link rel="stylesheet" href="styling/muscle-map.css">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="scripts/muscle-map.js"></script>
 
   <style>
     body { opacity: 0; transition: opacity .14s ease; }
     body.app-ready { opacity: 1; }
+    .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+    .htmx-request .htmx-indicator { opacity: 1; }
+    .htmx-request.glass-panel { opacity: 0.6; pointer-events: none; }
   </style>
   <script>
     window.addEventListener('DOMContentLoaded', () => { document.body.classList.add('app-ready'); });
@@ -51,11 +55,30 @@
                 <p class="text-zinc-500 text-sm mt-2">Graphical progression tracking over time.</p>
             </div>
             
-            <div class="flex items-center gap-3 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
-                <form class="flex gap-1 sm:gap-2" method="GET" action="/analytics.html">
+            <div class="flex flex-col sm:flex-row items-center gap-4 bg-zinc-900/50 p-4 rounded-2xl border border-zinc-800">
+                <div class="flex bg-zinc-900/80 p-1 rounded-xl border border-white/5">
+                    <button hx-get="/analytics.html?range=1w&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "1w"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">1W</button>
+                    <button hx-get="/analytics.html?range=1m&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "1m"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">1M</button>
+                    <button hx-get="/analytics.html?range=3m&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "3m"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">3M</button>
+                    <button hx-get="/analytics.html?range=6m&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if eq .SelectedRange "6m"}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">6M</button>
+                    <button hx-get="/analytics.html?range=year&exercise={{.SelectedExercise}}&year={{.SelectedYear}}" 
+                       hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true"
+                       class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {{if or (eq .SelectedRange "year") (eq .SelectedRange "")}}bg-blue-600 text-white shadow-lg{{else}}text-zinc-500 hover:text-white{{end}}">Year</button>
+                </div>
+
+                <form class="flex gap-1 sm:gap-2" method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true">
                     <input type="hidden" name="exercise" value="{{.SelectedExercise}}">
+                    <input type="hidden" name="range" value="{{.SelectedRange}}">
                     <div class="relative group">
-                        <select name="year" onchange="this.form.submit()" class="bg-zinc-900/80 border border-zinc-700 hover:border-blue-500 text-white pl-4 pr-10 py-2.5 rounded-xl text-sm font-bold tracking-wider transition-all outline-none cursor-pointer shadow-lg appearance-none w-full">
+                        <select name="year" onchange="this.form.dispatchEvent(new Event('submit'))" class="bg-zinc-900/80 border border-zinc-700 hover:border-blue-500 text-white pl-4 pr-10 py-2.5 rounded-xl text-sm font-bold tracking-wider transition-all outline-none cursor-pointer shadow-lg appearance-none w-full">
                             {{range .Years}}
                             <option value="{{.}}" {{if eq . $.SelectedYear}}selected{{end}}>{{.}}</option>
                             {{end}}
@@ -111,10 +134,11 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Exercise:</span>
-                    <form method="GET" action="/analytics.html">
+                    <form method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true">
                         <input type="hidden" name="year" value="{{.SelectedYear}}">
+                        <input type="hidden" name="range" value="{{.SelectedRange}}">
                         <div class="relative group">
-                            <select name="exercise" onchange="this.form.submit()" class="bg-zinc-900/80 border border-zinc-700 hover:border-pink-500 text-white pl-4 pr-10 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all outline-none cursor-pointer shadow-lg appearance-none min-w-[160px]">
+                            <select name="exercise" onchange="this.form.dispatchEvent(new Event('submit'))" class="bg-zinc-900/80 border border-zinc-700 hover:border-pink-500 text-white pl-4 pr-10 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all outline-none cursor-pointer shadow-lg appearance-none min-w-[160px]">
                                 {{if not .Exercises}}
                                 <option value="">No logs found</option>
                                 {{else}}
@@ -201,19 +225,52 @@
 
   <!-- Pass data to Chart.js securely -->
   <script>
-      window.originalChartData = {
-          exercisePoints: {{.ExercisePointsJSON}},
-          bodyWeightPoints: {{.BodyWeightPointsJSON}}
-      };
-      
+      function initAnalytics() {
+          window.originalChartData = {
+              exercisePoints: {{.ExercisePointsJSON}},
+              bodyWeightPoints: {{.BodyWeightPointsJSON}}
+          };
+          
+          if (exChartInst) exChartInst.destroy();
+          if (bwChartInst) bwChartInst.destroy();
+          exChartInst = null;
+          bwChartInst = null;
+
+          const exSlider  = document.getElementById('ex-pan-slider');
+          const bwSlider  = document.getElementById('bw-pan-slider');
+
+          function refreshEx() {
+              exChartInst = renderChart('exerciseChart', window.originalChartData.exercisePoints,
+                  '#ff00a0', 'rgba(255,0,160,0.1)', exChartInst, (i) => exChartInst = i, exSlider);
+          }
+          function refreshBw() {
+              bwChartInst = renderChart('bodyWeightChart', window.originalChartData.bodyWeightPoints,
+                  '#3b82f6', 'rgba(59,130,246,0.1)', bwChartInst, (i) => bwChartInst = i, bwSlider);
+          }
+
+          refreshEx();
+          refreshBw();
+
+          if (exSlider) {
+              exSlider.removeEventListener('input', refreshEx);
+              exSlider.addEventListener('input', refreshEx);
+          }
+          if (bwSlider) {
+              bwSlider.removeEventListener('input', refreshBw);
+              bwSlider.addEventListener('input', refreshBw);
+          }
+
+          if (typeof initMuscleMap === 'function') {
+              initMuscleMap('muscle-map-container', (muscle) => {
+                  const display = document.getElementById('selected-muscle-display');
+                  if (display) display.textContent = muscle.charAt(0).toUpperCase() + muscle.slice(1);
+              });
+          }
+      }
+
       let exChartInst = null;
       let bwChartInst = null;
-
       const VISIBLE_POINTS = 30;
-
-      function clampOffset(offset, dataLen) {
-          return Math.max(0, Math.min(offset, Math.max(0, dataLen - VISIBLE_POINTS)));
-      }
 
       function renderChart(id, allPoints, color, bgColor, currentInst, setInst, sliderEl) {
           const ctx = document.getElementById(id);
@@ -269,30 +326,10 @@
           return newInst;
       }
 
-      document.addEventListener('DOMContentLoaded', () => {
-          const exSlider  = document.getElementById('ex-pan-slider');
-          const bwSlider  = document.getElementById('bw-pan-slider');
-
-          function refreshEx() {
-              exChartInst = renderChart('exerciseChart', window.originalChartData.exercisePoints,
-                  '#ff00a0', 'rgba(255,0,160,0.1)', exChartInst, (i) => exChartInst = i, exSlider);
-          }
-          function refreshBw() {
-              bwChartInst = renderChart('bodyWeightChart', window.originalChartData.bodyWeightPoints,
-                  '#3b82f6', 'rgba(59,130,246,0.1)', bwChartInst, (i) => bwChartInst = i, bwSlider);
-          }
-
-          refreshEx();
-          refreshBw();
-
-          if (exSlider) exSlider.addEventListener('input', refreshEx);
-          if (bwSlider) bwSlider.addEventListener('input', refreshBw);
-
-          if (typeof initMuscleMap === 'function') {
-              initMuscleMap('muscle-map-container', (muscle) => {
-                  const display = document.getElementById('selected-muscle-display');
-                  if (display) display.textContent = muscle.charAt(0).toUpperCase() + muscle.slice(1);
-              });
+      document.addEventListener('DOMContentLoaded', initAnalytics);
+      document.body.addEventListener('htmx:afterOnLoad', (event) => {
+          if (event.detail.target.id === 'analytics-shell') {
+              initAnalytics();
           }
       });
   </script>

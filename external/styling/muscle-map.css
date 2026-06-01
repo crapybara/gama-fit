@@ -58,43 +58,31 @@
   stroke: #71717a;
 }
 
-/* Heatmap Glow Levels - Theme Aware */
-.muscle-group.glow-1 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 15%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 20%, transparent); }
-.muscle-group.glow-2 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 30%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 40%, transparent); }
-.muscle-group.glow-3 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 50%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 60%, transparent); }
-.muscle-group.glow-4 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 70%, transparent) !important; stroke: color-mix(in srgb, var(--app-pink) 80%, transparent); filter: drop-shadow(0 0 4px var(--app-pink)); }
-.muscle-group.glow-5 .muscle-part { fill: color-mix(in srgb, var(--app-pink) 85%, transparent) !important; stroke: var(--app-pink); filter: drop-shadow(0 0 8px var(--app-pink)); }
-.muscle-group.glow-6 .muscle-part { 
-  fill: var(--app-pink) !important; 
-  stroke: #fff;
-  filter: drop-shadow(0 0 15px var(--app-pink)) drop-shadow(0 0 30px var(--app-pink)) brightness(1.5); 
-  animation: neon-pulse 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes neon-pulse {
-  from { filter: drop-shadow(0 0 10px var(--app-pink)) drop-shadow(0 0 20px var(--app-pink)) brightness(1.2); }
-  to { filter: drop-shadow(0 0 20px var(--app-pink)) drop-shadow(0 0 40px var(--app-pink)) brightness(1.8); }
-}
+/* Heatmap Intensity Levels - Performance Optimized (No Filters/Animations) */
+.muscle-group.glow-1 .muscle-part { fill: #fef08a !important; stroke: #fde047; } /* Yellow 200 */
+.muscle-group.glow-2 .muscle-part { fill: #fde047 !important; stroke: #facc15; } /* Yellow 300 */
+.muscle-group.glow-3 .muscle-part { fill: #facc15 !important; stroke: #eab308; } /* Yellow 400 */
+.muscle-group.glow-4 .muscle-part { fill: #fb923c !important; stroke: #f97316; } /* Orange 400 */
+.muscle-group.glow-5 .muscle-part { fill: #f97316 !important; stroke: #ea580c; } /* Orange 500 */
+.muscle-group.glow-6 .muscle-part { fill: #ef4444 !important; stroke: #dc2626; } /* Red 500 */
 
 .muscle-group.missed-muscle .muscle-part {
-  fill: #450a0a !important; 
-  stroke: #991b1b;
-  opacity: 0.6;
+  fill: #3f3f46 !important; 
+  stroke: #52525b;
+  opacity: 0.4;
 }
 
 /* Selected muscle group */
 .muscle-group.selected .muscle-part {
   fill: var(--app-pink, #ff00a0) !important;
-  stroke: rgba(255, 0, 160, 0.4) !important;
-  stroke-width: 1;
-  filter: drop-shadow(0 0 8px var(--app-pink));
+  stroke: #fff !important;
+  stroke-width: 1.5;
 }
 
 /* Analytics Mode Styling */
 .analytics-mode .muscle-group.selected .muscle-part {
   fill: var(--app-blue, #3b82f6) !important;
-  stroke: rgba(59, 130, 246, 0.4) !important;
-  filter: drop-shadow(0 0 8px var(--app-blue));
+  stroke: #fff !important;
 }
 
 @media (max-width: 640px) {

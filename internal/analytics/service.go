@@ -2,9 +2,7 @@ package analytics
 
 import (
 	"database/sql"
-	"fmt"
 	"math"
-	"sort"
 	"strings"
 	"time"
 
@@ -33,7 +31,7 @@ func FetchUserExercises(userID int) []string {
 	return exercises
 }
 
-func FetchYearExercisePoints(userID int, exercise string, selectedYear int) []ChartPoint {
+func FetchExercisePoints(userID int, exercise string, start, end time.Time) []ChartPoint {
 	var points []ChartPoint
 	if exercise == "" {
 		return points
@@ -41,11 +39,11 @@ func FetchYearExercisePoints(userID int, exercise string, selectedYear int) []Ch
 	query := `
 		SELECT logged_date, AVG(weight)
 		FROM freestyle_logs 
-		WHERE user_id = $1 AND exercise_name = $2 AND logged_date LIKE $3
+		WHERE user_id = $1 AND exercise_name = $2 AND logged_date >= $3 AND logged_date <= $4
 		GROUP BY logged_date
 		ORDER BY logged_date ASC
 	`
-	rows, err := database.DB.Query(query, userID, exercise, fmt.Sprintf("%d-%%", selectedYear))
+	rows, err := database.DB.Query(query, userID, exercise, start.Format("2006-01-02"), end.Format("2006-01-02"))
 	if err != nil {
 		return points
 	}
@@ -65,16 +63,16 @@ func FetchYearExercisePoints(userID int, exercise string, selectedYear int) []Ch
 	return points
 }
 
-func FetchYearBodyWeightPoints(userID int, selectedYear int, firstLogDate time.Time) []ChartPoint {
+func FetchBodyWeightPoints(userID int, start, end time.Time) []ChartPoint {
 	var points []ChartPoint
 	query := `
 		SELECT log_date, AVG(weight)
 		FROM body_weight_logs 
-		WHERE user_id = $1 AND log_date LIKE $2
+		WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3
 		GROUP BY log_date
 		ORDER BY log_date ASC
 	`
-	rows, err := database.DB.Query(query, userID, fmt.Sprintf("%d-%%", selectedYear))
+	rows, err := database.DB.Query(query, userID, start.Format("2006-01-02"), end.Format("2006-01-02"))
 	if err != nil {
 		return points
 	}
@@ -85,9 +83,6 @@ func FetchYearBodyWeightPoints(userID int, selectedYear int, firstLogDate time.T
 		var w float64
 		if err := rows.Scan(&d, &w); err == nil {
 			t, _ := time.Parse("2006-01-02", d)
-			if t.Before(firstLogDate) && t.Format("2006-01-02") != firstLogDate.Format("2006-01-02") {
-				continue
-			}
 			points = append(points, ChartPoint{
 				Label:  strings.ToLower(t.Format("02 Jan")),
 				Weight: math.Round(w*10)/10,
@@ -98,47 +93,51 @@ func FetchYearBodyWeightPoints(userID int, selectedYear int, firstLogDate time.T
 }
 
 func FetchFirstLogDate(userID int) time.Time {
-	var dates []string
-	queries := []string{
-		"SELECT MIN(logged_date) FROM freestyle_logs WHERE user_id = $1",
-		"SELECT MIN(log_date) FROM body_weight_logs WHERE user_id = $1",
-		"SELECT MIN(log_date) FROM daily_meals WHERE user_id = $1",
-		"SELECT MIN(log_date) FROM sleep_logs WHERE user_id = $1",
-	}
+	query := `
+		SELECT MIN(d) FROM (
+			SELECT MIN(logged_date) as d FROM freestyle_logs WHERE user_id = $1
+			UNION ALL
+			SELECT MIN(log_date) FROM body_weight_logs WHERE user_id = $1
+			UNION ALL
+			SELECT MIN(log_date) FROM daily_meals WHERE user_id = $1
+			UNION ALL
+			SELECT MIN(log_date) FROM sleep_logs WHERE user_id = $1
+		) AS combined_dates
+	`
+	var d sql.NullString
+	_ = database.DB.QueryRow(query, userID).Scan(&d)
 
-	for _, q := range queries {
-		var d sql.NullString
-		_ = database.DB.QueryRow(q, userID).Scan(&d)
-		if d.Valid && d.String != "" {
-			dates = append(dates, d.String)
-		}
-	}
-
-	if len(dates) == 0 {
+	if !d.Valid || d.String == "" {
 		return time.Now()
 	}
 
-	sort.Strings(dates)
-	t, _ := time.Parse("2006-01-02", dates[0])
+	t, _ := time.Parse("2006-01-02", d.String)
 	return t
 }
 
-func FetchAverageSleepHours(userID int) float64 {
+func FetchAverageSleepHours(userID int, start, end time.Time) float64 {
 	var avg float64
-	_ = database.DB.QueryRow(`SELECT COALESCE(AVG(duration_mins), 0) / 60.0 FROM sleep_logs WHERE user_id = $1 AND log_date >= TO_CHAR(CURRENT_DATE - INTERVAL '6 days', 'YYYY-MM-DD')`, userID).Scan(&avg)
+	query := `SELECT COALESCE(AVG(duration_mins), 0) / 60.0 FROM sleep_logs WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3`
+	_ = database.DB.QueryRow(query, userID, start.Format("2006-01-02"), end.Format("2006-01-02")).Scan(&avg)
 	return avg
 }
 
-func FetchAverageNutrition(userID int) (int, int) {
+func FetchAverageNutrition(userID int, start, end time.Time) (int, int) {
 	var totalCalories int
 	var totalProtein float64
-	err := database.DB.QueryRow(`
+	query := `
 		SELECT COALESCE(SUM(calories), 0), COALESCE(SUM(protein), 0.0) 
 		FROM daily_meals 
-		WHERE user_id = $1 AND log_date >= TO_CHAR(CURRENT_DATE - INTERVAL '6 days', 'YYYY-MM-DD')
-	`, userID).Scan(&totalCalories, &totalProtein)
+		WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3
+	`
+	err := database.DB.QueryRow(query, userID, start.Format("2006-01-02"), end.Format("2006-01-02")).Scan(&totalCalories, &totalProtein)
 	if err != nil {
 		return 0, 0
 	}
-	return totalCalories / 7, int(math.Round(totalProtein / 7.0))
+
+	days := int(end.Sub(start).Hours()/24) + 1
+	if days <= 0 {
+		days = 1
+	}
+	return totalCalories / days, int(math.Round(totalProtein / float64(days)))
 }

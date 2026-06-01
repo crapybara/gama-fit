@@ -196,20 +196,17 @@
     function setHeatmapScope(scope) {
         currentHeatmapScope = scope;
         
-        // Update UI buttons
         const weekBtn = document.getElementById('scope-week');
         const dayBtn = document.getElementById('scope-day');
-        
+        const activeClasses = ['bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]'];
+        const inactiveClasses = ['text-zinc-500', 'hover:text-white'];
+
         if (scope === 'week') {
-            weekBtn.classList.add('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
-            weekBtn.classList.remove('text-zinc-500', 'hover:text-white');
-            dayBtn.classList.remove('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
-            dayBtn.classList.add('text-zinc-500', 'hover:text-white');
+            weekBtn.classList.add(...activeClasses); weekBtn.classList.remove(...inactiveClasses);
+            dayBtn.classList.remove(...activeClasses); dayBtn.classList.add(...inactiveClasses);
         } else {
-            dayBtn.classList.add('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
-            dayBtn.classList.remove('text-zinc-500', 'hover:text-white');
-            weekBtn.classList.remove('bg-app-pink', 'text-white', 'shadow-[0_0_15px_rgba(255,0,160,0.3)]');
-            weekBtn.classList.add('text-zinc-500', 'hover:text-white');
+            dayBtn.classList.add(...activeClasses); dayBtn.classList.remove(...inactiveClasses);
+            weekBtn.classList.remove(...activeClasses); weekBtn.classList.add(...inactiveClasses);
         }
         
         refreshHeatmap();
@@ -217,8 +214,12 @@
 
     function refreshHeatmap() {
         const daySel = document.querySelector('select[name="day"]');
-        const day = daySel ? daySel.value : (new Date().getDay() || 7);
-        fetch(`/api/plans/heatmap?scope=${currentHeatmapScope}&day=${day}`)
+        const day = daySel ? daySel.value : "";
+        
+        // Cache buster and explicit parameters
+        const url = `/api/plans/heatmap?scope=${currentHeatmapScope}&day=${day}&t=${Date.now()}`;
+        
+        fetch(url)
             .then(res => res.json())
             .then(data => {
                 if (typeof updateHeatmap === 'function') {
@@ -256,9 +257,6 @@
               refreshHeatmap();
           }
       });
-      
-      // Initial heatmap load
-      setTimeout(refreshHeatmap, 500);
     });
   </script>
   <datalist id="exercise-list">
