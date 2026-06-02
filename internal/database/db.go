@@ -94,7 +94,8 @@ func ConnectAndSetup() {
 				theme TEXT DEFAULT 'default',
 				pomo_duration INTEGER DEFAULT 25,
 				short_break INTEGER DEFAULT 5,
-				long_break INTEGER DEFAULT 15
+				long_break INTEGER DEFAULT 15,
+				goal_weight REAL DEFAULT 0
 			);
 		ELSE
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS height REAL DEFAULT 0;
@@ -109,6 +110,7 @@ func ConnectAndSetup() {
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS pomo_duration INTEGER DEFAULT 25;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS short_break INTEGER DEFAULT 5;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS long_break INTEGER DEFAULT 15;
+			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS goal_weight REAL DEFAULT 0;
 		END IF;
 
 		-- cardio_logs

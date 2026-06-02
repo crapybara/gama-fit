@@ -251,6 +251,10 @@ func HandleSleep(w http.ResponseWriter, r *http.Request) {
 			bedtime = excluded.bedtime, waketime = excluded.waketime, quality = excluded.quality, duration_mins = excluded.duration_mins, score = excluded.score
 		`, userID, localDate, bedtime, waketime, quality, durationMins, score)
 
+		// Resource friendly: Keep only last 30 days of data
+		_, _ = database.DB.Exec("DELETE FROM sleep_logs WHERE user_id = $1 AND log_date < (CURRENT_DATE - INTERVAL '30 days')::TEXT", userID)
+
+
 		fmt.Fprint(w, `<div id="sleep-summary" hx-swap-oob="true" hx-get="/api/sleep/summary" hx-trigger="load" class="glass-panel rounded-[2.5rem] p-8 lg:p-12 relative overflow-hidden page-animate-fade layout-delay"></div>`)
 	} else if r.Method == http.MethodDelete {
 		id := r.URL.Query().Get("id")
@@ -268,7 +272,7 @@ func HandleSleepHistory(w http.ResponseWriter, r *http.Request) {
 		FROM sleep_logs 
 		WHERE user_id = $1
 		ORDER BY log_date DESC 
-		LIMIT 14
+		LIMIT 15
 	`, userID)
 	if err != nil {
 		fmt.Fprint(w, `<div class="text-zinc-500 text-sm py-4 font-mono col-span-full text-center">No sleep history recorded.</div>`)

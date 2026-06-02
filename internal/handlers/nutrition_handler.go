@@ -108,15 +108,15 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 		<div class="flex items-center justify-between mb-8 relative z-10">
 			<h3 class="text-white font-black uppercase tracking-wider text-sm">Energy Balance</h3>
 			<div class="flex gap-4">
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onmouseenter="setCalView('consumed')" onmouseleave="setCalView('default')">
 					<div class="w-3 h-3 rounded-full bg-app-yellow"></div>
 					<span class="text-[10px] font-bold text-zinc-500 uppercase">Consumed</span>
 				</div>
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onmouseenter="setCalView('bmr')" onmouseleave="setCalView('default')">
 					<div class="w-3 h-3 rounded-full bg-blue-500"></div>
 					<span class="text-[10px] font-bold text-zinc-500 uppercase">BMR</span>
 				</div>
-				<div class="flex items-center gap-2">
+				<div class="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" onmouseenter="setCalView('active')" onmouseleave="setCalView('default')">
 					<div class="w-3 h-3 rounded-full bg-emerald-500"></div>
 					<span class="text-[10px] font-bold text-zinc-500 uppercase">Active</span>
 				</div>
@@ -132,25 +132,31 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 						<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
 						<circle class="text-app-yellow macro-ring cursor-pointer" 
 								onmouseenter="setCalView('consumed')" onmouseleave="setCalView('default')"
-								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
+								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;">
+							<title>%d kcal</title>
+						</circle>
 						
 						<!-- BMR Ring (Middle) -->
 						<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="37" cx="50" cy="50"/>
 						<circle class="text-blue-500 macro-ring cursor-pointer" 
 								onmouseenter="setCalView('bmr')" onmouseleave="setCalView('default')"
-								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="37" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
+								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="37" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;">
+							<title>%.0f kcal</title>
+						</circle>
 
 						<!-- Burned Ring (Inner) -->
 						<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="29" cx="50" cy="50"/>
 						<circle class="text-emerald-500 macro-ring cursor-pointer" 
 								onmouseenter="setCalView('active')" onmouseleave="setCalView('default')"
-								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="29" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
+								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="29" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;">
+							<title>%.0f kcal</title>
+						</circle>
 					</svg>
 
 					<!-- Consumed View (Default) -->
 					<div id="view-consumed" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-100 scale-100">
 						<span class="font-display font-black text-4xl sm:text-6xl text-white drop-shadow-lg tracking-tighter">%d</span>
-						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-yellow tracking-widest mt-1 bg-app-yellow/10 px-2 sm:px-3 py-1 rounded-full border border-app-yellow/20">Cons. kcal</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-yellow tracking-widest mt-1 bg-app-yellow/10 px-2 sm:px-3 py-1 rounded-full border border-app-yellow/20">Calories In</span>
 					</div>
 
 					<!-- BMR View -->
@@ -200,44 +206,50 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 			</script>
 
 			<div class="flex-1 w-full grid grid-cols-3 gap-3 sm:gap-4">
-				<div class="bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
+				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
 							<circle class="text-app-pink macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
-						<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm">%.1fg</div>
+						<div class="macro-grams absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm transition-opacity">%.1fg</div>
+						<div class="macro-kcal absolute inset-0 flex items-center justify-center text-app-pink font-bold text-[10px] sm:text-sm opacity-0 transition-opacity">%.0f kcal</div>
 					</div>
 					<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Protein</span>
 				</div>
 
-				<div class="bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
+				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
 							<circle class="text-blue-500 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
-						<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm">%.1fg</div>
+						<div class="macro-grams absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm transition-opacity">%.1fg</div>
+						<div class="macro-kcal absolute inset-0 flex items-center justify-center text-blue-400 font-bold text-[10px] sm:text-sm opacity-0 transition-opacity">%.0f kcal</div>
 					</div>
 					<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Carbs</span>
 				</div>
 
-				<div class="bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
+				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
 							<circle class="text-emerald-400 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
-						<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm">%.1fg</div>
+						<div class="macro-grams absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm transition-opacity">%.1fg</div>
+						<div class="macro-kcal absolute inset-0 flex items-center justify-center text-emerald-400 font-bold text-[10px] sm:text-sm opacity-0 transition-opacity">%.0f kcal</div>
 					</div>
 					<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Fats</span>
 				</div>
 			</div>
 		</div>
-	`, pctCal, c1, off1, pctBMR, c2, off2, pctBurn, c3, off3, calories, bmr, activeBurn, bmr+activeBurn,
-		pctPro, macroCircumference, proOffset, protein,
-		pctCarb, macroCircumference, carbOffset, carbs,
-		pctFat, macroCircumference, fatOffset, fats)
+	`, pctCal, calories, c1, off1, 
+		pctBMR, bmr, c2, off2, 
+		pctBurn, activeBurn, c3, off3, 
+		calories, bmr, activeBurn, bmr+activeBurn,
+		pctPro, macroCircumference, proOffset, protein, protein*4,
+		pctCarb, macroCircumference, carbOffset, carbs, carbs*4,
+		pctFat, macroCircumference, fatOffset, fats, fats*9)
 }
 
 func HandleSetTargets(w http.ResponseWriter, r *http.Request) {
@@ -337,18 +349,18 @@ func HandleMeals(w http.ResponseWriter, r *http.Request) {
 		var cal int
 		var pro, carb, fat, weight float64
 		if err := rows.Scan(&name, &cal, &pro, &carb, &fat, &weight); err == nil {
-			catalogHtml += fmt.Sprintf(`<option value="%s">%s ( %.1fg: %.1fP | %.1fC | %.1fF )</option>`, name, name, weight, pro, carb, fat)
+			catalogHtml += fmt.Sprintf(`<option value="%s">%s ( %d kcal | %.1fg: %.1fP | %.1fC | %.1fF )</option>`, name, name, cal, weight, pro, carb, fat)
 			manageListHtml += fmt.Sprintf(`
 				<div class="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 rounded-xl p-3 mb-2 group hover:border-zinc-600 transition-colors">
-					<div>
+					<div title="%d calories">
 						<div class="text-white text-sm font-bold">%s</div>
-						<div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">%.1fg serving: %.1fP | %.1fC | %.1fF</div>
+						<div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">%d kcal | %.1fg serving: %.1fP | %.1fC | %.1fF</div>
 					</div>
 					<button hx-delete="/api/meals?catalog_name=%s" hx-target="#food-catalog-container" class="text-zinc-600 hover:text-red-500 transition-colors p-1">
 						<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
 					</button>
 				</div>
-			`, name, weight, pro, carb, fat, url.QueryEscape(name))
+			`, cal, name, cal, weight, pro, carb, fat, url.QueryEscape(name))
 		}
 	}
 	if !hasCatalog {

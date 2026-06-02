@@ -75,7 +75,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 			} else {
 				val, err := strconv.ParseFloat(valueStr, 64)
 				if err == nil && val >= 0 {
-					if metric == "bmi" || metric == "height" || metric == "neck" || metric == "belly" || metric == "arms" || metric == "calf" || metric == "age" {
+					if metric == "bmi" || metric == "height" || metric == "neck" || metric == "belly" || metric == "arms" || metric == "calf" || metric == "age" || metric == "goal_weight" {
 						query := fmt.Sprintf("UPDATE user_stats SET %s = $1 WHERE user_id = $2", metric)
 						_, _ = database.DB.Exec(query, val, userID)
 					}
@@ -85,13 +85,13 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var bmi, height, neck, belly, arms, calf float64
+	var bmi, height, neck, belly, arms, calf, goalWeight float64
 	var age int
 	var gender, theme string
 	var pomoDuration, shortBreak, longBreak int
-	err := database.DB.QueryRow("SELECT bmi, height, neck, belly, arms, calf, age, gender, theme, pomo_duration, short_break, long_break FROM user_stats WHERE user_id = $1", userID).Scan(&bmi, &height, &neck, &belly, &arms, &calf, &age, &gender, &theme, &pomoDuration, &shortBreak, &longBreak)
+	err := database.DB.QueryRow("SELECT bmi, height, neck, belly, arms, calf, age, gender, theme, pomo_duration, short_break, long_break, goal_weight FROM user_stats WHERE user_id = $1", userID).Scan(&bmi, &height, &neck, &belly, &arms, &calf, &age, &gender, &theme, &pomoDuration, &shortBreak, &longBreak, &goalWeight)
 	if err != nil {
-		bmi, height, neck, belly, arms, calf = 0, 0, 0, 0, 0, 0
+		bmi, height, neck, belly, arms, calf, goalWeight = 0, 0, 0, 0, 0, 0, 0
 		age = 25
 		gender = "male"
 		theme = "default"
@@ -241,6 +241,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 							<option value="belly">Belly</option>
 							<option value="arms">Arms</option>
 							<option value="calf">Calf</option>
+							<option value="goal_weight">Goal Weight (kg)</option>
 						</select>
 						</div>
 						<div>
@@ -255,7 +256,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 				<div class="flex items-center justify-between mb-6">
 					<h3 class="text-white font-black uppercase tracking-wider text-sm">Current Measurements</h3>
 				</div>
-				<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
+				<div class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-9 gap-4">
 					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
 						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Age</span>
 						<span class="font-display font-black text-2xl text-white">%d</span>
@@ -271,6 +272,10 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
 						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Height</span>
 						<span class="font-display font-black text-2xl text-white">%s<span class="text-xs text-zinc-500 ml-1">cm</span></span>
+					</div>
+					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center border-app-yellow/40">
+						<span class="block text-[10px] uppercase font-bold text-app-yellow mb-1">Goal</span>
+						<span class="font-display font-black text-2xl text-white">%s<span class="text-xs text-zinc-500 ml-1">kg</span></span>
 					</div>
 					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
 						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Neck</span>
@@ -290,144 +295,8 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 					</div>
 				</div>
 			</div>
+	`, tPro, tCarb, tFat, pomoDuration, pomoDuration, shortBreak, shortBreak, longBreak, longBreak, age, gender, formatVal(bmi), formatVal(height), formatVal(goalWeight), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf))
 
-			<!-- DB Backup Actions at Bottom -->
-			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden border-app-yellow/20">
-				<div class="flex items-center justify-between mb-6">
-					<h3 class="text-app-yellow font-black uppercase tracking-wider text-sm">Database Management</h3>
-				</div>
-				<div class="flex flex-col sm:flex-row gap-4">
-					<a href="/api/db/export" class="flex-1 flex items-center justify-center gap-2 bg-app-surface/80 backdrop-blur-md border border-white/5 hover:border-app-yellow/50 text-zinc-400 hover:text-app-yellow px-4 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl group">
-						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-						<span>Export DB</span>
-					</a>
-
-					<button onclick="document.getElementById('db-import-input').click()" class="flex-1 flex items-center justify-center gap-2 bg-app-surface/80 backdrop-blur-md border border-white/5 hover:border-app-pink/50 text-zinc-400 hover:text-app-pink px-4 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-xl group">
-						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-						<span>Import DB</span>
-					</button>
-					<form id="db-import-form" action="/api/db/import" method="POST" enctype="multipart/form-data" class="hidden">
-						<input type="file" id="db-import-input" name="database" onchange="if(confirm('Importing will overwrite current data. Continue?')) document.getElementById('db-import-form').submit()">
-					</form>
-				</div>
-				<p class="text-[10px] text-zinc-500 mt-4 text-center uppercase tracking-widest font-bold">Note: PostgreSQL exports are currently handled via system tools.</p>
-			</div>
-		</div>
-
-		<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-		<script>
-			function setPomo(p, s, l) {
-				const form = document.querySelector('form[hx-post="/api/settings"] input[name="action"][value="pomo"]').closest('form');
-				form.querySelector('input[name="pomo_duration"]').value = p;
-				form.querySelector('input[name="short_break"]').value = s;
-				form.querySelector('input[name="long_break"]').value = l;
-				document.getElementById('pomo-val').innerText = p;
-				document.getElementById('short-val').innerText = s;
-				document.getElementById('long-val').innerText = l;
-			}
-
-			let currentLogDate = new Date().toISOString().split('T')[0];
-			
-			function updateDateDisplay() {
-				document.getElementById('log-date-display').innerText = currentLogDate;
-				fetchLog();
-			}
-
-			function changeLogDate(days) {
-				let d = new Date(currentLogDate);
-				d.setDate(d.getDate() + days);
-				currentLogDate = d.toISOString().split('T')[0];
-				updateDateDisplay();
-			}
-
-			async function fetchLog() {
-				const res = await fetch('/api/logs?date=' + currentLogDate);
-				const content = await res.text();
-				document.getElementById('log-content').value = content;
-				if (document.getElementById('log-preview-container').classList.contains('hidden') === false) {
-					renderPreview();
-				}
-			}
-
-			async function saveGymLog() {
-				const content = document.getElementById('log-content').value;
-				const formData = new FormData();
-				formData.append('date', currentLogDate);
-				formData.append('content', content);
-				
-				const res = await fetch('/api/logs', {
-					method: 'POST',
-					body: formData
-				});
-				
-				if (res.ok) {
-					alert('Saved!');
-				} else {
-					alert('Error saving log');
-				}
-			}
-
-			function toggleLogMode(mode) {
-				const edit = document.getElementById('log-edit-container');
-				const preview = document.getElementById('log-preview-container');
-				const btnEdit = document.getElementById('btn-edit');
-				const btnPreview = document.getElementById('btn-preview');
-				
-				if (mode === 'edit') {
-					edit.classList.remove('hidden');
-					preview.classList.add('hidden');
-					btnEdit.classList.add('bg-app-pink', 'text-white');
-					btnEdit.classList.remove('bg-app-card', 'text-zinc-400');
-					btnPreview.classList.add('bg-app-card', 'text-zinc-400');
-					btnPreview.classList.remove('bg-app-pink', 'text-white');
-				} else {
-					edit.classList.add('hidden');
-					preview.classList.remove('hidden');
-					btnPreview.classList.add('bg-app-pink', 'text-white');
-					btnPreview.classList.remove('bg-app-card', 'text-zinc-400');
-					btnEdit.classList.add('bg-app-card', 'text-zinc-400');
-					btnEdit.classList.remove('bg-app-pink', 'text-white');
-					renderPreview();
-				}
-			}
-
-			function renderPreview() {
-				const content = document.getElementById('log-content').value;
-				document.getElementById('log-preview-container').innerHTML = marked.parse(content);
-			}
-
-			function exportCurrentLog() {
-				const content = document.getElementById('log-content').value;
-				const blob = new Blob([content], { type: 'text/markdown' });
-				const url = window.URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = "gym_log_" + currentLogDate + ".md";
-				a.click();
-				window.URL.revokeObjectURL(url);
-			}
-
-			async function setTheme(theme) {
-				const formData = new FormData();
-				formData.append('theme', theme);
-				await fetch('/api/settings/theme', {
-					method: 'POST',
-					body: formData
-				});
-				applyTheme(theme);
-			}
-
-			function applyTheme(theme) {
-				document.documentElement.setAttribute('data-theme', theme);
-				localStorage.setItem('app-theme', theme);
-			}
-
-			// Initialize
-			updateDateDisplay();
-			const savedTheme = localStorage.getItem('app-theme') || 'default';
-			applyTheme(savedTheme);
-		</script>
-	`, tPro, tCarb, tFat, pomoDuration, pomoDuration, shortBreak, shortBreak, longBreak, longBreak, age, gender, formatVal(bmi), formatVal(height), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf))
 
 	w.Write([]byte(html))
 }
