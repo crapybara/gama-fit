@@ -13,31 +13,6 @@
     0 0 32px rgba(4, 199, 213, 0.1);
 }
 
-/* --- Creatine Hydro-Surge Effect --- */
-body::after {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(59, 130, 246, 0.1);
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0;
-  transition: opacity 0.4s ease-out;
-}
-
-body.creatine-surge-active::after {
-  opacity: 1;
-  transition: opacity 0.1s ease-in;
-}
-
-body.creatine-surge-active .glass-panel {
-  border-color: rgba(59, 130, 246, 0.3);
-  transition: border-color 0.1s ease-in;
-}
-
 /* --- Plan List Styling --- */
 .plan-item {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

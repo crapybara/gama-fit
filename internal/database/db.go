@@ -89,6 +89,8 @@ func ConnectAndSetup() {
 				belly REAL DEFAULT 0,
 				arms REAL DEFAULT 0,
 				calf REAL DEFAULT 0,
+				age INTEGER DEFAULT 25,
+				gender TEXT DEFAULT 'male',
 				theme TEXT DEFAULT 'default',
 				pomo_duration INTEGER DEFAULT 25,
 				short_break INTEGER DEFAULT 5,
@@ -101,10 +103,28 @@ func ConnectAndSetup() {
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS belly REAL DEFAULT 0;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS arms REAL DEFAULT 0;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS calf REAL DEFAULT 0;
+			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS age INTEGER DEFAULT 25;
+			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT 'male';
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'default';
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS pomo_duration INTEGER DEFAULT 25;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS short_break INTEGER DEFAULT 5;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS long_break INTEGER DEFAULT 15;
+		END IF;
+
+		-- cardio_logs
+		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'cardio_logs') THEN
+			CREATE TABLE cardio_logs (
+				id SERIAL PRIMARY KEY,
+				user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				heart_rate INTEGER NOT NULL,
+				duration INTEGER NOT NULL, -- in minutes
+				pace TEXT NOT NULL,
+				intensity TEXT,
+				logged_date TEXT NOT NULL DEFAULT CURRENT_DATE::TEXT,
+				logged_time TEXT NOT NULL DEFAULT (TO_CHAR(CURRENT_TIMESTAMP, 'HH24:MI:SS'))
+			);
+		ELSE
+			ALTER TABLE cardio_logs ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 		END IF;
 
 		-- gym_logs
@@ -164,17 +184,6 @@ func ConnectAndSetup() {
 		ELSE
 			ALTER TABLE workout_plans ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 			ALTER TABLE workout_plans ADD COLUMN IF NOT EXISTS muscle TEXT;
-		END IF;
-
-		-- creatine_tracker_final
-		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'creatine_tracker_final') THEN
-			CREATE TABLE creatine_tracker_final (
-				user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-				log_date TEXT NOT NULL,
-				PRIMARY KEY (user_id, log_date)
-			);
-		ELSE
-			ALTER TABLE creatine_tracker_final ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 		END IF;
 
 		-- user_macros_final

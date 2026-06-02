@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"mime"
 	"net/http"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"gama-fit/analytics"
 	"gama-fit/database"
@@ -51,6 +56,7 @@ func main() {
 	http.HandleFunc("/api/plans", handlers.AuthMiddleware(handlers.HandleWorkoutPlan))
 	http.HandleFunc("/api/plans/heatmap", handlers.AuthMiddleware(handlers.HandleWorkoutHeatmap))
 	http.HandleFunc("/api/freestyle", handlers.AuthMiddleware(handlers.HandleFreestyle))
+	http.HandleFunc("/api/cardio", handlers.AuthMiddleware(handlers.HandleCardio))
 	http.HandleFunc("/api/bodyweight", handlers.AuthMiddleware(handlers.HandleBodyWeight))
 	http.HandleFunc("/api/streak", handlers.AuthMiddleware(handlers.GetStreak))
 
@@ -105,6 +111,31 @@ func main() {
 		fs.ServeHTTP(w, r)
 	})
 
-	log.Println("🚀 Gama Fitness Server running on http://0.0.0.0:8080")
-	http.ListenAndServe(":8080", nil)
+	server := &http.Server{
+		Addr:         ":8080",
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  30 * time.Second,
+	}
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		log.Println("🚀 Gama Fitness Server running on http://0.0.0.0:8080")
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	<-stop
+	log.Println("Shutting down server gracefully...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server shutdown failed: %v", err)
+	}
+	log.Println("Server stopped.")
 }

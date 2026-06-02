@@ -50,34 +50,43 @@ export async function loadVideos() {
     empty.textContent = "No MP4 files found.";
     empty.style.color = "rgba(255,255,255,0.7)";
     videoGrid.appendChild(empty);
-    return;
+  } else {
+    videos.forEach((name) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "video-card";
+      
+      const label = document.createElement("span");
+      label.textContent = readableName(name);
+
+      card.append(label);
+      card.addEventListener("click", () => {
+        setBackground(name);
+        qs("#preset-modal").classList.add("hidden");
+      });
+      videoGrid.appendChild(card);
+    });
   }
 
-  videos.forEach((name) => {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "video-card";
-    
-    const label = document.createElement("span");
-    label.textContent = readableName(name);
-
-    card.append(label);
-    card.addEventListener("click", () => {
-      setBackground(name);
-      qs("#preset-modal").classList.add("hidden");
-    });
-    videoGrid.appendChild(card);
-  });
-
   const saved = localStorage.getItem("study-bg-video");
-  setBackground(saved && videos.includes(saved) ? saved : videos[0]);
+  if (saved) {
+    setBackground(saved);
+  } else if (videos.length > 0) {
+    setBackground(videos[0]);
+  }
 }
 
-function setBackground(name) {
+export function setBackground(name) {
   if (!name) return;
-  const url = `assets/videos/${escapeName(name)}`;
-  if (bgVideo.src.includes(url)) return; 
+  const isUrl = name.startsWith("http");
+  const url = isUrl ? name : `assets/videos/${escapeName(name)}`;
+  if (bgVideo.src === url || bgVideo.src.endsWith(url)) return; 
+  
+  bgVideo.pause();
   bgVideo.src = url;
+  bgVideo.loop = true; 
+  bgVideo.playsInline = true;
+  // Lowering playback quality hints if supported (though limited in standard <video>)
   bgVideo.load();
   bgVideo.play().catch(() => {});
   localStorage.setItem("study-bg-video", name);
@@ -85,11 +94,22 @@ function setBackground(name) {
 
 export function initVideoLoop() {
   bgVideo.loop = true;
-  bgVideo.addEventListener("timeupdate", function() {
-    // Proactive reset 250ms before end to avoid gap
-    if (this.duration && this.currentTime > this.duration - 0.25) {
-      this.currentTime = 0;
-      this.play().catch(() => {});
+  
+  // Use a throttled check instead of rapid timeupdate if we want extreme efficiency,
+  // but standard loop attribute is actually very efficient. 
+  // We'll keep a simple fallback and add Visibility API.
+  
+  bgVideo.addEventListener("ended", () => {
+    bgVideo.currentTime = 0;
+    bgVideo.play().catch(() => {});
+  });
+
+  // Page Visibility API: Stop video when tab is hidden to save RAM/CPU
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      bgVideo.pause();
+    } else {
+      bgVideo.play().catch(() => {});
     }
   });
 }

@@ -25,6 +25,11 @@ func HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(username) > 50 || len(password) > 72 {
+		w.Write([]byte("<p class='text-red-500'>Username or password is too long</p>"))
+		return
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Server error", http.StatusInternalServerError)
@@ -55,6 +60,11 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 	password := r.FormValue("password")
 	rememberMe := r.FormValue("remember") == "on"
+
+	if len(username) > 50 || len(password) > 72 {
+		w.Write([]byte("<p class='text-red-500'>Invalid username or password</p>"))
+		return
+	}
 
 	var id int
 	var hashedPassword string

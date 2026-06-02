@@ -333,7 +333,6 @@ func seedShopCatalog() {
 		{"item", "Protein Bar", 40},
 		{"item", "Shaker Bottle", 75},
 		{"item", "Resistance Band", 120},
-		{"item", "Creatine Jar", 180},
 	}
 	for _, item := range items {
 		_, err := DB.Exec(

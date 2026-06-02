@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const rings = document.querySelectorAll('.macro-ring');
         
         rings.forEach((ring, index) => {
-            const targetPct = parseInt(ring.getAttribute('data-target')) || 0;
+            const targetPct = parseFloat(ring.getAttribute('data-target')) || 0;
             
             const radius = ring.r.baseVal.value; 
             const circumference = 2 * Math.PI * radius; 
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => {
                 ring.style.transition = 'stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1)';
                 ring.style.strokeDashoffset = offset;
-            }, 100 + (index * 150)); 
+            }, 100 + (index * 100)); 
         });
     };
 

@@ -14,36 +14,90 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 	userID, _ := GetUserID(r)
 	localDate, _ := getLocalTime(r)
 
+	// 1. Fetch User Data for BMR & Targets
 	var targetCal int
 	var targetPro, targetCarb, targetFat float64
-	if err := database.DB.QueryRow("SELECT calories, protein, carbs, fats FROM user_macros_final WHERE user_id = $1", userID).Scan(&targetCal, &targetPro, &targetCarb, &targetFat); err != nil || targetCal == 0 {
+	var age int
+	var gender string
+	var height float64
+	_ = database.DB.QueryRow("SELECT calories, protein, carbs, fats FROM user_macros_final WHERE user_id = $1", userID).Scan(&targetCal, &targetPro, &targetCarb, &targetFat)
+	_ = database.DB.QueryRow("SELECT age, gender, height FROM user_stats WHERE user_id = $1", userID).Scan(&age, &gender, &height)
+
+	if targetCal == 0 {
 		targetCal, targetPro, targetCarb, targetFat = 2500, 200, 300, 70
 	}
+	if age <= 0 { age = 25 }
+	if gender == "" { gender = "male" }
+	if height <= 0 { height = 175 }
 
+	// 2. Fetch Today's Weight
+	var weight float64
+	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 AND log_date = $2", userID, localDate).Scan(&weight)
+	if weight <= 0 { weight = 75 }
+
+	// 3. Calculate BMR (Mifflin-St Jeor)
+	bmr := 10*weight + 6.25*height - 5*float64(age)
+	if gender == "male" {
+		bmr += 5
+	} else {
+		bmr -= 161
+	}
+
+	// 4. Calculate Calories Consumed
 	var calories int
 	var protein, carbs, fats float64
 	_ = database.DB.QueryRow("SELECT COALESCE(SUM(calories),0), COALESCE(SUM(protein),0), COALESCE(SUM(carbs),0), COALESCE(SUM(fats),0) FROM daily_meals WHERE user_id = $1 AND log_date = $2", userID, localDate).Scan(&calories, &protein, &carbs, &fats)
 
+	// 5. Calculate Active Calories Burnt
+	activeBurn := 0.0
+	// Cardio Logs
+	rows, err := database.DB.Query("SELECT intensity, duration FROM cardio_logs WHERE user_id = $1 AND logged_date = $2", userID, localDate)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var intensity string
+			var duration int
+			if err := rows.Scan(&intensity, &duration); err == nil {
+				met := 6.0 // Default Moderate
+				switch intensity {
+				case "Light": met = 3.5
+				case "Vigorous": met = 9.0
+				case "Very Hard": met = 12.0
+				}
+				activeBurn += (met * weight * (float64(duration) / 60.0))
+			}
+		}
+	}
+	// Freestyle Logs (simplified: 5 kcal per set)
+	var freestyleSets int
+	_ = database.DB.QueryRow("SELECT COUNT(*) FROM freestyle_logs WHERE user_id = $1 AND logged_date = $2", userID, localDate).Scan(&freestyleSets)
+	activeBurn += float64(freestyleSets) * 5.0
+
+	// 6. Percentages for Rings
 	pctCal := (float64(calories) / float64(targetCal)) * 100
+	pctBMR := (bmr / 2500.0) * 100 // Scale relative to a baseline or itself
+	if pctBMR > 100 { pctBMR = 100 }
+	
+	pctBurn := (activeBurn / 1000.0) * 100 // Scale relative to a daily active goal
+	if pctBurn > 100 { pctBurn = 100 }
+
+	if pctCal > 100 { pctCal = 100 }
+	
 	pctPro := (protein / targetPro) * 100
 	pctCarb := (carbs / targetCarb) * 100
 	pctFat := (fats / targetFat) * 100
+	if pctPro > 100 { pctPro = 100 }
+	if pctCarb > 100 { pctCarb = 100 }
+	if pctFat > 100 { pctFat = 100 }
 
-	if pctCal > 100 {
-		pctCal = 100
-	}
-	if pctPro > 100 {
-		pctPro = 100
-	}
-	if pctCarb > 100 {
-		pctCarb = 100
-	}
-	if pctFat > 100 {
-		pctFat = 100
-	}
-
-	calCircumference := 2 * math.Pi * 45
-	calOffset := calCircumference - (pctCal / 100.0 * calCircumference)
+	// 7. SVG Dimensions
+	c1 := 2 * math.Pi * 45.0 // Consumed (Outer)
+	c2 := 2 * math.Pi * 37.0 // BMR (Middle)
+	c3 := 2 * math.Pi * 29.0 // Burned (Inner)
+	
+	off1 := c1 - (pctCal / 100.0 * c1)
+	off2 := c2 - (pctBMR / 100.0 * c2)
+	off3 := c3 - (pctBurn / 100.0 * c3)
 
 	macroCircumference := 2 * math.Pi * 40
 	proOffset := macroCircumference - (pctPro / 100.0 * macroCircumference)
@@ -52,30 +106,105 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, `
 		<div class="flex items-center justify-between mb-8 relative z-10">
-			<h3 class="text-white font-black uppercase tracking-wider text-sm">Daily Breakdown</h3>
+			<h3 class="text-white font-black uppercase tracking-wider text-sm">Energy Balance</h3>
+			<div class="flex gap-4">
+				<div class="flex items-center gap-2">
+					<div class="w-3 h-3 rounded-full bg-app-yellow"></div>
+					<span class="text-[10px] font-bold text-zinc-500 uppercase">Consumed</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<div class="w-3 h-3 rounded-full bg-blue-500"></div>
+					<span class="text-[10px] font-bold text-zinc-500 uppercase">BMR</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+					<span class="text-[10px] font-bold text-zinc-500 uppercase">Active</span>
+				</div>
+			</div>
 		</div>
 
 		<div class="flex flex-col md:flex-row items-center justify-between gap-8 sm:gap-12 relative z-10">
 			<div class="relative flex-shrink-0">
-				<div class="absolute inset-0 bg-app-yellow/10 blur-3xl rounded-full scale-90"></div>
+				<div class="absolute inset-0 bg-app-yellow/10 blur-3xl rounded-full scale-90 transition-all duration-500" id="ring-glow"></div>
 				<div class="relative w-48 h-48 sm:w-64 sm:h-64 flex items-center justify-center">
-					<svg class="w-full h-full -rotate-90 drop-shadow-[0_0_25px_rgba(251,255,0,0.5)]" viewBox="0 0 100 100">
-						<circle class="text-zinc-800/40" stroke-width="5" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
-						<circle class="text-app-yellow macro-ring" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-target="%f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f; transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);"/>
+					<svg class="w-full h-full -rotate-90 drop-shadow-[0_0_20px_rgba(0,0,0,0.5)]" viewBox="0 0 100 100">
+						<!-- Consumed Ring (Outer) -->
+						<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
+						<circle class="text-app-yellow macro-ring cursor-pointer" 
+								onmouseenter="setCalView('consumed')" onmouseleave="setCalView('default')"
+								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
+						
+						<!-- BMR Ring (Middle) -->
+						<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="37" cx="50" cy="50"/>
+						<circle class="text-blue-500 macro-ring cursor-pointer" 
+								onmouseenter="setCalView('bmr')" onmouseleave="setCalView('default')"
+								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="37" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
+
+						<!-- Burned Ring (Inner) -->
+						<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="29" cx="50" cy="50"/>
+						<circle class="text-emerald-500 macro-ring cursor-pointer" 
+								onmouseenter="setCalView('active')" onmouseleave="setCalView('default')"
+								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="29" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
-					<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+
+					<!-- Consumed View (Default) -->
+					<div id="view-consumed" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-100 scale-100">
 						<span class="font-display font-black text-4xl sm:text-6xl text-white drop-shadow-lg tracking-tighter">%d</span>
-						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-yellow tracking-widest mt-1 bg-app-yellow/10 px-2 sm:px-3 py-1 rounded-full border border-app-yellow/20">/ %d kcal</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-yellow tracking-widest mt-1 bg-app-yellow/10 px-2 sm:px-3 py-1 rounded-full border border-app-yellow/20">Cons. kcal</span>
+					</div>
+
+					<!-- BMR View -->
+					<div id="view-bmr" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-0 scale-90 pointer-events-none">
+						<span class="font-display font-black text-4xl sm:text-6xl text-blue-400 drop-shadow-lg tracking-tighter">%.0f</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-blue-400 tracking-widest mt-1 bg-blue-500/10 px-2 sm:px-3 py-1 rounded-full border border-blue-500/20">BMR kcal</span>
+					</div>
+
+					<!-- Active View -->
+					<div id="view-active" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-0 scale-90 pointer-events-none">
+						<span class="font-display font-black text-4xl sm:text-6xl text-emerald-400 drop-shadow-lg tracking-tighter">%.0f</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-400 tracking-widest mt-1 bg-emerald-500/10 px-2 sm:px-3 py-1 rounded-full border border-emerald-500/20">Active Burn</span>
+					</div>
+
+					<!-- Total Out View -->
+					<div id="view-total" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-0 scale-90 pointer-events-none">
+						<span class="font-display font-black text-4xl sm:text-6xl text-white drop-shadow-lg tracking-tighter">%.0f</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-400 tracking-widest mt-1 bg-zinc-900/50 px-2 sm:px-3 py-1 rounded-full border border-white/10">Total Out</span>
 					</div>
 				</div>
 			</div>
+
+			<script>
+				function setCalView(view) {
+					const views = ['consumed', 'bmr', 'active', 'total'];
+					const glow = document.getElementById('ring-glow');
+					
+					views.forEach(v => {
+						const el = document.getElementById('view-' + v);
+						if(!el) return;
+						
+						if(v === view || (view === 'default' && v === 'consumed')) {
+							el.classList.remove('opacity-0', 'scale-90', 'pointer-events-none');
+							el.classList.add('opacity-100', 'scale-100');
+						} else {
+							el.classList.remove('opacity-100', 'scale-100');
+							el.classList.add('opacity-0', 'scale-90', 'pointer-events-none');
+						}
+					});
+
+					if(glow) {
+						if(view === 'bmr') glow.className = "absolute inset-0 bg-blue-500/10 blur-3xl rounded-full scale-90 transition-all duration-500";
+						else if(view === 'active') glow.className = "absolute inset-0 bg-emerald-500/10 blur-3xl rounded-full scale-90 transition-all duration-500";
+						else glow.className = "absolute inset-0 bg-app-yellow/10 blur-3xl rounded-full scale-90 transition-all duration-500";
+					}
+				}
+			</script>
 
 			<div class="flex-1 w-full grid grid-cols-3 gap-3 sm:gap-4">
 				<div class="bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
-							<circle class="text-app-pink macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f; transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);"/>
+							<circle class="text-app-pink macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
 						<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm">%.1fg</div>
 					</div>
@@ -86,7 +215,7 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
-							<circle class="text-blue-500 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f; transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);"/>
+							<circle class="text-blue-500 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
 						<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm">%.1fg</div>
 					</div>
@@ -97,7 +226,7 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
-							<circle class="text-emerald-400 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f; transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);"/>
+							<circle class="text-emerald-400 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
 						<div class="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm">%.1fg</div>
 					</div>
@@ -105,7 +234,7 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 				</div>
 			</div>
 		</div>
-	`, pctCal, calCircumference, calOffset, calories, targetCal,
+	`, pctCal, c1, off1, pctBMR, c2, off2, pctBurn, c3, off3, calories, bmr, activeBurn, bmr+activeBurn,
 		pctPro, macroCircumference, proOffset, protein,
 		pctCarb, macroCircumference, carbOffset, carbs,
 		pctFat, macroCircumference, fatOffset, fats)

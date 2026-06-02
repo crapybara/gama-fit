@@ -296,3 +296,137 @@ func HandleBodyWeight(w http.ResponseWriter, r *http.Request) {
 		`)
 	}
 }
+
+// --- 4. CARDIO TRACKER ---
+func HandleCardio(w http.ResponseWriter, r *http.Request) {
+	userID, _ := GetUserID(r)
+	localDate, localTime := getLocalTime(r)
+
+	if r.Method == http.MethodPost {
+		hr, _ := strconv.Atoi(r.FormValue("heart_rate"))
+		dur, _ := strconv.Atoi(r.FormValue("duration"))
+		pace := r.FormValue("pace")
+		intensity := r.FormValue("intensity")
+
+		if hr > 0 && dur > 0 {
+			_, err := database.DB.Exec("INSERT INTO cardio_logs (user_id, heart_rate, duration, pace, intensity, logged_date, logged_time) VALUES ($1, $2, $3, $4, $5, $6, $7)", userID, hr, dur, pace, intensity, localDate, localTime)
+			if err != nil {
+				log.Printf("Error inserting cardio log: %v", err)
+			}
+		}
+	} else if r.Method == http.MethodDelete {
+		id := r.URL.Query().Get("id")
+		_, err := database.DB.Exec("DELETE FROM cardio_logs WHERE id = $1 AND user_id = $2", id, userID)
+		if err != nil {
+			log.Printf("Error deleting cardio log: %v", err)
+		}
+	}
+
+	var age int
+	_ = database.DB.QueryRow("SELECT age FROM user_stats WHERE user_id = $1", userID).Scan(&age)
+	if age <= 0 {
+		age = 25
+	}
+	mhr := 220 - age
+
+	rows, err := database.DB.Query("SELECT id, heart_rate, duration, pace, intensity FROM cardio_logs WHERE user_id = $1 AND logged_date = $2 ORDER BY id DESC", userID, localDate)
+	if err != nil {
+		log.Printf("Error fetching cardio logs: %v", err)
+	}
+	defer rows.Close()
+
+	logsHtml := ""
+	for rows.Next() {
+		var id, hr, dur int
+		var pace, intensity string
+		if err := rows.Scan(&id, &hr, &dur, &pace, &intensity); err == nil {
+			logsHtml += fmt.Sprintf(`
+			<div class="flex items-center justify-between bg-zinc-900/40 border border-white/5 rounded-xl p-3 mb-2 hover:bg-zinc-900/80 transition-colors">
+				<div class="flex flex-col">
+					<span class="text-white text-sm font-bold">%s</span>
+					<span class="text-[10px] text-zinc-500 uppercase tracking-tighter">%s</span>
+				</div>
+				<div class="flex items-center gap-3 text-xs font-mono">
+					<span class="text-blue-400">%d BPM</span>
+					<span class="text-zinc-600">|</span>
+					<span class="text-emerald-400">%d MIN</span>
+					<button hx-delete="/api/cardio?id=%d" hx-target="#cardio-list" hx-confirm="Delete this entry?" class="ml-2 text-zinc-600 hover:text-red-500 transition-colors">
+						<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+					</button>
+				</div>
+			</div>`, pace, intensity, hr, dur, id)
+		}
+	}
+
+	if logsHtml == "" {
+		logsHtml = `<div class="text-zinc-600 text-[10px] font-mono text-center py-4 border border-dashed border-zinc-800/50 rounded-xl uppercase tracking-widest">No cardio sessions yet</div>`
+	}
+
+	zonesHtml := fmt.Sprintf(`
+		<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+			<div class="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-2.5 text-center">
+				<p class="text-[9px] font-black text-emerald-500 uppercase tracking-tighter">Light (50-60%%)</p>
+				<p class="text-xs font-bold text-white mt-0.5">%d-%d</p>
+				<p class="text-[8px] text-zinc-500 leading-tight mt-1">Slow walking</p>
+			</div>
+			<div class="bg-blue-500/5 border border-blue-500/10 rounded-xl p-2.5 text-center">
+				<p class="text-[9px] font-black text-blue-400 uppercase tracking-tighter">Mod (60-75%%)</p>
+				<p class="text-xs font-bold text-white mt-0.5">%d-%d</p>
+				<p class="text-[8px] text-zinc-500 leading-tight mt-1">Brisk walking</p>
+			</div>
+			<div class="bg-app-yellow/5 border border-app-yellow/10 rounded-xl p-2.5 text-center">
+				<p class="text-[9px] font-black text-app-yellow uppercase tracking-tighter">Vigorous (75-85%%)</p>
+				<p class="text-xs font-bold text-white mt-0.5">%d-%d</p>
+				<p class="text-[8px] text-zinc-500 leading-tight mt-1">Running/Cycling</p>
+			</div>
+			<div class="bg-app-pink/5 border border-app-pink/10 rounded-xl p-2.5 text-center">
+				<p class="text-[9px] font-black text-app-pink uppercase tracking-tighter">Hard (85-95%%+)</p>
+				<p class="text-xs font-bold text-white mt-0.5">%d-%d</p>
+				<p class="text-[8px] text-zinc-500 leading-tight mt-1">Sprints/HIIT</p>
+			</div>
+		</div>
+	`, 
+	int(float64(mhr)*0.5), int(float64(mhr)*0.6),
+	int(float64(mhr)*0.6), int(float64(mhr)*0.75),
+	int(float64(mhr)*0.75), int(float64(mhr)*0.85),
+	int(float64(mhr)*0.85), int(float64(mhr)*0.95))
+
+	formHtml := `
+		<form hx-post="/api/cardio" hx-target="#cardio-list" hx-on::after-request="this.reset()" class="flex flex-col gap-3 mb-6">
+			<div class="flex flex-col sm:flex-row gap-3">
+				<div class="flex-1">
+					<input type="number" name="heart_rate" placeholder="HR (BPM)" required class="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-all font-mono">
+				</div>
+				<div class="flex-1">
+					<input type="number" name="duration" placeholder="DUR (MIN)" required class="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-emerald-500 transition-all font-mono">
+				</div>
+				<div class="flex-[1.5]">
+					<input type="text" name="pace" placeholder="Pace (e.g. 5:30 min/km)" required class="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-app-yellow transition-all font-bold">
+				</div>
+			</div>
+			<div class="flex gap-3">
+				<div class="relative flex-1">
+					<select name="intensity" class="w-full bg-zinc-900/60 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-400 outline-none focus:border-app-pink transition-all appearance-none cursor-pointer">
+						<option value="Light">Light Intensity</option>
+						<option value="Moderate" selected>Moderate Intensity</option>
+						<option value="Vigorous">Vigorous Intensity</option>
+						<option value="Very Hard">Very Hard / HIIT</option>
+					</select>
+					<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+						<svg class="w-4 h-4 text-app-pink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+					</div>
+				</div>
+				<button type="submit" class="bg-white text-black font-black px-6 rounded-xl hover:bg-zinc-200 transition-all shadow-xl flex items-center justify-center shrink-0">
+					<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+				</button>
+			</div>
+		</form>`
+
+	if r.Header.Get("HX-Request") == "true" && r.Method == http.MethodPost {
+		w.Write([]byte(logsHtml))
+	} else if r.Header.Get("HX-Request") == "true" && r.Method == http.MethodDelete {
+		w.Write([]byte(logsHtml))
+	} else {
+		w.Write([]byte(zonesHtml + formHtml + `<div id="cardio-list">` + logsHtml + `</div>`))
+	}
+}

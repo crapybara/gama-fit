@@ -69,11 +69,16 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 		} else {
 			metric := r.FormValue("metric")
 			valueStr := r.FormValue("value")
-			val, err := strconv.ParseFloat(valueStr, 64)
-			if err == nil && val >= 0 {
-				if metric == "bmi" || metric == "height" || metric == "neck" || metric == "belly" || metric == "arms" || metric == "calf" {
-					query := fmt.Sprintf("UPDATE user_stats SET %s = $1 WHERE user_id = $2", metric)
-					_, _ = database.DB.Exec(query, val, userID)
+			
+			if metric == "gender" {
+				_, _ = database.DB.Exec("UPDATE user_stats SET gender = $1 WHERE user_id = $2", valueStr, userID)
+			} else {
+				val, err := strconv.ParseFloat(valueStr, 64)
+				if err == nil && val >= 0 {
+					if metric == "bmi" || metric == "height" || metric == "neck" || metric == "belly" || metric == "arms" || metric == "calf" || metric == "age" {
+						query := fmt.Sprintf("UPDATE user_stats SET %s = $1 WHERE user_id = $2", metric)
+						_, _ = database.DB.Exec(query, val, userID)
+					}
 				}
 			}
 			w.Header().Set("HX-Trigger", "metricUpdated")
@@ -81,14 +86,18 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var bmi, height, neck, belly, arms, calf float64
-	var theme string
+	var age int
+	var gender, theme string
 	var pomoDuration, shortBreak, longBreak int
-	err := database.DB.QueryRow("SELECT bmi, height, neck, belly, arms, calf, theme, pomo_duration, short_break, long_break FROM user_stats WHERE user_id = $1", userID).Scan(&bmi, &height, &neck, &belly, &arms, &calf, &theme, &pomoDuration, &shortBreak, &longBreak)
+	err := database.DB.QueryRow("SELECT bmi, height, neck, belly, arms, calf, age, gender, theme, pomo_duration, short_break, long_break FROM user_stats WHERE user_id = $1", userID).Scan(&bmi, &height, &neck, &belly, &arms, &calf, &age, &gender, &theme, &pomoDuration, &shortBreak, &longBreak)
 	if err != nil {
 		bmi, height, neck, belly, arms, calf = 0, 0, 0, 0, 0, 0
+		age = 25
+		gender = "male"
 		theme = "default"
 		pomoDuration, shortBreak, longBreak = 25, 5, 15
 	}
+	if gender == "" { gender = "male" }
 
 	var tPro, tCarb, tFat float64
 	_ = database.DB.QueryRow("SELECT protein, carbs, fats FROM user_macros_final WHERE user_id = $1", userID).Scan(&tPro, &tCarb, &tFat)
@@ -224,6 +233,8 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 					<div>
 						<label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Metric Type</label>
 						<select name="metric" class="w-full bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors">
+							<option value="age">Age (years)</option>
+							<option value="gender">Gender</option>
 							<option value="bmi">BMI</option>
 							<option value="height">Height (cm)</option>
 							<option value="neck">Neck</option>
@@ -231,11 +242,11 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 							<option value="arms">Arms</option>
 							<option value="calf">Calf</option>
 						</select>
-					</div>
-					<div>
-						<label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Value</label>
-						<input type="number" step="0.1" name="value" placeholder="e.g. 22.5" required class="w-full bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors font-mono">
-					</div>
+						</div>
+						<div>
+						<label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Value / Option</label>
+						<input type="text" name="value" placeholder="e.g. 25 or male" required class="w-full bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors font-mono">
+						</div>
 					<button type="submit" class="w-full bg-blue-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-400 transition-all shadow-[0_0_12px_rgba(59,130,246,0.25)] text-xs uppercase tracking-wider">Save Metric</button>
 				</form>
 			</div>
@@ -244,7 +255,15 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 				<div class="flex items-center justify-between mb-6">
 					<h3 class="text-white font-black uppercase tracking-wider text-sm">Current Measurements</h3>
 				</div>
-				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+				<div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
+					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
+						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Age</span>
+						<span class="font-display font-black text-2xl text-white">%d</span>
+					</div>
+					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
+						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Gender</span>
+						<span class="font-display font-black text-xl text-white uppercase tracking-tighter">%s</span>
+					</div>
 					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
 						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">BMI</span>
 						<span class="font-display font-black text-2xl text-white">%s</span>
@@ -408,7 +427,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 			const savedTheme = localStorage.getItem('app-theme') || 'default';
 			applyTheme(savedTheme);
 		</script>
-	`, tPro, tCarb, tFat, pomoDuration, pomoDuration, shortBreak, shortBreak, longBreak, longBreak, formatVal(bmi), formatVal(height), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf))
+	`, tPro, tCarb, tFat, pomoDuration, pomoDuration, shortBreak, shortBreak, longBreak, longBreak, age, gender, formatVal(bmi), formatVal(height), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf))
 
 	w.Write([]byte(html))
 }

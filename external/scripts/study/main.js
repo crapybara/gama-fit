@@ -8,7 +8,7 @@ import {
   toggleFullscreen, updateFullscreenIcons 
 } from './fullscreen.js';
 import { 
-  loadUsername, loadQuotes, loadVideos, initVideoLoop
+  loadUsername, loadQuotes, loadVideos, initVideoLoop, setBackground
 } from './presets.js';
 import {
   loadMusicPresets, loadMusicPreset, toggleMusic,
@@ -60,6 +60,19 @@ function bindEvents() {
       presetModal.classList.add("hidden");
     }
   });
+
+  const cdnLoadBtn = qs("#cdn-video-load-btn");
+  const cdnInput = qs("#cdn-video-input");
+  cdnLoadBtn.addEventListener("click", () => {
+    const url = cdnInput.value.trim();
+    if (url) {
+      setBackground(url);
+      localStorage.setItem("study-last-cdn-url", url);
+      presetModal.classList.add("hidden");
+    }
+  });
+  const lastCdn = localStorage.getItem("study-last-cdn-url");
+  if (lastCdn) cdnInput.value = lastCdn;
 
   qsa(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => {
