@@ -291,7 +291,7 @@ h1, h2, h3, h4, .font-display {
 
 [data-theme="synthwave"],
 [data-theme="synthwave84"],
-[data-theme="syntwave84"] {
+[data-theme="synthwave84"] {
   --app-bg: #05010a;
   --app-nav: #0a0714;
   --app-surface: #130d22;
@@ -386,8 +386,7 @@ h1, h2, h3, h4, .font-display {
     radial-gradient(circle at 88% 84%, rgba(184, 187, 38, 0.1), transparent 30%);
 }
 
-[data-theme="catppuccin"],
-[data-theme="catapuccin"] {
+[data-theme="catppuccin"] {
   --app-bg: #1e1e2e;
   --app-nav: #181825;
   --app-surface: #181825;

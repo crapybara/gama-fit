@@ -3,10 +3,13 @@ package handlers
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"time"
+
+	"gama-fit/database"
 )
 
 func HandleExportDB(w http.ResponseWriter, r *http.Request) {
@@ -16,18 +19,17 @@ func HandleExportDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var stdout, stderr bytes.Buffer
-	cmd := exec.Command("pg_dump", dsn)
+	// --clean --if-exists ensures the backup can be imported over an existing database
+	cmd := exec.Command("pg_dump", "--clean", "--if-exists", dsn)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	
 	if err != nil {
+		log.Printf("Export error: %v\nStderr: %s", err, stderr.String())
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Export failed.\n\n")
-		fmt.Fprintf(w, "If you are using Docker, you can also run this command in your terminal:\n")
-		fmt.Fprintf(w, "docker exec gama-fit-db pg_dump -U user gamafit > backup.sql\n\n")
-		fmt.Fprintf(w, "Details: %v\n%s", err, stderr.String())
+		fmt.Fprintf(w, "Export failed. Check server logs.\n\nDetails: %v\n%s", err, stderr.String())
 		return
 	}
 
@@ -54,7 +56,8 @@ func HandleImportDB(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create temp file", http.StatusInternalServerError)
 		return
 	}
-	defer os.Remove(tempFile.Name())
+	tempPath := tempFile.Name()
+	defer os.Remove(tempPath)
 	defer tempFile.Close()
 
 	if _, err := tempFile.ReadFrom(file); err != nil {
@@ -68,20 +71,67 @@ func HandleImportDB(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var stderr bytes.Buffer
-	cmd := exec.Command("psql", dsn, "-f", tempFile.Name())
+	cmd := exec.Command("psql", dsn, "-f", tempPath)
 	cmd.Stderr = &stderr
 	err = cmd.Run()
 
 	if err != nil {
+		log.Printf("Import error: %v\nStderr: %s", err, stderr.String())
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Import failed.\n\n")
-		fmt.Fprintf(w, "If you are using Docker, you can also run this manually:\n")
-		fmt.Fprintf(w, "docker cp <your_file.sql> gama-fit-db:/tmp/restore.sql\n")
-		fmt.Fprintf(w, "docker exec gama-fit-db psql -U user -d gamafit -f /tmp/restore.sql\n\n")
-		fmt.Fprintf(w, "Details: %v\n%s", err, stderr.String())
+		fmt.Fprintf(w, "Import failed. Ensure the .sql file is a valid backup.\n\nDetails: %v\n%s", err, stderr.String())
 		return
 	}
 
-	http.Redirect(w, r, "/settings.html", http.StatusSeeOther)
+	// Success: Redirect back to settings
+	http.Redirect(w, r, "/settings.html?import=success", http.StatusSeeOther)
+}
+
+func HandleDeleteAllData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, _ := GetUserID(r)
+	
+	// Transactional delete of all user data
+	tx, err := database.DB.Begin()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	tables := []string{
+		"workout_plans", "freestyle_logs", "body_weight_logs", 
+		"cardio_logs", "gym_logs", "user_macros_final", 
+		"daily_meals", "food_catalog", "sleep_logs", 
+		"focus_tasks", "checkins", "goals", "shop_catalog",
+	}
+
+	for _, table := range tables {
+		_, err = tx.Exec(fmt.Sprintf("DELETE FROM %s WHERE user_id = $1", table), userID)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Error clearing %s: %v", table, err)
+			http.Error(w, "Error clearing "+table, http.StatusInternalServerError)
+			return
+		}
+	}
+	
+	// Reset stats but keep the user record
+	_, err = tx.Exec("UPDATE user_stats SET bmi=0, height=0, neck=0, belly=0, arms=0, calf=0, age=25, goal_weight=0, total_coins=0, current_streak=0 WHERE user_id = $1", userID)
+	if err != nil {
+		tx.Rollback()
+		http.Error(w, "Error resetting stats", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(w, "Failed to commit changes", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("HX-Location", "/settings.html?reset=true")
+	w.WriteHeader(http.StatusOK)
 }

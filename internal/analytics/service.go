@@ -15,6 +15,83 @@ type ChartPoint struct {
 	Reps   int     `json:"reps,omitempty"`
 }
 
+type BestLift struct {
+	Exercise string  `json:"exercise"`
+	Weight   float64 `json:"weight"`
+	Reps     int     `json:"reps"`
+	OneRM    float64 `json:"one_rm"`
+}
+
+func FetchTotalVolume(userID int, start, end time.Time) float64 {
+	var vol float64
+	query := `SELECT COALESCE(SUM(weight * reps * COALESCE(sets, 1)), 0) FROM freestyle_logs WHERE user_id = $1 AND logged_date >= $2 AND logged_date <= $3`
+	_ = database.DB.QueryRow(query, userID, start.Format("2006-01-02"), end.Format("2006-01-02")).Scan(&vol)
+	return vol
+}
+
+func FetchBestLift(userID int, start, end time.Time) BestLift {
+	query := `
+		SELECT exercise_name, weight, reps, (weight * (1 + 0.0333 * reps)) as onerm
+		FROM freestyle_logs
+		WHERE user_id = $1 AND logged_date >= $2 AND logged_date <= $3
+		ORDER BY onerm DESC
+		LIMIT 1
+	`
+	var bl BestLift
+	err := database.DB.QueryRow(query, userID, start.Format("2006-01-02"), end.Format("2006-01-02")).Scan(&bl.Exercise, &bl.Weight, &bl.Reps, &bl.OneRM)
+	if err != nil {
+		return BestLift{}
+	}
+	return bl
+}
+
+func FetchMuscleBestLifts(userID int) map[string]BestLift {
+	query := `
+		SELECT DISTINCT ON (muscle) muscle, exercise_name, weight, reps, (weight * (1 + 0.0333 * reps)) as onerm
+		FROM freestyle_logs
+		WHERE user_id = $1 AND muscle IS NOT NULL AND muscle != ''
+		ORDER BY muscle, onerm DESC
+	`
+	rows, err := database.DB.Query(query, userID)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	lifts := make(map[string]BestLift)
+	for rows.Next() {
+		var muscle string
+		var bl BestLift
+		if err := rows.Scan(&muscle, &bl.Exercise, &bl.Weight, &bl.Reps, &bl.OneRM); err == nil {
+			lifts[strings.ToLower(muscle)] = bl
+		}
+	}
+	return lifts
+}
+
+func FetchMuscleExercises1RM(userID int, muscle string) []BestLift {
+	query := `
+		SELECT DISTINCT ON (exercise_name) exercise_name, weight, reps, (weight * (1 + 0.0333 * reps)) as onerm
+		FROM freestyle_logs
+		WHERE user_id = $1 AND muscle = $2
+		ORDER BY exercise_name, onerm DESC
+	`
+	rows, err := database.DB.Query(query, userID, muscle)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	var lifts []BestLift
+	for rows.Next() {
+		var bl BestLift
+		if err := rows.Scan(&bl.Exercise, &bl.Weight, &bl.Reps, &bl.OneRM); err == nil {
+			lifts = append(lifts, bl)
+		}
+	}
+	return lifts
+}
+
 func FetchUserExercises(userID int) []string {
 	var exercises []string
 	rows, err := database.DB.Query(`SELECT DISTINCT exercise_name FROM freestyle_logs WHERE user_id = $1 ORDER BY exercise_name`, userID)

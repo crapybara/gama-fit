@@ -3,6 +3,8 @@
  * Proper anatomical front + back SVG body diagram
  */
 
+let lastHeatmapData = null;
+
 function initMuscleMap(containerId, onToggleMuscle) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -103,6 +105,30 @@ function initMuscleMap(containerId, onToggleMuscle) {
                         <path d="M 130.40,72.56 C 128.92,75.95 126.41,78.57 123.97,81.24 122.71,82.62 121.38,83.93 120.11,85.30 119.94,85.49 119.93,85.84 119.85,86.11 120.12,86.19 120.41,86.37 120.67,86.34 121.38,86.23 122.09,86.06 122.79,85.88 125.96,85.07 129.14,84.27 132.30,83.43 133.79,83.04 135.29,82.66 136.77,82.22 136.79,82.22 136.80,82.21 136.83,82.21 138.83,81.65 142.22,83.05 144.02,84.19 145.02,81.63 149.88,80.15 149.88,80.15 149.88,80.15 144.98,78.00 144.98,78.00 143.88,77.53 143.00,77.18 142.15,76.78 138.83,75.24 135.52,73.69 132.21,72.13 131.47,71.78 130.79,71.65 130.40,72.56" class="muscle-part"/>
                     </g>
                 </svg>
+            </div>
+
+            <!-- CENTRAL STATS PANEL -->
+            <div class="muscle-stats-panel" id="muscle-stats-panel">
+                <div class="stats-title" id="stats-target-name">TOTAL OVERVIEW</div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Volume</span>
+                    <span class="stat-value" id="stat-volume">0<span class="stat-unit">VOL</span></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Total Sets</span>
+                    <span class="stat-value" id="stat-sets">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Exercises</span>
+                    <span class="stat-value" id="stat-exercises">0</span>
+                </div>
+                
+                <!-- Container for extra details (e.g. 1RM list in analytics) -->
+                <div id="muscle-extra-details" class="mt-4 pt-4 border-t border-white/5 empty:hidden"></div>
+
+                <div class="mt-2">
+                    <button onclick="resetStatsDisplay()" id="btn-reset-stats" class="hidden text-[8px] font-black text-zinc-500 hover:text-white uppercase tracking-widest transition-colors">Reset View</button>
+                </div>
             </div>
 
             <div class="muscle-map-view">
@@ -210,6 +236,8 @@ function initMuscleMap(containerId, onToggleMuscle) {
             container.querySelectorAll('.muscle-group').forEach(g => g.classList.remove('selected'));
             // Select all groups with same muscle name (front + back might share)
             container.querySelectorAll(`.muscle-group[data-muscle="${muscle}"]`).forEach(g => g.classList.add('selected'));
+            
+            updateStatsDisplay(muscle);
             if (onToggleMuscle) onToggleMuscle(muscle);
         });
     });
@@ -219,47 +247,78 @@ function updateHeatmap(containerId, heatmapData, scope = 'week') {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // Visual feedback that update is happening
+    lastHeatmapData = heatmapData;
     container.style.opacity = '0.5';
     
     setTimeout(() => {
-        // Reset all glows and status classes
         container.querySelectorAll('.muscle-group').forEach(group => {
-            group.classList.remove('glow-1', 'glow-2', 'glow-3', 'glow-4', 'glow-5', 'glow-6', 'missed-muscle');
+            group.classList.remove('glow-1', 'glow-2', 'glow-3', 'glow-4', 'glow-5', 'glow-6', 'missed-muscle', 'selected');
         });
 
-        const entries = Object.entries(heatmapData);
-        if (entries.length > 0) {
-            // Find maximum volume to normalize intensity
-            const maxVolume = Math.max(...entries.map(([, volume]) => volume));
-            
-            if (maxVolume > 0) {
-                for (const [muscle, volume] of entries) {
-                    const groups = container.querySelectorAll(`.muscle-group[data-muscle="${muscle.toLowerCase()}"]`);
-                    if (volume === 0) {
-                        groups.forEach(g => g.classList.add('missed-muscle'));
-                        continue;
-                    }
-
-                    // Calculate intensity level 1-6
-                    let level = 1;
-                    const ratio = volume / maxVolume;
-
-                    if (ratio >= 0.9) level = 6;
-                    else if (ratio >= 0.7) level = 5;
-                    else if (ratio >= 0.5) level = 4;
-                    else if (ratio >= 0.3) level = 3;
-                    else if (ratio >= 0.1) level = 2;
-                    else level = 1;
-
-                    groups.forEach(g => g.classList.add(`glow-${level}`));
-                }
+        const muscles = heatmapData.muscles || {};
+        const weeklyMax = heatmapData.weeklyMax || 0;
+        const normalizationMax = Math.max(weeklyMax, 100);
+        
+        for (const [muscle, stats] of Object.entries(muscles)) {
+            const groups = container.querySelectorAll(`.muscle-group[data-muscle="${muscle.toLowerCase()}"]`);
+            if (stats.volume === 0) {
+                groups.forEach(g => g.classList.add('missed-muscle'));
+                continue;
             }
+
+            let level = 1;
+            const ratio = stats.volume / normalizationMax;
+            if (ratio >= 0.9) level = 6;
+            else if (ratio >= 0.7) level = 5;
+            else if (ratio >= 0.5) level = 4;
+            else if (ratio >= 0.3) level = 3;
+            else if (ratio >= 0.1) level = 2;
+            else level = 1;
+
+            groups.forEach(g => g.classList.add(`glow-${level}`));
         }
         
+        resetStatsDisplay();
         container.style.opacity = '1';
     }, 50);
 }
 
+function updateStatsDisplay(muscleKey) {
+    if (!lastHeatmapData) return;
+    
+    const stats = muscleKey ? lastHeatmapData.muscles[muscleKey] : lastHeatmapData.total;
+    if (!stats) return;
+
+    const nameDisplay = document.getElementById('stats-target-name');
+    const volDisplay = document.getElementById('stat-volume');
+    const setsDisplay = document.getElementById('stat-sets');
+    const exDisplay = document.getElementById('stat-exercises');
+
+    if (nameDisplay) nameDisplay.innerText = muscleKey ? muscleKey.toUpperCase() : "TOTAL OVERVIEW";
+    if (volDisplay) volDisplay.innerHTML = `${Math.round(stats.volume)}<span class="stat-unit">VOL</span>`;
+    if (setsDisplay) setsDisplay.innerText = stats.sets;
+    if (exDisplay) exDisplay.innerText = stats.exercises;
+    
+    const resetBtn = document.getElementById('btn-reset-stats');
+    if (resetBtn) {
+        if (muscleKey) {
+            resetBtn.classList.remove('hidden');
+        } else {
+            resetBtn.classList.add('hidden');
+            const extra = document.getElementById('muscle-extra-details');
+            if (extra) extra.innerHTML = ''; 
+        }
+    }
+}
+
+function resetStatsDisplay() {
+    const container = document.querySelector('.muscle-map-container');
+    if (container) {
+        container.querySelectorAll('.muscle-group').forEach(g => g.classList.remove('selected'));
+    }
+    updateStatsDisplay(null);
+}
+
 window.initMuscleMap = initMuscleMap;
 window.updateHeatmap = updateHeatmap;
+window.resetStatsDisplay = resetStatsDisplay;

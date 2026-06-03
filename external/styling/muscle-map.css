@@ -1,10 +1,10 @@
 .muscle-map-container {
   display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  gap: 24px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  padding: 20px 10px;
+  padding: 10px;
 }
 
 .muscle-map-view {
@@ -14,6 +14,59 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
+}
+
+.muscle-stats-panel {
+  flex: 0 0 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 1.5rem;
+  backdrop-filter: blur(10px);
+  min-height: 200px;
+  justify-content: center;
+  text-align: center;
+  animation: fade-in 0.3s ease;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 8px;
+  font-weight: 900;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+}
+
+.stat-unit {
+  font-size: 10px;
+  color: var(--app-pink);
+  margin-left: 2px;
+}
+
+.stats-title {
+  font-size: 10px;
+  font-weight: 900;
+  color: #fff;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 4px;
 }
 
 .view-label {
@@ -59,12 +112,12 @@
 }
 
 /* Heatmap Intensity Levels - Performance Optimized (No Filters/Animations) */
-.muscle-group.glow-1 .muscle-part { fill: #fef08a !important; stroke: #fde047; } /* Yellow 200 */
-.muscle-group.glow-2 .muscle-part { fill: #fde047 !important; stroke: #facc15; } /* Yellow 300 */
+.muscle-group.glow-1 .muscle-part { fill: #4ade80 !important; stroke: #22c55e; } /* Green 400 */
+.muscle-group.glow-2 .muscle-part { fill: #84cc16 !important; stroke: #65a30d; } /* Lime 500 */
 .muscle-group.glow-3 .muscle-part { fill: #facc15 !important; stroke: #eab308; } /* Yellow 400 */
 .muscle-group.glow-4 .muscle-part { fill: #fb923c !important; stroke: #f97316; } /* Orange 400 */
-.muscle-group.glow-5 .muscle-part { fill: #f97316 !important; stroke: #ea580c; } /* Orange 500 */
-.muscle-group.glow-6 .muscle-part { fill: #ef4444 !important; stroke: #dc2626; } /* Red 500 */
+.muscle-group.glow-5 .muscle-part { fill: #f87171 !important; stroke: #ef4444; } /* Red 400 */
+.muscle-group.glow-6 .muscle-part { fill: #dc2626 !important; stroke: #b91c1c; } /* Red 600 */
 
 .muscle-group.missed-muscle .muscle-part {
   fill: #3f3f46 !important; 
@@ -87,10 +140,20 @@
 
 @media (max-width: 640px) {
   .muscle-map-container {
-    gap: 12px;
+    flex-direction: column;
+    gap: 20px;
     padding: 10px 4px;
+    align-items: center;
   }
   .muscle-map-view {
     max-width: none;
+    width: 100%;
+  }
+  .muscle-stats-panel {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 280px;
+    min-height: auto;
+    padding: 20px;
   }
 }

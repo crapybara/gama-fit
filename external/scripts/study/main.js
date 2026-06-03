@@ -38,9 +38,8 @@ function bindEvents() {
   qs("#todo-close-btn").addEventListener("click", () => todoPopup.classList.add("hidden"));
   todoInput.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || !todoInput.value.trim()) return;
-    renderTodo({ text: todoInput.value.trim(), done: false });
+    saveTodos(todoInput.value.trim());
     todoInput.value = "";
-    saveTodos();
   });
 
   qs("#fullscreen-toggle").addEventListener("click", toggleFullscreen);

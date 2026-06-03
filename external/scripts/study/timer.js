@@ -152,7 +152,7 @@ function playFinishTone() {
 export function renderTodo(task) {
   const li = document.createElement("li");
   li.className = "todo-item";
-  if (task.done) li.classList.add("done");
+  if (task.completed) li.classList.add("done");
 
   const content = document.createElement("div");
   content.className = "todo-content";
@@ -160,24 +160,28 @@ export function renderTodo(task) {
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.className = "todo-checkbox";
-  checkbox.checked = Boolean(task.done);
+  checkbox.checked = Boolean(task.completed);
 
   const span = document.createElement("span");
   span.className = "todo-text";
-  span.textContent = task.text;
+  span.textContent = task.title;
 
   const remove = document.createElement("button");
   remove.type = "button";
   remove.className = "todo-delete";
   remove.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
 
-  checkbox.addEventListener("change", () => {
+  checkbox.addEventListener("change", async () => {
     li.classList.toggle("done", checkbox.checked);
-    saveTodos();
+    await fetch(`/api/focus/${task.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed: checkbox.checked })
+    });
   });
-  remove.addEventListener("click", () => {
+  remove.addEventListener("click", async () => {
     li.remove();
-    saveTodos();
+    await fetch(`/api/focus/${task.id}`, { method: "DELETE" });
   });
 
   content.append(checkbox, span);
@@ -185,16 +189,19 @@ export function renderTodo(task) {
   todoList.appendChild(li);
 }
 
-export function saveTodos() {
-  const tasks = Array.from(todoList.children).map((li) => ({
-    text: li.querySelector(".todo-text").textContent,
-    done: li.querySelector(".todo-checkbox").checked,
-  }));
-  localStorage.setItem("study-todos", JSON.stringify(tasks));
+export async function saveTodos(title) {
+  await fetch("/api/focus", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: title })
+  });
+  loadTodos();
 }
 
-export function loadTodos() {
-  const tasks = JSON.parse(localStorage.getItem("study-todos") || "[]");
+export async function loadTodos() {
+  const res = await fetch("/api/focus");
+  if (!res.ok) return;
+  const tasks = await res.json();
   todoList.innerHTML = "";
-  tasks.forEach(renderTodo);
+  if (tasks) tasks.forEach(renderTodo);
 }

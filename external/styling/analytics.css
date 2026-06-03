@@ -24,6 +24,68 @@
   background: rgba(255, 0, 160, 0.5);
 }
 
+/* --- Muscle Map Analytics Reordering --- */
+.analytics-mode .muscle-map-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+/* Front View */
+.analytics-mode .muscle-map-view:nth-child(1) {
+  order: 1;
+  flex: 0 0 auto;
+}
+
+/* Back View */
+.analytics-mode .muscle-map-view:nth-child(3) {
+  order: 2;
+  flex: 0 0 auto;
+}
+
+/* Stats Panel (Was in middle, now move to right) */
+.analytics-mode .muscle-stats-panel {
+  order: 3;
+  flex: 1 0 320px;
+  max-width: 450px;
+  text-align: left;
+  justify-content: flex-start;
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(59, 130, 246, 0.15);
+  min-height: 450px;
+  padding: 24px;
+}
+
+.analytics-mode .stats-title {
+  font-size: 14px;
+  margin-bottom: 16px;
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.analytics-mode .stat-item {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding-bottom: 8px;
+}
+
+.analytics-mode .stat-label {
+  font-size: 10px;
+}
+
+.analytics-mode .stat-value {
+  font-size: 1.1rem;
+}
+
+@media (max-width: 1200px) {
+  .analytics-mode .muscle-map-container {
+    justify-content: center;
+  }
+}
+
 .chart-container {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;

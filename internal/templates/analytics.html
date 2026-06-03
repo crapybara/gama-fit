@@ -123,6 +123,70 @@
             </div>
         </div>
 
+        <!-- NEW LIFTING STATS SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 mb-6">
+            <div class="lg:col-span-2 glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+                <div class="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <div>
+                    <div class="flex items-center justify-between mb-4 relative z-10">
+                        <p class="text-blue-400 text-[10px] font-black uppercase tracking-[0.25em]">This Week Performance</p>
+                        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-900/80 border border-white/5 shadow-xl">
+                            <span class="w-1.5 h-1.5 rounded-full animate-pulse bg-blue-500"></span>
+                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Active Stats</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 relative z-10">
+                        <div>
+                            <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Total Lifted</p>
+                            <h3 class="text-white font-black text-5xl leading-none font-outfit">{{printf "%.0f" .ThisWeekVolume}}<span class="text-xs text-blue-500 ml-1">KG</span></h3>
+                            <div class="mt-3 flex items-center gap-2">
+                                <span class="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-lg {{if ge .VolumeChange 0.0}}bg-emerald-500/10 text-emerald-400{{else}}bg-red-500/10 text-red-400{{end}}">
+                                    {{if ge .VolumeChange 0.0}}↑{{else}}↓{{end}} {{printf "%.1f" .VolumeChange}}%
+                                </span>
+                                <span class="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">vs Last Week</span>
+                            </div>
+                        </div>
+                        <div class="sm:text-right">
+                            <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Strength Change</p>
+                            <h3 class="text-white font-black text-3xl leading-none font-outfit">{{if ge .StrengthChange 0.0}}+{{end}}{{printf "%.1f" .StrengthChange}}%</h3>
+                            <p class="text-zinc-600 text-[9px] font-bold uppercase tracking-widest mt-1">Based on Peak 1RM</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[2rem] p-6 relative overflow-hidden flex flex-col justify-between border-blue-500/20">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <div>
+                    <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-4">Peak Best Lift</p>
+                    {{if .BestLift.Exercise}}
+                    <h4 class="text-white text-sm font-black uppercase tracking-tight line-clamp-1 mb-1">{{.BestLift.Exercise}}</h4>
+                    <p class="text-blue-500 text-lg font-black font-outfit">{{.BestLift.Weight}} <span class="text-[10px] text-zinc-500">KG ×</span> {{.BestLift.Reps}} <span class="text-[10px] text-zinc-500">Reps</span></p>
+                    {{else}}
+                    <p class="text-zinc-600 text-xs font-bold uppercase py-2 tracking-widest">No logs this week</p>
+                    {{end}}
+                </div>
+                <div class="mt-4 pt-4 border-t border-zinc-800/50">
+                    <p class="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-1">Estimated 1RM</p>
+                    <p class="text-white text-2xl font-black font-outfit">{{printf "%.1f" .BestLift.OneRM}}<span class="text-[10px] text-blue-500 ml-1">KG</span></p>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[2rem] p-6 relative overflow-hidden bg-blue-500/5 border-blue-500/20">
+                <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-4">Muscle Best Lifts</p>
+                <div class="space-y-3 max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
+                    {{range $muscle, $bl := .MuscleBestLifts}}
+                    <div class="flex items-center justify-between group">
+                        <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest group-hover:text-blue-400 transition-colors">{{$muscle}}</span>
+                        <span class="text-[10px] text-white font-mono font-bold">{{printf "%.0f" $bl.Weight}}kg × {{$bl.Reps}}</span>
+                    </div>
+                    {{else}}
+                    <p class="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">No muscle data yet</p>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+
         <!-- Exercise Progression Chart -->
         <div class="glass-panel rounded-[2.5rem] p-5 lg:p-7 relative overflow-hidden border border-zinc-800/80 shadow-2xl">
             <div class="absolute top-0 right-0 w-96 h-96 rounded-full blur-[150px] pointer-events-none" style="background:color-mix(in srgb, var(--app-pink) 7%, transparent);"></div>
@@ -208,14 +272,14 @@
                     <h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2 mb-1">
                         <span style="color:var(--app-blue)">🧬</span> Muscle Focus Analysis
                     </h3>
-                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Select a muscle group to view specific volume</p>
+                    <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Select a muscle group to view specific volume and progression</p>
                 </div>
                 <div id="selected-muscle-display" class="bg-blue-500/10 border border-blue-500/20 px-4 py-2 rounded-xl text-blue-400 text-xs font-black uppercase tracking-[0.2em]">
                     All Muscles
                 </div>
             </div>
 
-            <div id="muscle-map-container" class="relative z-10 min-h-[600px] analytics-mode">
+            <div id="muscle-map-container" class="relative z-10 min-h-[500px] analytics-mode">
                 <div class="flex justify-center items-center h-full py-12">
                     <div class="animate-pulse text-zinc-600 font-black uppercase tracking-[0.3em] text-xs">Initializing Neural Map...</div>
                 </div>
@@ -269,6 +333,12 @@
               initMuscleMap('muscle-map-container', (muscle) => {
                   const display = document.getElementById('selected-muscle-display');
                   if (display) display.textContent = muscle.charAt(0).toUpperCase() + muscle.slice(1);
+                  
+                  // Fetch muscle details into the panel's "extra" slot
+                  htmx.ajax('GET', '/api/analytics/muscle-1rm?muscle=' + encodeURIComponent(muscle), {
+                      target: '#muscle-extra-details',
+                      swap: 'innerHTML'
+                  });
               });
           }
       }

@@ -186,8 +186,8 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 				<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 					<button onclick="setTheme('default')" class="p-3 rounded-xl border border-white/5 bg-app-surface hover:border-app-pink transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Default</button>
 					<button onclick="setTheme('dracula')" class="p-3 rounded-xl border border-white/5 bg-[#282a36] hover:border-[#bd93f9] transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Dracula</button>
-					<button onclick="setTheme('synthwave84')" class="p-3 rounded-xl border border-white/5 bg-[#05010a] hover:border-[#ff2fa8] transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Synthwave 84</button>
-					<button onclick="setTheme('materialui')" class="p-3 rounded-xl border border-white/5 bg-[#0b0911] hover:border-[#ff2fa8] transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Material UI</button>
+					<button onclick="setTheme('synthwave')" class="p-3 rounded-xl border border-white/5 bg-[#05010a] hover:border-[#ff2fa8] transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Synthwave 84</button>
+					<button onclick="setTheme('material')" class="p-3 rounded-xl border border-white/5 bg-[#0b0911] hover:border-[#ff2fa8] transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Material UI</button>
 					<button onclick="setTheme('gruvbox')" class="p-3 rounded-xl border border-white/5 bg-[#282828] hover:border-[#fb4934] transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Gruvbox</button>
 					<button onclick="setTheme('catppuccin')" class="p-3 rounded-xl border border-white/5 bg-[#1e1e2e] hover:border-[#f5c2e7] transition-all text-[10px] font-bold uppercase tracking-tight text-zinc-400 hover:text-white">Catppuccin</button>
 				</div>
@@ -251,6 +251,42 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 					<button type="submit" class="w-full bg-blue-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-400 transition-all shadow-[0_0_12px_rgba(59,130,246,0.25)] text-xs uppercase tracking-wider">Save Metric</button>
 				</form>
 			</div>
+
+			<!-- Database Management -->
+			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden border-emerald-500/20">
+				<div class="flex items-center justify-between mb-6">
+					<h3 class="text-emerald-400 font-black uppercase tracking-wider text-sm">Database Management</h3>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div>
+						<h4 class="text-white font-bold text-xs uppercase mb-3">Export Data</h4>
+						<p class="text-zinc-500 text-[10px] mb-4">Download a full backup of your database as a .sql file.</p>
+						<a href="/api/db/export" class="inline-flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold px-6 py-3 rounded-xl transition-all text-[10px] uppercase tracking-wider border border-emerald-500/20">
+							<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+							Download Backup
+						</a>
+					</div>
+					<div>
+						<h4 class="text-white font-bold text-xs uppercase mb-3">Import Data</h4>
+						<p class="text-zinc-500 text-[10px] mb-4">Restore your data from a previously exported .sql backup. <span class="text-app-pink font-bold">This will overwrite existing records.</span></p>
+						<form action="/api/db/import" method="POST" enctype="multipart/form-data" class="flex flex-col gap-3">
+							<input type="file" name="database" accept=".sql" required class="block w-full text-[10px] text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-zinc-800 file:text-zinc-300 hover:file:bg-zinc-700 cursor-pointer">
+							<button type="submit" class="bg-zinc-100 hover:bg-white text-black font-bold px-6 py-2.5 rounded-xl transition-all text-[10px] uppercase tracking-wider">
+								Upload & Overwrite
+							</button>
+						</form>
+					</div>
+					</div>
+
+					<div class="mt-8 pt-6 border-t border-zinc-800/50">
+					<h4 class="text-red-500 font-black text-xs uppercase mb-2">Danger Zone</h4>
+					<p class="text-zinc-500 text-[10px] mb-4">Permanently delete all your workout plans, logs, and body metrics. This cannot be undone.</p>
+					<button hx-post="/api/db/delete-all" hx-confirm="ARE YOU SURE? This will permanently wipe all your workout data and logs!" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/20 font-bold px-6 py-3 rounded-xl transition-all text-[10px] uppercase tracking-wider">
+						Delete All My Data
+					</button>
+					</div>
+					</div>
+
 
 			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden">
 				<div class="flex items-center justify-between mb-6">

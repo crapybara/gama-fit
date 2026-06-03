@@ -154,13 +154,14 @@ func ConnectAndSetup() {
 		END IF;
 
 		-- freestyle_logs
-		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'freestyle_logs') THEN
+		if NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'freestyle_logs') THEN
 			CREATE TABLE freestyle_logs (
 				id SERIAL PRIMARY KEY,
 				user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				exercise_name TEXT NOT NULL,
 				weight REAL NOT NULL,
 				reps INTEGER NOT NULL,
+				sets INTEGER DEFAULT 1,
 				muscle TEXT,
 				is_cardio INTEGER DEFAULT 0,
 				logged_date TEXT NOT NULL DEFAULT CURRENT_DATE::TEXT,
@@ -170,7 +171,9 @@ func ConnectAndSetup() {
 			ALTER TABLE freestyle_logs ADD COLUMN IF NOT EXISTS muscle TEXT;
 			ALTER TABLE freestyle_logs ADD COLUMN IF NOT EXISTS is_cardio INTEGER DEFAULT 0;
 			ALTER TABLE freestyle_logs ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+			ALTER TABLE freestyle_logs ADD COLUMN IF NOT EXISTS sets INTEGER DEFAULT 1;
 		END IF;
+
 
 		-- workout_plans
 		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'workout_plans') THEN
@@ -287,11 +290,25 @@ func ConnectAndSetup() {
 			ALTER TABLE shop_catalog ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 		END IF;
 
+		-- focus_tasks
+		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'focus_tasks') THEN
+			CREATE TABLE focus_tasks (
+				id SERIAL PRIMARY KEY,
+				user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				title TEXT NOT NULL,
+				completed INTEGER NOT NULL DEFAULT 0,
+				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+			);
+		ELSE
+			ALTER TABLE focus_tasks ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+		END IF;
+
 		-- Add performance indexes
 		CREATE INDEX IF NOT EXISTS idx_freestyle_logs_user_exercise_date ON freestyle_logs(user_id, exercise_name, logged_date);
 		CREATE INDEX IF NOT EXISTS idx_body_weight_logs_user_date ON body_weight_logs(user_id, log_date);
 		CREATE INDEX IF NOT EXISTS idx_daily_meals_user_date ON daily_meals(user_id, log_date);
 		CREATE INDEX IF NOT EXISTS idx_sleep_logs_user_date ON sleep_logs(user_id, log_date);
+		CREATE INDEX IF NOT EXISTS idx_focus_tasks_user ON focus_tasks(user_id);
 	END $$;
 	`
 

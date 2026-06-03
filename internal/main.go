@@ -69,6 +69,10 @@ func main() {
 	http.HandleFunc("/api/macros/targets", handlers.AuthMiddleware(handlers.HandleSetTargets))
 	http.HandleFunc("/api/meals", handlers.AuthMiddleware(handlers.HandleMeals))
 
+	// Focus Tasks (Study Mode)
+	http.HandleFunc("/api/focus", handlers.AuthMiddleware(handlers.HandleFocusTasks))
+	http.HandleFunc("/api/focus/", handlers.AuthMiddleware(handlers.HandleFocusTaskActions))
+
 	// Sleep Endpoints (Protected)
 	http.HandleFunc("/api/sleep/summary", handlers.AuthMiddleware(handlers.HandleSleepSummary))
 	http.HandleFunc("/api/sleep", handlers.AuthMiddleware(handlers.HandleSleep))
@@ -76,6 +80,7 @@ func main() {
 
 	// Analytics Endpoints (Protected)
 	http.HandleFunc("/analytics.html", handlers.AuthMiddleware(analytics.HandleAnalytics))
+	http.HandleFunc("/api/analytics/muscle-1rm", handlers.AuthMiddleware(analytics.HandleMuscle1RM))
 
 	// Resource Handlers
 	http.HandleFunc("/api/resources/gifs", handlers.AuthMiddleware(handlers.HandleGifs))
@@ -86,6 +91,7 @@ func main() {
 	// DB Backup Endpoints (Protected)
 	http.HandleFunc("/api/db/export", handlers.AuthMiddleware(handlers.HandleExportDB))
 	http.HandleFunc("/api/db/import", handlers.AuthMiddleware(handlers.HandleImportDB))
+	http.HandleFunc("/api/db/delete-all", handlers.AuthMiddleware(handlers.HandleDeleteAllData))
 
 	// File Server for HTML/CSS/JS
 	fs := http.FileServer(http.Dir("../external"))

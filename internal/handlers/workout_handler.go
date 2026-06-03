@@ -43,7 +43,11 @@ func HandleFreestyle(w http.ResponseWriter, r *http.Request) {
 			weight, err1 := strconv.ParseFloat(weightStr, 64)
 			reps, err2 := strconv.Atoi(repsStr)
 			if err1 == nil && err2 == nil {
-				_, err := database.DB.Exec("INSERT INTO freestyle_logs (user_id, exercise_name, weight, reps, logged_date, logged_time) VALUES ($1, $2, $3, $4, $5, $6)", userID, exercise, weight, reps, localDate, localTime)
+				// We also fetch muscle from workout_plans if available
+				var muscle string
+				database.DB.QueryRow("SELECT muscle FROM workout_plans WHERE user_id = $1 AND exercise_name = $2 LIMIT 1", userID, exercise).Scan(&muscle)
+
+				_, err := database.DB.Exec("INSERT INTO freestyle_logs (user_id, exercise_name, weight, reps, sets, muscle, logged_date, logged_time) VALUES ($1, $2, $3, $4, 1, $5, $6, $7)", userID, exercise, weight, reps, muscle, localDate, localTime)
 				if err != nil {
 					log.Printf("Error inserting freestyle log: %v", err)
 				}
@@ -212,6 +216,12 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(html + formHtml))
 }
 
+type MuscleStats struct {
+	Volume    float64 `json:"volume"`
+	Sets      int     `json:"sets"`
+	Exercises int     `json:"exercises"`
+}
+
 func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
 	userID, _ := GetUserID(r)
 	scope := r.URL.Query().Get("scope")
@@ -225,38 +235,76 @@ func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
 		END
 	)`
 
-	query := fmt.Sprintf("SELECT muscle, SUM(sets * %s) FROM workout_plans WHERE user_id = $1", repsCalc)
-	args := []interface{}{userID}
+	// 1. Get Weekly Stats for global normalization and defaults
+	weeklyQuery := fmt.Sprintf("SELECT muscle, SUM(sets * %s), SUM(sets), COUNT(*) FROM workout_plans WHERE user_id = $1 GROUP BY muscle", repsCalc)
+	rowsW, err := database.DB.Query(weeklyQuery, userID)
+	if err != nil {
+		log.Printf("Weekly heatmap query error: %v", err)
+	}
+	defer rowsW.Close()
+
+	weeklyStats := make(map[string]MuscleStats)
+	weeklyMax := 0.0
+	totalWeekly := MuscleStats{}
+
+	for rowsW.Next() {
+		var muscle string
+		var vol, sts float64 // Scan sets as float to handle SUM then cast
+		var ex int
+		if err := rowsW.Scan(&muscle, &vol, &sts, &ex); err == nil && muscle != "" {
+			stats := MuscleStats{Volume: vol, Sets: int(sts), Exercises: ex}
+			weeklyStats[muscle] = stats
+			if vol > weeklyMax {
+				weeklyMax = vol
+			}
+			totalWeekly.Volume += vol
+			totalWeekly.Sets += int(sts)
+			totalWeekly.Exercises += ex
+		}
+	}
+
+	// 2. Get Scope-specific Stats
+	heatmap := make(map[string]MuscleStats)
+	totalScoped := MuscleStats{}
 
 	if scope == "day" && dayStr != "" {
 		if day, err := strconv.Atoi(dayStr); err == nil {
-			query += " AND day_of_week = $2"
-			args = append(args, day)
+			dayQuery := fmt.Sprintf("SELECT muscle, SUM(sets * %s), SUM(sets), COUNT(*) FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 GROUP BY muscle", repsCalc)
+			rowsD, err := database.DB.Query(dayQuery, userID, day)
+			if err == nil {
+				defer rowsD.Close()
+				for rowsD.Next() {
+					var m string
+					var v, s float64
+					var e int
+					if err := rowsD.Scan(&m, &v, &s, &e); err == nil && m != "" {
+						st := MuscleStats{Volume: v, Sets: int(s), Exercises: e}
+						heatmap[m] = st
+						totalScoped.Volume += v
+						totalScoped.Sets += int(s)
+						totalScoped.Exercises += e
+					}
+				}
+			}
 		}
+	} else {
+		heatmap = weeklyStats
+		totalScoped = totalWeekly
 	}
 
-	query += " GROUP BY muscle"
-
-	rows, err := database.DB.Query(query, args...)
-	if err != nil {
-		log.Printf("Heatmap query error: %v", err)
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("{}"))
-		return
-	}
-	defer rows.Close()
-
-	heatmap := make(map[string]float64)
-	for rows.Next() {
-		var muscle string
-		var totalVolume float64
-		if err := rows.Scan(&muscle, &totalVolume); err == nil && muscle != "" {
-			heatmap[muscle] = totalVolume
-		}
+	// 3. Return structured response
+	response := struct {
+		Muscles   map[string]MuscleStats `json:"muscles"`
+		Total     MuscleStats            `json:"total"`
+		WeeklyMax float64                `json:"weeklyMax"`
+	}{
+		Muscles:   heatmap,
+		Total:     totalScoped,
+		WeeklyMax: weeklyMax,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(heatmap)
+	json.NewEncoder(w).Encode(response)
 }
 
 // --- 3. BODY WEIGHT TRACKER ---

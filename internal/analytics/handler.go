@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,6 +25,13 @@ type AnalyticsData struct {
 	AvgProtein           int
 	ExercisePointsJSON   template.JS
 	BodyWeightPointsJSON template.JS
+
+	// New Lifting Stats
+	ThisWeekVolume   float64
+	VolumeChange     float64
+	BestLift         BestLift
+	StrengthChange   float64
+	MuscleBestLifts  map[string]BestLift
 }
 
 type cacheEntry struct {
@@ -34,6 +43,13 @@ var (
 	analyticsCache = make(map[string]cacheEntry)
 	cacheMu        sync.RWMutex
 )
+
+func lastBestLiftStart(userID int, end time.Time) time.Time {
+	// We look back up to 60 days for a "previous" best lift if nothing was logged last week
+	// but for strength change comparison, we ideally want a recent one.
+	// Let's default to end - 60 days.
+	return end.AddDate(0, 0, -60)
+}
 
 func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 	userID, err := handlers.GetUserID(r)
@@ -103,6 +119,30 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 	avgSleepHours := FetchAverageSleepHours(userID, start, end)
 	avgCalories, avgProtein := FetchAverageNutrition(userID, start, end)
 
+	// Lifting Stats Calculation (Weekly focused)
+	thisWeekStart := now.AddDate(0, 0, -6)
+	lastWeekStart := now.AddDate(0, 0, -13)
+	lastWeekEnd := now.AddDate(0, 0, -7)
+	
+	thisWeekVol := FetchTotalVolume(userID, thisWeekStart, now)
+	lastWeekVol := FetchTotalVolume(userID, lastWeekStart, lastWeekEnd)
+	
+	volChange := 0.0
+	if lastWeekVol > 0 {
+		volChange = ((thisWeekVol - lastWeekVol) / lastWeekVol) * 100
+	}
+
+	bestLift := FetchBestLift(userID, thisWeekStart, now)
+	// For strength change, we compare this week's peak 1RM vs previous period's peak 1RM
+	lastBestLift := FetchBestLift(userID, lastBestLiftStart(userID, lastWeekEnd), lastWeekEnd)
+	
+	strengthChange := 0.0
+	if lastBestLift.OneRM > 0 && bestLift.OneRM > 0 {
+		strengthChange = ((bestLift.OneRM - lastBestLift.OneRM) / lastBestLift.OneRM) * 100
+	}
+
+	muscleBestLifts := FetchMuscleBestLifts(userID)
+
 	exPoints := FetchExercisePoints(userID, selectedExercise, start, end)
 	bwPoints := FetchBodyWeightPoints(userID, start, end)
 
@@ -120,6 +160,13 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 		AvgProtein:           avgProtein,
 		ExercisePointsJSON:   template.JS(exJSON),
 		BodyWeightPointsJSON: template.JS(bwJSON),
+		
+		// New Stats
+		ThisWeekVolume:   thisWeekVol,
+		VolumeChange:     volChange,
+		BestLift:         bestLift,
+		StrengthChange:   strengthChange,
+		MuscleBestLifts:  muscleBestLifts,
 	}
 
 	// Save to cache (expiring in 5 minutes)
@@ -128,6 +175,44 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 	cacheMu.Unlock()
 
 	renderAnalytics(w, data)
+}
+
+func HandleMuscle1RM(w http.ResponseWriter, r *http.Request) {
+	userID, err := handlers.GetUserID(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	muscle := r.URL.Query().Get("muscle")
+	if muscle == "" {
+		w.Write([]byte(`<div class="text-zinc-500 text-[10px] uppercase font-black text-center py-4">Select a muscle to view details</div>`))
+		return
+	}
+
+	lifts := FetchMuscleExercises1RM(userID, muscle)
+	if len(lifts) == 0 {
+		w.Write([]byte(fmt.Sprintf(`<div class="text-zinc-500 text-[10px] uppercase font-black text-center py-4">No data for %s</div>`, muscle)))
+		return
+	}
+
+	html := fmt.Sprintf(`<div class="space-y-3 animate-fade-in"><h4 class="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4 border-b border-blue-500/20 pb-2">%s Progression</h4>`, strings.ToUpper(muscle))
+	for _, bl := range lifts {
+		html += fmt.Sprintf(`
+			<div class="flex items-center justify-between group">
+				<div>
+					<p class="text-white text-xs font-black uppercase tracking-tight">%s</p>
+					<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">%v KG × %d</p>
+				</div>
+				<div class="text-right">
+					<p class="text-[10px] text-zinc-600 font-black uppercase tracking-widest mb-0.5">Est. 1RM</p>
+					<p class="text-white text-sm font-black font-mono">%v<span class="text-[8px] text-blue-500 ml-1">KG</span></p>
+				</div>
+			</div>`, bl.Exercise, bl.Weight, bl.Reps, math.Round(bl.OneRM*10)/10)
+	}
+	html += `</div>`
+
+	w.Write([]byte(html))
 }
 
 func renderAnalytics(w http.ResponseWriter, data AnalyticsData) {
