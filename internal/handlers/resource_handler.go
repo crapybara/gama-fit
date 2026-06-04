@@ -157,8 +157,11 @@ func HandleVideos(w http.ResponseWriter, r *http.Request) {
 
 	videos := []string{}
 	for _, f := range files {
-		if !f.IsDir() && strings.EqualFold(filepath.Ext(f.Name()), ".mp4") {
-			videos = append(videos, f.Name())
+		if !f.IsDir() {
+			ext := strings.ToLower(filepath.Ext(f.Name()))
+			if ext == ".mp4" || ext == ".webm" {
+				videos = append(videos, f.Name())
+			}
 		}
 	}
 	sort.Strings(videos)

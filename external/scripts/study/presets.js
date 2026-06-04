@@ -47,7 +47,7 @@ export async function loadVideos() {
   videoGrid.innerHTML = "";
   if (videos.length === 0) {
     const empty = document.createElement("p");
-    empty.textContent = "No MP4 files found.";
+    empty.textContent = "No MP4 or WebM files found.";
     empty.style.color = "rgba(255,255,255,0.7)";
     videoGrid.appendChild(empty);
   } else {
