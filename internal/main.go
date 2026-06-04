@@ -56,6 +56,7 @@ func main() {
 	http.HandleFunc("/api/plans", handlers.AuthMiddleware(handlers.HandleWorkoutPlan))
 	http.HandleFunc("/api/plans/heatmap", handlers.AuthMiddleware(handlers.HandleWorkoutHeatmap))
 	http.HandleFunc("/api/freestyle", handlers.AuthMiddleware(handlers.HandleFreestyle))
+	http.HandleFunc("/api/freestyle/marklog", handlers.AuthMiddleware(handlers.HandleMarkLog))
 	http.HandleFunc("/api/cardio", handlers.AuthMiddleware(handlers.HandleCardio))
 	http.HandleFunc("/api/bodyweight", handlers.AuthMiddleware(handlers.HandleBodyWeight))
 	http.HandleFunc("/api/streak", handlers.AuthMiddleware(handlers.GetStreak))

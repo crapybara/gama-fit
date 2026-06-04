@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"gama-fit/database"
 )
@@ -27,6 +29,34 @@ func HandleFreestyle(w http.ResponseWriter, r *http.Request) {
 			var name string
 			if err := rows.Scan(&name); err == nil {
 				html += fmt.Sprintf(`<option value="%s">%s</option>`, name, name)
+			}
+		}
+		w.Write([]byte(html))
+		return
+	}
+
+	if r.URL.Query().Get("action") == "plan_options" {
+		dayStr := r.URL.Query().Get("day")
+		if dayStr == "" {
+			dayStr = "1"
+		}
+		day, _ := strconv.Atoi(dayStr)
+
+		rows, err := database.DB.Query("SELECT exercise_name FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 ORDER BY id ASC", userID, day)
+		if err != nil {
+			log.Printf("Error fetching plan options: %v", err)
+			w.Write([]byte("<option value=\"\">Error loading plan</option>"))
+			return
+		}
+		defer rows.Close()
+
+		html := `<option value="">Quick Select...</option>`
+		count := 1
+		for rows.Next() {
+			var name string
+			if err := rows.Scan(&name); err == nil {
+				html += fmt.Sprintf(`<option value="%s">m%d - %s</option>`, name, count, name)
+				count++
 			}
 		}
 		w.Write([]byte(html))
@@ -96,6 +126,131 @@ func HandleFreestyle(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte(html))
 }
+
+func HandleMarkLog(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, _ := GetUserID(r)
+	localDate, localTime := getLocalTime(r)
+	content := r.FormValue("content")
+
+	if content == "" {
+		return
+	}
+
+	dayMap := map[string]int{
+		"monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6, "sunday": 7,
+		"mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6, "sun": 7,
+	}
+
+	// Helper to resolve aliases for a specific day
+	getAliases := func(day int) map[string]string {
+		aliases := make(map[string]string)
+		rows, err := database.DB.Query("SELECT exercise_name FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 ORDER BY id ASC", userID, day)
+		if err == nil {
+			defer rows.Close()
+			count := 1
+			for rows.Next() {
+				var name string
+				if err := rows.Scan(&name); err == nil {
+					aliases[fmt.Sprintf("m%d", count)] = name
+					count++
+				}
+			}
+		}
+		return aliases
+	}
+
+	lines := strings.Split(content, "\n")
+	
+	// Default to today's day of week
+	parsedDate, _ := time.Parse("2006-01-02", localDate)
+	currentDayOfWeek := int(parsedDate.Weekday())
+	if currentDayOfWeek == 0 {
+		currentDayOfWeek = 7
+	}
+	
+	targetDayOfWeek := currentDayOfWeek
+	targetDate := localDate
+	var aliases map[string]string
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// 1. Check for day header (#monday)
+		if strings.HasPrefix(line, "#") {
+			dayName := strings.ToLower(strings.TrimPrefix(line, "#"))
+			if d, ok := dayMap[dayName]; ok {
+				targetDayOfWeek = d
+				// Calculate targetDate relative to today (localDate)
+				diff := targetDayOfWeek - currentDayOfWeek
+				if diff > 0 {
+					diff -= 7 // It was in the past
+				}
+				targetDate = parsedDate.AddDate(0, 0, diff).Format("2006-01-02")
+				aliases = getAliases(targetDayOfWeek)
+			}
+			continue
+		}
+
+		// Lazy load aliases if not set by header
+		if aliases == nil {
+			aliases = getAliases(targetDayOfWeek)
+		}
+
+		// 2. Parse exercise sets: m1: 10x60, 8x70
+		parts := strings.Split(line, ":")
+		if len(parts) < 2 {
+			continue
+		}
+
+		exerciseAlias := strings.ToLower(strings.TrimSpace(parts[0]))
+		exerciseName, ok := aliases[exerciseAlias]
+		if !ok {
+			// Maybe it's not an alias but a direct name?
+			exerciseName = parts[0]
+		}
+
+		setsContent := parts[1]
+		sets := strings.Split(setsContent, ",")
+
+		for _, set := range sets {
+			set = strings.TrimSpace(set)
+			if set == "" {
+				continue
+			}
+
+			// Format: 10x60 (reps x weight)
+			setParts := strings.Split(strings.ToLower(set), "x")
+			if len(setParts) != 2 {
+				continue
+			}
+
+			reps, _ := strconv.Atoi(strings.TrimSpace(setParts[0]))
+			weight, _ := strconv.ParseFloat(strings.TrimSpace(setParts[1]), 64)
+
+			if reps > 0 && weight > 0 {
+				var muscle string
+				database.DB.QueryRow("SELECT muscle FROM workout_plans WHERE user_id = $1 AND exercise_name = $2 LIMIT 1", userID, exerciseName).Scan(&muscle)
+
+				_, err := database.DB.Exec("INSERT INTO freestyle_logs (user_id, exercise_name, weight, reps, sets, muscle, logged_date, logged_time) VALUES ($1, $2, $3, $4, 1, $5, $6, $7)", userID, exerciseName, weight, reps, muscle, targetDate, localTime)
+				if err != nil {
+					log.Printf("Error inserting marklog entry: %v", err)
+				}
+			}
+		}
+	}
+
+	// Trigger HTMX refresh
+	http.Redirect(w, r, "/api/freestyle?local_date="+localDate, http.StatusSeeOther)
+}
+
 
 // --- 2. WORKOUT PLAN (7-Day System) ---
 func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
