@@ -122,10 +122,11 @@ function initMuscleMap(containerId, onToggleMuscle) {
                     <span class="stat-label">Exercises</span>
                     <span class="stat-value" id="stat-exercises">0</span>
                 </div>
+                ${container.classList.contains('analytics-mode') ? `
                 <div class="stat-item border-t border-white/5 pt-3 mt-1">
                     <span class="stat-label">Volume Change</span>
                     <span class="stat-value" id="stat-change">0%</span>
-                </div>
+                </div>` : ''}
                 
                 <!-- Container for extra details (e.g. 1RM list in analytics) -->
                 <div id="muscle-extra-details" class="mt-4 pt-4 border-t border-white/5 empty:hidden"></div>
@@ -303,6 +304,24 @@ function updateStatsDisplay(muscleKey) {
     if (volDisplay) volDisplay.innerHTML = `${Math.round(stats.volume)}<span class="stat-unit">VOL</span>`;
     if (setsDisplay) setsDisplay.innerText = stats.sets;
     if (exDisplay) exDisplay.innerText = stats.exercises;
+
+    // Handle Uncategorized volume display for Total Overview
+    const extra = document.getElementById('muscle-extra-details');
+    if (!muscleKey && extra && lastHeatmapData.muscles['uncategorized']) {
+        const uncat = lastHeatmapData.muscles['uncategorized'];
+        if (uncat.volume > 0) {
+            extra.innerHTML = `
+                <div class="flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">
+                    <span>Uncategorized</span>
+                    <span>${Math.round(uncat.volume)} VOL</span>
+                </div>
+            `;
+        } else {
+            extra.innerHTML = '';
+        }
+    } else if (extra && !muscleKey) {
+        extra.innerHTML = '';
+    }
 
     if (changeDisplay) {
         const change = stats.change || 0;

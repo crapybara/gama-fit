@@ -114,7 +114,7 @@ func FetchExercisePoints(userID int, exercise string, start, end time.Time) []Ch
 		return points
 	}
 	query := `
-		SELECT logged_date, AVG(weight)
+		SELECT logged_date, AVG(weight), MAX(reps)
 		FROM freestyle_logs 
 		WHERE user_id = $1 AND exercise_name = $2 AND logged_date >= $3 AND logged_date <= $4
 		GROUP BY logged_date
@@ -129,11 +129,13 @@ func FetchExercisePoints(userID int, exercise string, start, end time.Time) []Ch
 	for rows.Next() {
 		var d string
 		var w float64
-		if err := rows.Scan(&d, &w); err == nil {
+		var r int
+		if err := rows.Scan(&d, &w, &r); err == nil {
 			t, _ := time.Parse("2006-01-02", d)
 			points = append(points, ChartPoint{
 				Label:  strings.ToLower(t.Format("02 Jan")),
 				Weight: w,
+				Reps:   r,
 			})
 		}
 	}
@@ -321,10 +323,10 @@ func FetchAnalyticsHeatmap(userID int, start, end time.Time) (map[string]Analyti
 
 func fetchMuscleStats(userID int, start, end time.Time) map[string]AnalyticsMuscleStats {
 	query := `
-		SELECT muscle, SUM(weight * reps * COALESCE(sets, 1)), SUM(COALESCE(sets, 1)), COUNT(DISTINCT exercise_name)
+		SELECT COALESCE(NULLIF(muscle, ''), 'uncategorized'), SUM(weight * reps * COALESCE(sets, 1)), SUM(COALESCE(sets, 1)), COUNT(DISTINCT exercise_name)
 		FROM freestyle_logs
-		WHERE user_id = $1 AND logged_date >= $2 AND logged_date <= $3 AND muscle IS NOT NULL AND muscle != ''
-		GROUP BY muscle
+		WHERE user_id = $1 AND logged_date >= $2 AND logged_date <= $3
+		GROUP BY 1
 	`
 	rows, err := database.DB.Query(query, userID, start.Format("2006-01-02"), end.Format("2006-01-02"))
 	stats := make(map[string]AnalyticsMuscleStats)

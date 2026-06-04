@@ -89,7 +89,7 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 
 	switch rangeParam {
 	case "1w":
-		start = now.AddDate(0, 0, -7)
+		start = now.AddDate(0, 0, -6)
 	case "1m":
 		start = now.AddDate(0, -1, 0)
 	case "3m":
@@ -112,24 +112,25 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 		years = append(years, y)
 	}
 
+	// The charts respect the selected range
 	avgSleepHours := FetchAverageSleepHours(userID, start, end)
 	avgCalories, avgProtein := FetchAverageNutrition(userID, start, end)
 
-	// Lifting Stats Calculation (Weekly focused)
-	thisWeekStart := now.AddDate(0, 0, -6)
-	lastWeekStart := now.AddDate(0, 0, -13)
-	lastWeekEnd := now.AddDate(0, 0, -7)
-	
-	thisWeekVol := FetchTotalVolume(userID, thisWeekStart, now)
-	lastWeekVol := FetchTotalVolume(userID, lastWeekStart, lastWeekEnd)
-	
+	// Top stats strictly use a 7-day rolling window
+	fixedThisWeekStart := now.AddDate(0, 0, -6)
+	fixedLastWeekStart := now.AddDate(0, 0, -13)
+	fixedLastWeekEnd := now.AddDate(0, 0, -7)
+
+	thisWeekVol := FetchTotalVolume(userID, fixedThisWeekStart, now)
+	lastWeekVol := FetchTotalVolume(userID, fixedLastWeekStart, fixedLastWeekEnd)
+
 	volChange := 0.0
 	if lastWeekVol > 0 {
 		volChange = ((thisWeekVol - lastWeekVol) / lastWeekVol) * 100
 	}
 
-	bestLift := FetchBestLift(userID, thisWeekStart, now)
-	
+	bestLift := FetchBestLift(userID, fixedThisWeekStart, now)
+
 	bmi, ffmi, lbm := FetchBodyComposition(userID)
 
 	exPoints := FetchExercisePoints(userID, selectedExercise, start, end)
@@ -225,7 +226,7 @@ func HandleAnalyticsHeatmap(w http.ResponseWriter, r *http.Request) {
 
 	switch rangeParam {
 	case "1w":
-		start = now.AddDate(0, 0, -7)
+		start = now.AddDate(0, 0, -6)
 	case "1m":
 		start = now.AddDate(0, -1, 0)
 	case "3m":

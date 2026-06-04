@@ -384,7 +384,21 @@
                   x: { grid: { display: false }, ticks: { color: '#71717a', font: { size: 10, weight: 'bold' } } },
                   y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#71717a', font: { size: 10 } } }
                 },
-                plugins: { legend: { display: false } },
+                plugins: { 
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        let label = Number(context.parsed.y).toFixed(1) + ' KG';
+                        const pointIndex = context.dataIndex;
+                        if (points[pointIndex] && points[pointIndex].reps > 0) {
+                            label += ' × ' + points[pointIndex].reps + ' Reps';
+                        }
+                        return label;
+                      }
+                    }
+                  }
+                },
                 animation: { duration: 300 }
               }
           });
