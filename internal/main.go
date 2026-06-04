@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -120,7 +121,7 @@ func main() {
 	})
 
 	server := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":8095",
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  30 * time.Second,
@@ -130,7 +131,12 @@ func main() {
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Println("🚀 Gama Fitness Server running on http://0.0.0.0:8080")
+		localIP := "0.0.0.0"
+		if conn, err := net.Dial("udp", "8.8.8.8:80"); err == nil {
+			localIP = conn.LocalAddr().(*net.UDPAddr).IP.String()
+			conn.Close()
+		}
+		log.Printf("🚀 Gama Fitness Server running on http://%s:8095", localIP)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}

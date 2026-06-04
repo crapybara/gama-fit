@@ -42,7 +42,7 @@ COPY --from=builder /app/internal/templates ./templates
 COPY --from=builder /app/internal/gamafit-server .
 
 # Tell Docker what port this container listens on
-EXPOSE 8080
+EXPOSE 8095
 
 # Boot the server
 CMD ["./gamafit-server"]

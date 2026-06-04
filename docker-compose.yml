@@ -24,7 +24,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "0.0.0.0:8080:8080"
+      - "0.0.0.0:8095:8095"
     environment:
       - DB_DSN=host=db port=5432 user=user password=password dbname=gamafit sslmode=disable
     volumes:

@@ -14,9 +14,18 @@ import (
 )
 
 const (
-	baseURL    = "http://localhost:8080"
+	defaultBaseURL    = "http://localhost:8095"
 	cookieFile = ".gama_session"
 )
+
+var dynamicBaseURL string
+
+func init() {
+	dynamicBaseURL = os.Getenv("GAMA_URL")
+	if dynamicBaseURL == "" {
+		dynamicBaseURL = defaultBaseURL
+	}
+}
 
 type FocusTask struct {
 	ID        int    `json:"id"`
@@ -83,7 +92,7 @@ func login(client *http.Client, username, password string) {
 	data.Set("username", username)
 	data.Set("password", password)
 
-	resp, err := client.PostForm(baseURL+"/api/login", data)
+	resp, err := client.PostForm(dynamicBaseURL+"/api/login", data)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -101,7 +110,7 @@ func login(client *http.Client, username, password string) {
 func addTask(client *http.Client, title string) {
 	task := FocusTask{Title: title}
 	body, _ := json.Marshal(task)
-	resp, err := client.Post(baseURL+"/api/focus", "application/json", bytes.NewBuffer(body))
+	resp, err := client.Post(dynamicBaseURL+"/api/focus", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -118,7 +127,7 @@ func addTask(client *http.Client, title string) {
 }
 
 func listTasks(client *http.Client) {
-	resp, err := client.Get(baseURL + "/api/focus")
+	resp, err := client.Get(dynamicBaseURL + "/api/focus")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -149,7 +158,7 @@ func listTasks(client *http.Client) {
 
 func actionTask(client *http.Client, pos int, action string) {
 	// Need to get ID first
-	resp, _ := client.Get(baseURL + "/api/focus")
+	resp, _ := client.Get(dynamicBaseURL + "/api/focus")
 	var tasks []FocusTask
 	json.NewDecoder(resp.Body).Decode(&tasks)
 	resp.Body.Close()
@@ -164,10 +173,10 @@ func actionTask(client *http.Client, pos int, action string) {
 	if action == "done" {
 		task.Completed = true
 		body, _ := json.Marshal(task)
-		req, _ = http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/focus/%d", baseURL, task.ID), bytes.NewBuffer(body))
+		req, _ = http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/focus/%d", dynamicBaseURL, task.ID), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
 	} else {
-		req, _ = http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/focus/%d", baseURL, task.ID), nil)
+		req, _ = http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/focus/%d", dynamicBaseURL, task.ID), nil)
 	}
 
 	resp, err := client.Do(req)
@@ -189,7 +198,7 @@ func actionTask(client *http.Client, pos int, action string) {
 }
 
 func saveSession(jar http.CookieJar) {
-	u, _ := url.Parse(baseURL)
+	u, _ := url.Parse(dynamicBaseURL)
 	cookies := jar.Cookies(u)
 	for _, c := range cookies {
 		if c.Name == "session_id" {
@@ -206,7 +215,7 @@ func loadSession(jar http.CookieJar) {
 	path := filepath.Join(home, cookieFile)
 	data, err := os.ReadFile(path)
 	if err == nil {
-		u, _ := url.Parse(baseURL)
+		u, _ := url.Parse(dynamicBaseURL)
 		jar.SetCookies(u, []*http.Cookie{{
 			Name:  "session_id",
 			Value: string(data),
