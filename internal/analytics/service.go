@@ -218,3 +218,129 @@ func FetchAverageNutrition(userID int, start, end time.Time) (int, int) {
 	}
 	return totalCalories / days, int(math.Round(totalProtein / float64(days)))
 }
+
+func FetchBodyComposition(userID int) (bmi, ffmi, lbm float64) {
+	var weight float64
+	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 ORDER BY log_date DESC LIMIT 1", userID).Scan(&weight)
+
+	var height, neck, belly float64
+	var gender string
+	_ = database.DB.QueryRow("SELECT height, neck, belly, gender FROM user_stats WHERE user_id = $1", userID).Scan(&height, &neck, &belly, &gender)
+
+	if height <= 0 || weight <= 0 {
+		return 0, 0, 0
+	}
+
+	hMeter := height / 100.0
+	bmi = weight / (hMeter * hMeter)
+
+	// Body Fat % (Navy Method)
+	var bf float64
+	if neck > 0 && belly > neck {
+		if gender == "female" {
+			bf = 163.205*math.Log10(belly-neck) - 97.684*math.Log10(height) - 78.387
+		} else {
+			bf = 86.010*math.Log10(belly-neck) - 70.041*math.Log10(height) + 36.76
+		}
+	} else {
+		// Fallback if measurements are missing
+		bf = 20.0 
+	}
+
+	if bf < 3 { bf = 3 }
+
+	lbm = weight * (1 - bf/100.0)
+	ffmi = lbm / (hMeter * hMeter)
+
+	return bmi, ffmi, lbm
+}
+
+type AnalyticsMuscleStats struct {
+	Volume    float64 `json:"volume"`
+	Sets      int     `json:"sets"`
+	Exercises int     `json:"exercises"`
+	Change    float64 `json:"change"` // Percentage change vs previous period
+}
+
+func FetchAnalyticsHeatmap(userID int, start, end time.Time) (map[string]AnalyticsMuscleStats, AnalyticsMuscleStats, float64) {
+	duration := end.Sub(start)
+	prevStart := start.Add(-duration)
+	prevEnd := start.Add(-time.Second)
+
+	currentStats := fetchMuscleStats(userID, start, end)
+	prevStats := fetchMuscleStats(userID, prevStart, prevEnd)
+
+	heatmap := make(map[string]AnalyticsMuscleStats)
+	totalCurrent := AnalyticsMuscleStats{}
+	totalPrevVolume := 0.0
+	maxVol := 0.0
+
+	// All unique muscles from both periods
+	muscles := make(map[string]bool)
+	for m := range currentStats { muscles[m] = true }
+	for m := range prevStats { muscles[m] = true }
+
+	for m := range muscles {
+		curr := currentStats[m]
+		prev := prevStats[m]
+
+		change := 0.0
+		if prev.Volume > 0 {
+			change = ((curr.Volume - prev.Volume) / prev.Volume) * 100
+		} else if curr.Volume > 0 {
+			change = 100.0 // 100% increase if prev was 0
+		}
+
+		stat := AnalyticsMuscleStats{
+			Volume:    curr.Volume,
+			Sets:      curr.Sets,
+			Exercises: curr.Exercises,
+			Change:    change,
+		}
+		heatmap[m] = stat
+
+		if curr.Volume > maxVol {
+			maxVol = curr.Volume
+		}
+
+		totalCurrent.Volume += curr.Volume
+		totalCurrent.Sets += curr.Sets
+		totalCurrent.Exercises += curr.Exercises
+		totalPrevVolume += prev.Volume
+	}
+
+	// Calculate weighted average change for "Total Overview"
+	if totalPrevVolume > 0 {
+		totalCurrent.Change = ((totalCurrent.Volume - totalPrevVolume) / totalPrevVolume) * 100
+	} else if totalCurrent.Volume > 0 {
+		totalCurrent.Change = 100.0
+	}
+
+	return heatmap, totalCurrent, maxVol
+}
+
+func fetchMuscleStats(userID int, start, end time.Time) map[string]AnalyticsMuscleStats {
+	query := `
+		SELECT muscle, SUM(weight * reps * COALESCE(sets, 1)), SUM(COALESCE(sets, 1)), COUNT(DISTINCT exercise_name)
+		FROM freestyle_logs
+		WHERE user_id = $1 AND logged_date >= $2 AND logged_date <= $3 AND muscle IS NOT NULL AND muscle != ''
+		GROUP BY muscle
+	`
+	rows, err := database.DB.Query(query, userID, start.Format("2006-01-02"), end.Format("2006-01-02"))
+	stats := make(map[string]AnalyticsMuscleStats)
+	if err != nil {
+		return stats
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var m string
+		var v, s float64
+		var e int
+		if err := rows.Scan(&m, &v, &s, &e); err == nil {
+			stats[strings.ToLower(m)] = AnalyticsMuscleStats{Volume: v, Sets: int(s), Exercises: e}
+		}
+	}
+	return stats
+}
+

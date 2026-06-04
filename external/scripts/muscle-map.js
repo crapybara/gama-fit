@@ -122,6 +122,10 @@ function initMuscleMap(containerId, onToggleMuscle) {
                     <span class="stat-label">Exercises</span>
                     <span class="stat-value" id="stat-exercises">0</span>
                 </div>
+                <div class="stat-item border-t border-white/5 pt-3 mt-1">
+                    <span class="stat-label">Volume Change</span>
+                    <span class="stat-value" id="stat-change">0%</span>
+                </div>
                 
                 <!-- Container for extra details (e.g. 1RM list in analytics) -->
                 <div id="muscle-extra-details" class="mt-4 pt-4 border-t border-white/5 empty:hidden"></div>
@@ -293,11 +297,19 @@ function updateStatsDisplay(muscleKey) {
     const volDisplay = document.getElementById('stat-volume');
     const setsDisplay = document.getElementById('stat-sets');
     const exDisplay = document.getElementById('stat-exercises');
+    const changeDisplay = document.getElementById('stat-change');
 
     if (nameDisplay) nameDisplay.innerText = muscleKey ? muscleKey.toUpperCase() : "TOTAL OVERVIEW";
     if (volDisplay) volDisplay.innerHTML = `${Math.round(stats.volume)}<span class="stat-unit">VOL</span>`;
     if (setsDisplay) setsDisplay.innerText = stats.sets;
     if (exDisplay) exDisplay.innerText = stats.exercises;
+
+    if (changeDisplay) {
+        const change = stats.change || 0;
+        const colorClass = change >= 0 ? 'text-emerald-400' : 'text-red-400';
+        changeDisplay.innerText = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+        changeDisplay.className = `stat-value ${colorClass}`;
+    }
     
     const resetBtn = document.getElementById('btn-reset-stats');
     if (resetBtn) {

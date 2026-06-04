@@ -30,8 +30,11 @@ type AnalyticsData struct {
 	ThisWeekVolume   float64
 	VolumeChange     float64
 	BestLift         BestLift
-	StrengthChange   float64
-	MuscleBestLifts  map[string]BestLift
+	
+	// Body Composition
+	BMI  float64
+	FFMI float64
+	LBM  float64
 }
 
 type cacheEntry struct {
@@ -43,13 +46,6 @@ var (
 	analyticsCache = make(map[string]cacheEntry)
 	cacheMu        sync.RWMutex
 )
-
-func lastBestLiftStart(userID int, end time.Time) time.Time {
-	// We look back up to 60 days for a "previous" best lift if nothing was logged last week
-	// but for strength change comparison, we ideally want a recent one.
-	// Let's default to end - 60 days.
-	return end.AddDate(0, 0, -60)
-}
 
 func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 	userID, err := handlers.GetUserID(r)
@@ -133,15 +129,8 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bestLift := FetchBestLift(userID, thisWeekStart, now)
-	// For strength change, we compare this week's peak 1RM vs previous period's peak 1RM
-	lastBestLift := FetchBestLift(userID, lastBestLiftStart(userID, lastWeekEnd), lastWeekEnd)
 	
-	strengthChange := 0.0
-	if lastBestLift.OneRM > 0 && bestLift.OneRM > 0 {
-		strengthChange = ((bestLift.OneRM - lastBestLift.OneRM) / lastBestLift.OneRM) * 100
-	}
-
-	muscleBestLifts := FetchMuscleBestLifts(userID)
+	bmi, ffmi, lbm := FetchBodyComposition(userID)
 
 	exPoints := FetchExercisePoints(userID, selectedExercise, start, end)
 	bwPoints := FetchBodyWeightPoints(userID, start, end)
@@ -165,8 +154,11 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 		ThisWeekVolume:   thisWeekVol,
 		VolumeChange:     volChange,
 		BestLift:         bestLift,
-		StrengthChange:   strengthChange,
-		MuscleBestLifts:  muscleBestLifts,
+		
+		// Body Composition
+		BMI:  bmi,
+		FFMI: ffmi,
+		LBM:  lbm,
 	}
 
 	// Save to cache (expiring in 5 minutes)
@@ -213,6 +205,51 @@ func HandleMuscle1RM(w http.ResponseWriter, r *http.Request) {
 	html += `</div>`
 
 	w.Write([]byte(html))
+}
+
+func HandleAnalyticsHeatmap(w http.ResponseWriter, r *http.Request) {
+	userID, err := handlers.GetUserID(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	rangeParam := r.URL.Query().Get("range")
+	if rangeParam == "" {
+		rangeParam = "1w"
+	}
+
+	var start, end time.Time
+	now := time.Now()
+	end = now
+
+	switch rangeParam {
+	case "1w":
+		start = now.AddDate(0, 0, -7)
+	case "1m":
+		start = now.AddDate(0, -1, 0)
+	case "3m":
+		start = now.AddDate(0, -3, 0)
+	case "6m":
+		start = now.AddDate(0, -6, 0)
+	default:
+		start = now.AddDate(0, 0, -7)
+	}
+
+	heatmap, total, maxVol := FetchAnalyticsHeatmap(userID, start, end)
+
+	response := struct {
+		Muscles   map[string]AnalyticsMuscleStats `json:"muscles"`
+		Total     AnalyticsMuscleStats            `json:"total"`
+		WeeklyMax float64                         `json:"weeklyMax"`
+	}{
+		Muscles:   heatmap,
+		Total:     total,
+		WeeklyMax: maxVol,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func renderAnalytics(w http.ResponseWriter, data AnalyticsData) {

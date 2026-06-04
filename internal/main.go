@@ -82,6 +82,7 @@ func main() {
 	// Analytics Endpoints (Protected)
 	http.HandleFunc("/analytics.html", handlers.AuthMiddleware(analytics.HandleAnalytics))
 	http.HandleFunc("/api/analytics/muscle-1rm", handlers.AuthMiddleware(analytics.HandleMuscle1RM))
+	http.HandleFunc("/api/analytics/heatmap", handlers.AuthMiddleware(analytics.HandleAnalyticsHeatmap))
 
 	// Resource Handlers
 	http.HandleFunc("/api/resources/gifs", handlers.AuthMiddleware(handlers.HandleGifs))

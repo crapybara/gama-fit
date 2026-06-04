@@ -225,6 +225,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 				</div>
 			</div>
 
+			<!-- Body Metrics Form -->
 			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden">
 				<div class="flex items-center justify-between mb-6">
 					<h3 class="text-white font-black uppercase tracking-wider text-sm">Log Body Metrics</h3>
@@ -234,19 +235,18 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 						<label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Metric Type</label>
 						<select name="metric" class="w-full bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors">
 							<option value="age">Age (years)</option>
-							<option value="gender">Gender</option>
-							<option value="bmi">BMI</option>
+							<option value="gender">Sex (Male/Female)</option>
 							<option value="height">Height (cm)</option>
-							<option value="neck">Neck</option>
-							<option value="belly">Belly</option>
-							<option value="arms">Arms</option>
-							<option value="calf">Calf</option>
+							<option value="neck">Neck (cm)</option>
+							<option value="belly">Belly/Waist (cm)</option>
+							<option value="arms">Arms (cm)</option>
+							<option value="calf">Calf (cm)</option>
 							<option value="goal_weight">Goal Weight (kg)</option>
 						</select>
 						</div>
 						<div>
 						<label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-2">Value / Option</label>
-						<input type="text" name="value" placeholder="e.g. 25 or male" required class="w-full bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors font-mono">
+						<input type="text" name="value" placeholder="e.g. 25, male, 180" required class="w-full bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500 transition-colors font-mono">
 						</div>
 					<button type="submit" class="w-full bg-blue-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-400 transition-all shadow-[0_0_12px_rgba(59,130,246,0.25)] text-xs uppercase tracking-wider">Save Metric</button>
 				</form>
@@ -298,12 +298,8 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 						<span class="font-display font-black text-2xl text-white">%d</span>
 					</div>
 					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
-						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Gender</span>
+						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Sex</span>
 						<span class="font-display font-black text-xl text-white uppercase tracking-tighter">%s</span>
-					</div>
-					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
-						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">BMI</span>
-						<span class="font-display font-black text-2xl text-white">%s</span>
 					</div>
 					<div class="bg-app-surface/50 border border-white/5 rounded-xl p-4 text-center">
 						<span class="block text-[10px] uppercase font-bold text-zinc-500 mb-1">Height</span>
@@ -331,7 +327,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 					</div>
 				</div>
 			</div>
-	`, tPro, tCarb, tFat, pomoDuration, pomoDuration, shortBreak, shortBreak, longBreak, longBreak, age, gender, formatVal(bmi), formatVal(height), formatVal(goalWeight), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf))
+	`, tPro, tCarb, tFat, pomoDuration, pomoDuration, shortBreak, shortBreak, longBreak, longBreak, age, gender, formatVal(height), formatVal(goalWeight), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf))
 
 
 	w.Write([]byte(html))

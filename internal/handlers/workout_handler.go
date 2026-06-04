@@ -375,6 +375,7 @@ type MuscleStats struct {
 	Volume    float64 `json:"volume"`
 	Sets      int     `json:"sets"`
 	Exercises int     `json:"exercises"`
+	Change    float64 `json:"change"`
 }
 
 func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {

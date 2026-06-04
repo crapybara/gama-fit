@@ -124,8 +124,8 @@
         </div>
 
         <!-- NEW LIFTING STATS SECTION -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-5 mb-6">
-            <div class="lg:col-span-2 glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+        <div class="grid grid-cols-1 gap-5 mb-6">
+            <div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
                 <div class="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-[80px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 <div>
                     <div class="flex items-center justify-between mb-4 relative z-10">
@@ -146,43 +146,21 @@
                                 <span class="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">vs Last Week</span>
                             </div>
                         </div>
-                        <div class="sm:text-right">
-                            <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Strength Change</p>
-                            <h3 class="text-white font-black text-3xl leading-none font-outfit">{{if ge .StrengthChange 0.0}}+{{end}}{{printf "%.1f" .StrengthChange}}%</h3>
-                            <p class="text-zinc-600 text-[9px] font-bold uppercase tracking-widest mt-1">Based on Peak 1RM</p>
+                        <div class="flex flex-wrap gap-4 sm:gap-6 sm:justify-end">
+                            <div class="text-right">
+                                <p class="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">BMI</p>
+                                <h3 class="text-white font-black text-xl font-outfit">{{printf "%.1f" .BMI}}</h3>
+                            </div>
+                            <div class="text-right border-l border-zinc-800/50 pl-4 sm:pl-6">
+                                <p class="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">FFMI</p>
+                                <h3 class="text-white font-black text-xl font-outfit">{{printf "%.1f" .FFMI}}</h3>
+                            </div>
+                            <div class="text-right border-l border-zinc-800/50 pl-4 sm:pl-6">
+                                <p class="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Lean Mass</p>
+                                <h3 class="text-white font-black text-xl font-outfit">{{printf "%.1f" .LBM}}<span class="text-[10px] text-blue-500 ml-0.5">KG</span></h3>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="glass-panel rounded-[2rem] p-6 relative overflow-hidden flex flex-col justify-between border-blue-500/20">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[50px] rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                <div>
-                    <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-4">Peak Best Lift</p>
-                    {{if .BestLift.Exercise}}
-                    <h4 class="text-white text-sm font-black uppercase tracking-tight line-clamp-1 mb-1">{{.BestLift.Exercise}}</h4>
-                    <p class="text-blue-500 text-lg font-black font-outfit">{{.BestLift.Weight}} <span class="text-[10px] text-zinc-500">KG ×</span> {{.BestLift.Reps}} <span class="text-[10px] text-zinc-500">Reps</span></p>
-                    {{else}}
-                    <p class="text-zinc-600 text-xs font-bold uppercase py-2 tracking-widest">No logs this week</p>
-                    {{end}}
-                </div>
-                <div class="mt-4 pt-4 border-t border-zinc-800/50">
-                    <p class="text-zinc-600 text-[9px] font-black uppercase tracking-widest mb-1">Estimated 1RM</p>
-                    <p class="text-white text-2xl font-black font-outfit">{{printf "%.1f" .BestLift.OneRM}}<span class="text-[10px] text-blue-500 ml-1">KG</span></p>
-                </div>
-            </div>
-
-            <div class="glass-panel rounded-[2rem] p-6 relative overflow-hidden bg-blue-500/5 border-blue-500/20">
-                <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-4">Muscle Best Lifts</p>
-                <div class="space-y-3 max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
-                    {{range $muscle, $bl := .MuscleBestLifts}}
-                    <div class="flex items-center justify-between group">
-                        <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest group-hover:text-blue-400 transition-colors">{{$muscle}}</span>
-                        <span class="text-[10px] text-white font-mono font-bold">{{printf "%.0f" $bl.Weight}}kg × {{$bl.Reps}}</span>
-                    </div>
-                    {{else}}
-                    <p class="text-zinc-600 text-[10px] font-bold uppercase tracking-widest">No muscle data yet</p>
-                    {{end}}
                 </div>
             </div>
         </div>
@@ -340,7 +318,20 @@
                       swap: 'innerHTML'
                   });
               });
+
+              refreshAnalyticsHeatmap();
           }
+      }
+
+      function refreshAnalyticsHeatmap() {
+          const range = new URLSearchParams(window.location.search).get('range') || '1w';
+          fetch(`/api/analytics/heatmap?range=${range}`)
+              .then(res => res.json())
+              .then(data => {
+                  if (typeof updateHeatmap === 'function') {
+                      updateHeatmap('muscle-map-container', data, 'analytics');
+                  }
+              });
       }
 
       let exChartInst = null;
