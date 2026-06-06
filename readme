@@ -1,0 +1,12 @@
+# what is gama-fit?
+gamafit is fitness hub centre who is meant to be self-care oriented the app goal is to reach your goals and also support the user in the process 
+
+# why this project 
+i always wanted something like this, a app that can support me, if it can support me i hope it will support others that is the reason this repo 
+
+#features overview
+- fitness orientation[ sleep,food,workout ] these big three can be tracked 
+- analytics and proper data [ eg it will show you your lifts data,weight,muscle focus analysis,pomodoro stats]
+- mark logger 
+- gama cli 
+- themes and database import export

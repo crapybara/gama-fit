@@ -464,9 +464,12 @@
           const points = allPoints.slice(offset, end);
 
           if (sliderEl) {
+              const wrapper = sliderEl.parentElement.parentElement;
               const maxOffset = Math.max(0, allPoints.length - VISIBLE_POINTS);
               sliderEl.max = maxOffset;
-              sliderEl.parentElement.style.display = maxOffset > 0 ? 'block' : 'none';
+              if (wrapper) {
+                  wrapper.style.display = maxOffset > 0 ? 'block' : 'none';
+              }
           }
 
           if (currentInst) currentInst.destroy();
