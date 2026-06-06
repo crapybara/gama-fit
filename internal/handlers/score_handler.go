@@ -26,6 +26,24 @@ func GetFitnessScore(w http.ResponseWriter, r *http.Request) {
 		score += 15
 	}
 
+	var weight, height float64
+	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 ORDER BY log_date DESC LIMIT 1", userID).Scan(&weight)
+	_ = database.DB.QueryRow("SELECT height FROM user_stats WHERE user_id = $1", userID).Scan(&height)
+
+	if weight > 0 && height > 0 {
+		hMeter := height / 100.0
+		bmi := weight / (hMeter * hMeter)
+		if bmi >= 18.5 && bmi <= 24.9 {
+			score += 15
+		}
+	}
+
+	if currentStreak > 30 {
+		if score < 95 {
+			score = 95
+		}
+	}
+
 	if score > 100 {
 		score = 100
 	}

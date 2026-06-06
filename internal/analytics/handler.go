@@ -18,6 +18,7 @@ type AnalyticsData struct {
 	SelectedYear         int
 	SelectedRange        string
 	SelectedExercise     string
+	SelectedDate         string
 	Exercises            []string
 	Years                []int
 	AvgSleep             string
@@ -35,6 +36,10 @@ type AnalyticsData struct {
 	BMI  float64
 	FFMI float64
 	LBM  float64
+
+	// Focus Stats
+	Focus          FocusSummary
+	FocusChartJSON template.JS
 }
 
 type cacheEntry struct {
@@ -136,8 +141,24 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 	exPoints := FetchExercisePoints(userID, selectedExercise, start, end)
 	bwPoints := FetchBodyWeightPoints(userID, start, end)
 
+	// Calculate Focus week (Monday to Sunday) for current week
+	daysSinceMonday := int(now.Weekday()) - 1
+	if daysSinceMonday < 0 {
+		daysSinceMonday = 6 // Sunday
+	}
+	currentMonday := now.AddDate(0, 0, -daysSinceMonday)
+	focusStart := currentMonday
+	focusEnd := focusStart.AddDate(0, 0, 6)
+	
+	// Ensure bounds
+	focusStart = time.Date(focusStart.Year(), focusStart.Month(), focusStart.Day(), 0, 0, 0, 0, time.Local)
+	focusEnd = time.Date(focusEnd.Year(), focusEnd.Month(), focusEnd.Day(), 23, 59, 59, 0, time.Local)
+
+	focusStats := GetFocusStats(userID, focusStart, focusEnd)
+
 	exJSON, _ := json.Marshal(exPoints)
 	bwJSON, _ := json.Marshal(bwPoints)
+	focusJSON, _ := json.Marshal(focusStats.DailyChart)
 
 	data := AnalyticsData{
 		SelectedYear:         selectedYear,
@@ -160,6 +181,10 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 		BMI:  bmi,
 		FFMI: ffmi,
 		LBM:  lbm,
+
+		// Focus Stats
+		Focus:          focusStats,
+		FocusChartJSON: template.JS(focusJSON),
 	}
 
 	// Save to cache (expiring in 5 minutes)
@@ -189,10 +214,12 @@ func HandleMuscle1RM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	html := fmt.Sprintf(`<div class="space-y-3 animate-fade-in"><h4 class="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4 border-b border-blue-500/20 pb-2">%s Progression</h4>`, strings.ToUpper(muscle))
+	html := fmt.Sprintf(`<div class="animate-fade-in">
+		<h4 class="text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4 border-b border-blue-500/20 pb-2">%s Progression</h4>
+		<div class="space-y-3 max-h-72 overflow-y-auto pr-2 custom-scrollbar">`, strings.ToUpper(muscle))
 	for _, bl := range lifts {
 		html += fmt.Sprintf(`
-			<div class="flex items-center justify-between group">
+			<div class="flex items-center justify-between group bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-all border border-transparent hover:border-blue-500/20">
 				<div>
 					<p class="text-white text-xs font-black uppercase tracking-tight">%s</p>
 					<p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">%v KG × %d</p>
@@ -203,7 +230,7 @@ func HandleMuscle1RM(w http.ResponseWriter, r *http.Request) {
 				</div>
 			</div>`, bl.Exercise, bl.Weight, bl.Reps, math.Round(bl.OneRM*10)/10)
 	}
-	html += `</div>`
+	html += `</div></div>`
 
 	w.Write([]byte(html))
 }

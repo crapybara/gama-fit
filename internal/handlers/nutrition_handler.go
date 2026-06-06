@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
@@ -280,13 +281,27 @@ func HandleMeals(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		_ = r.ParseForm()
 
-		if quickName := r.FormValue("quick_name"); quickName != "" {
-			pro, _ := strconv.ParseFloat(r.FormValue("quick_protein"), 64)
-			carb, _ := strconv.ParseFloat(r.FormValue("quick_carbs"), 64)
-			fat, _ := strconv.ParseFloat(r.FormValue("quick_fats"), 64)
-			cal := int(pro*4 + carb*4 + fat*9)
+		qName := r.FormValue("quick_name")
+		qPro := r.FormValue("quick_protein")
+		qCarb := r.FormValue("quick_carbs")
+		qFat := r.FormValue("quick_fats")
+		qCal := r.FormValue("quick_calories")
 
-			_, _ = database.DB.Exec("INSERT INTO daily_meals (user_id, name, calories, protein, carbs, fats, log_date, log_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", userID, quickName, cal, pro, carb, fat, localDate, localTime)
+		if qName != "" || qPro != "" || qCarb != "" || qFat != "" || qCal != "" {
+			if qName == "" {
+				qName = "Quick Log"
+			}
+			pro, _ := strconv.ParseFloat(qPro, 64)
+			carb, _ := strconv.ParseFloat(qCarb, 64)
+			fat, _ := strconv.ParseFloat(qFat, 64)
+			calories, _ := strconv.Atoi(qCal)
+
+			cal := int(math.Round(pro*4 + carb*4 + fat*9))
+			if calories > 0 {
+				cal = calories
+			}
+
+			_, _ = database.DB.Exec("INSERT INTO daily_meals (user_id, name, calories, protein, carbs, fats, log_date, log_time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)", userID, qName, cal, pro, carb, fat, localDate, localTime)
 			fmt.Fprint(w, `<div id="daily-breakdown-updater" hx-swap-oob="true" hx-get="/api/macros/summary" hx-target="#daily-breakdown" hx-swap="innerHTML" hx-trigger="load"></div>`)
 			return
 		} else if selectedFood := r.FormValue("catalog_food"); selectedFood != "" {
@@ -433,4 +448,39 @@ func HandleMeals(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost || r.Method == http.MethodDelete {
 		fmt.Fprintf(w, `<div id="daily-breakdown-updater" hx-swap-oob="true" hx-get="/api/macros/summary?local_date=%s" hx-target="#daily-breakdown" hx-swap="innerHTML" hx-trigger="load"></div>`, localDate)
 	}
+}
+
+type CatalogFoodItem struct {
+	Name     string  `json:"name"`
+	Calories int     `json:"calories"`
+	Protein  float64 `json:"protein"`
+	Carbs    float64 `json:"carbs"`
+	Fats     float64 `json:"fats"`
+	Weight   float64 `json:"weight"`
+}
+
+func HandleFoodCatalogJSON(w http.ResponseWriter, r *http.Request) {
+	userID, err := GetUserID(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	rows, err := database.DB.Query("SELECT name, calories, protein, carbs, fats, weight FROM food_catalog WHERE user_id = $1 ORDER BY name ASC", userID)
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var items []CatalogFoodItem
+	for rows.Next() {
+		var item CatalogFoodItem
+		if err := rows.Scan(&item.Name, &item.Calories, &item.Protein, &item.Carbs, &item.Fats, &item.Weight); err == nil {
+			items = append(items, item)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(items)
 }

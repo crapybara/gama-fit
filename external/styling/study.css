@@ -618,9 +618,31 @@ body.study-mode select {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  max-height: 18rem;
+  max-height: 22rem;
   overflow: auto;
   padding-right: 0.2rem;
+}
+
+.search-results button {
+  width: 100%;
+  text-align: left;
+  padding: 0.9rem 1.1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.9rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.search-results button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateX(2px);
 }
 
 .study-modal-card {
@@ -750,40 +772,108 @@ body.study-mode select {
   to { background-position: 260% 0; }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 760px), (max-height: 540px) {
   .study-top-left {
-    top: 0.85rem;
-    left: 0.85rem;
+    top: 3vmin;
+    left: 3vmin;
+    gap: 2vmin;
+  }
+
+  .study-orb-btn {
+    width: 8vmin;
+    height: 8vmin;
+  }
+
+  .study-orb-btn svg {
+    width: 4vmin;
+    height: 4vmin;
+  }
+
+  .study-username {
+    display: none;
+  }
+
+  .timer-text {
+    font-size: 18vmin;
+  }
+
+  .quote-text {
+    position: fixed;
+    bottom: 3vmin;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2.2vmin;
+    width: 70vw;
+    padding: 0;
+    line-height: 1.4;
   }
 
   .study-bottom-left {
-    left: 0.85rem;
-    right: 0.85rem;
-    bottom: 6.7rem;
-    width: auto;
+    left: 3vmin;
+    bottom: 3vmin;
+    width: 30vw;
+    min-width: 140px;
+    z-index: 30;
+  }
+
+  .music-console {
+    padding: 1.5vmin;
+    border-radius: 2vmin;
+  }
+
+  .music-btn {
+    width: 6vmin;
+    height: 6vmin;
+  }
+
+  .music-btn.main {
+    width: 8vmin;
+    height: 8vmin;
+  }
+
+  .music-title-btn {
+    font-size: 1.6vmin;
+  }
+
+  .music-options {
+    display: none;
   }
 
   .study-bottom-right {
-    left: 50%;
-    right: auto;
-    bottom: 1rem;
-    transform: translateX(-50%);
+    right: 3vmin;
+    bottom: 3vmin;
+    left: auto;
+    transform: none;
+    gap: 2vmin;
+    z-index: 30;
   }
 
   .study-btn {
-    width: 3.35rem;
-    height: 3.35rem;
+    width: 9vmin;
+    height: 9vmin;
   }
 
   .study-btn.primary {
-    width: 4.15rem;
-    height: 4.15rem;
+    width: 12vmin;
+    height: 12vmin;
   }
 
   .todo-popup {
-    left: 0.85rem;
-    right: 0.85rem;
-    bottom: 12.5rem;
+    left: 3vmin;
+    right: 3vmin;
+    bottom: 15vmin;
     width: auto;
+    max-height: 60vh;
+  }
+}
+
+/* Landscape-specific compact adjustments */
+@media (orientation: landscape) and (max-height: 540px) {
+  .study-bottom-left {
+    width: 25vw;
+  }
+  .quote-text {
+    bottom: 2vmin;
+    font-size: 2vmin;
   }
 }

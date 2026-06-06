@@ -2,7 +2,7 @@ import { qs, qsa } from './utils.js';
 import { 
   toggleTimer, resetTimer, skipBreak, stopTimer,
   fetchPomoSettings, renderTodo, saveTodos, loadTodos,
-  updateStatsDisplay, setTimerMode
+  updateStatsDisplay, setTimerMode, timerMode, isRunning
 } from './timer.js';
 import { 
   toggleFullscreen, updateFullscreenIcons 
@@ -110,9 +110,20 @@ function bindEvents() {
   qs("#music-prev-btn").addEventListener("click", prevTrack);
   qs("#music-shuffle-btn").addEventListener("click", shufflePlaylist);
 
-  qs("#resume-session-btn").addEventListener("click", () => setTimerMode("pomo"));
-  qs("#take-break-btn").addEventListener("click", () => setTimerMode("short"));
-  qs("#take-long-break-btn").addEventListener("click", () => setTimerMode("long"));
+  qs("#resume-session-btn").addEventListener("click", () => {
+    if (timerMode !== "pomo") {
+      setTimerMode("pomo");
+    }
+    if (!isRunning) toggleTimer();
+  });
+  qs("#take-break-btn").addEventListener("click", () => {
+    setTimerMode("short");
+    if (!isRunning) toggleTimer();
+  });
+  qs("#take-long-break-btn").addEventListener("click", () => {
+    setTimerMode("long");
+    if (!isRunning) toggleTimer();
+  });
 
   skipBreakBtn.addEventListener("click", skipBreak);
 

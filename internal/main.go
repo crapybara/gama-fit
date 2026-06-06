@@ -70,9 +70,11 @@ func main() {
 	http.HandleFunc("/api/macros/summary", handlers.AuthMiddleware(handlers.HandleMacrosSummary))
 	http.HandleFunc("/api/macros/targets", handlers.AuthMiddleware(handlers.HandleSetTargets))
 	http.HandleFunc("/api/meals", handlers.AuthMiddleware(handlers.HandleMeals))
+	http.HandleFunc("/api/foods/catalog", handlers.AuthMiddleware(handlers.HandleFoodCatalogJSON))
 
 	// Focus Tasks (Study Mode)
 	http.HandleFunc("/api/focus", handlers.AuthMiddleware(handlers.HandleFocusTasks))
+	http.HandleFunc("/api/focus/log", handlers.AuthMiddleware(handlers.HandleFocusLog))
 	http.HandleFunc("/api/focus/", handlers.AuthMiddleware(handlers.HandleFocusTaskActions))
 
 	// Sleep Endpoints (Protected)

@@ -2,6 +2,7 @@ package analytics
 
 import (
 	"database/sql"
+	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -262,6 +263,79 @@ type AnalyticsMuscleStats struct {
 	Sets      int     `json:"sets"`
 	Exercises int     `json:"exercises"`
 	Change    float64 `json:"change"` // Percentage change vs previous period
+}
+
+type FocusSummary struct {
+	TotalPomoMins  int          `json:"total_pomo_mins"`
+	TotalBreakMins int          `json:"total_break_mins"`
+	PomoFormatted  string       `json:"pomo_formatted"`
+	BreakFormatted string       `json:"break_formatted"`
+	Interruptions  int          `json:"interruptions"`
+	BreakRatio     float64      `json:"break_ratio"`
+	DailyChart     []ChartPoint `json:"daily_chart"`
+}
+
+func GetFocusStats(userID int, start, end time.Time) FocusSummary {
+	summary := FocusSummary{DailyChart: []ChartPoint{}}
+
+	// Get totals for date range
+	row := database.DB.QueryRow(`
+		SELECT 
+			COALESCE(SUM(CASE WHEN mode = 'pomo' THEN duration_mins ELSE 0 END), 0),
+			COALESCE(SUM(CASE WHEN mode IN ('short', 'long') THEN duration_mins ELSE 0 END), 0)
+		FROM focus_logs 
+		WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3`, userID, start.Format("2006-01-02"), end.Format("2006-01-02"))
+	_ = row.Scan(&summary.TotalPomoMins, &summary.TotalBreakMins)
+
+	// Format times
+	if summary.TotalPomoMins >= 60 {
+		summary.PomoFormatted = fmt.Sprintf("%dh %dm", summary.TotalPomoMins/60, summary.TotalPomoMins%60)
+	} else {
+		summary.PomoFormatted = fmt.Sprintf("%dm", summary.TotalPomoMins)
+	}
+
+	if summary.TotalBreakMins >= 60 {
+		summary.BreakFormatted = fmt.Sprintf("%dh %dm", summary.TotalBreakMins/60, summary.TotalBreakMins%60)
+	} else {
+		summary.BreakFormatted = fmt.Sprintf("%dm", summary.TotalBreakMins)
+	}
+
+	if summary.TotalPomoMins+summary.TotalBreakMins > 0 {
+		summary.BreakRatio = float64(summary.TotalBreakMins) / float64(summary.TotalPomoMins+summary.TotalBreakMins) * 100
+	}
+
+	// Create a map of existing data
+	dailyTotals := make(map[string]float64)
+	rows, err := database.DB.Query(`
+		SELECT 
+			log_date,
+			SUM(duration_mins) as total
+		FROM focus_logs
+		WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3 AND mode = 'pomo'
+		GROUP BY log_date`, userID, start.Format("2006-01-02"), end.Format("2006-01-02"))
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var d string
+			var w float64
+			if err := rows.Scan(&d, &w); err == nil {
+				dailyTotals[d] = w
+			}
+		}
+	}
+
+	// Fill exactly 7 days
+	days := []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+	for i := 0; i < 7; i++ {
+		currentDay := start.AddDate(0, 0, i)
+		dateStr := currentDay.Format("2006-01-02")
+		summary.DailyChart = append(summary.DailyChart, ChartPoint{
+			Label:  days[i],
+			Weight: dailyTotals[dateStr],
+		})
+	}
+
+	return summary
 }
 
 func FetchAnalyticsHeatmap(userID int, start, end time.Time) (map[string]AnalyticsMuscleStats, AnalyticsMuscleStats, float64) {

@@ -106,7 +106,7 @@ func HandleDeleteAllData(w http.ResponseWriter, r *http.Request) {
 		"workout_plans", "freestyle_logs", "body_weight_logs", 
 		"cardio_logs", "gym_logs", "user_macros_final", 
 		"daily_meals", "food_catalog", "sleep_logs", 
-		"focus_tasks", "checkins", "goals", "shop_catalog",
+		"focus_tasks", "focus_logs", "checkins", "goals", "shop_catalog",
 	}
 
 	for _, table := range tables {

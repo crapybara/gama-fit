@@ -303,12 +303,27 @@ func ConnectAndSetup() {
 			ALTER TABLE focus_tasks ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 		END IF;
 
+		-- focus_logs
+		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'focus_logs') THEN
+			CREATE TABLE focus_logs (
+				id SERIAL PRIMARY KEY,
+				user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				mode TEXT NOT NULL, -- pomo, short, long
+				duration_mins INTEGER NOT NULL,
+				log_date TEXT NOT NULL DEFAULT (CURRENT_DATE::TEXT),
+				log_time TEXT NOT NULL DEFAULT (CURRENT_TIME::TEXT)
+			);
+		ELSE
+			ALTER TABLE focus_logs ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+		END IF;
+
 		-- Add performance indexes
 		CREATE INDEX IF NOT EXISTS idx_freestyle_logs_user_exercise_date ON freestyle_logs(user_id, exercise_name, logged_date);
 		CREATE INDEX IF NOT EXISTS idx_body_weight_logs_user_date ON body_weight_logs(user_id, log_date);
 		CREATE INDEX IF NOT EXISTS idx_daily_meals_user_date ON daily_meals(user_id, log_date);
 		CREATE INDEX IF NOT EXISTS idx_sleep_logs_user_date ON sleep_logs(user_id, log_date);
 		CREATE INDEX IF NOT EXISTS idx_focus_tasks_user ON focus_tasks(user_id);
+		CREATE INDEX IF NOT EXISTS idx_focus_logs_user_date ON focus_logs(user_id, log_date);
 	END $$;
 	`
 

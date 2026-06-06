@@ -6,6 +6,7 @@ let timeLeft = 0;
 export let isRunning = false;
 let endTime = 0;
 export let timerMode = "pomo"; 
+let savedFocusTime = 0; // Tracks interrupted focus session
 let audioCtx = null;
 let sessionStats = JSON.parse(localStorage.getItem("study-session-stats") || '{"rounds":0, "breaks":0, "longBreaks":0}');
 
@@ -64,15 +65,41 @@ function runTimer() {
       clearInterval(timerId);
       isRunning = false;
       
-      if (timerMode === "pomo") sessionStats.rounds++;
+      const prevMode = timerMode;
+      if (timerMode === "pomo") {
+        sessionStats.rounds++;
+        savedFocusTime = 0;
+      }
       else if (timerMode === "short") sessionStats.breaks++;
       else if (timerMode === "long") sessionStats.longBreaks++;
       saveStats();
+
+      // Log full duration to server
+      let duration = config.pomo;
+      if (prevMode === "short") duration = config.short;
+      else if (prevMode === "long") duration = config.long;
+      logSession(prevMode, duration);
 
       playFinishTone();
       resetTimer();
     }
   }, 500);
+}
+
+async function logSession(mode, durationMins) {
+  if (durationMins <= 0) return;
+  try {
+    await fetch("/api/focus/log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        mode: mode, 
+        duration_mins: durationMins,
+        local_date: new Date().toISOString().split("T")[0],
+        local_time: new Date().toTimeString().split(" ")[0]
+      })
+    });
+  } catch(e) {}
 }
 
 export function toggleTimer() {
@@ -112,13 +139,49 @@ export function updateStatsDisplay() {
 }
 
 export function setTimerMode(mode) {
+  // If moving FROM pomo TO a break, save focus time and log partial session
+  if (timerMode === "pomo" && mode !== "pomo" && timeLeft > 0 && isRunning) {
+    savedFocusTime = timeLeft;
+    const elapsedMins = Math.round((config.pomo * 60 - timeLeft) / 60);
+    if (elapsedMins > 0) logSession("pomo", elapsedMins);
+  }
+  
   timerMode = mode;
-  resetTimer();
+  
+  // If moving TO pomo and we have saved focus time, restore it
+  if (mode === "pomo" && savedFocusTime > 0) {
+    clearInterval(timerId);
+    timeLeft = savedFocusTime;
+    savedFocusTime = 0;
+    endTime = 0;
+    isRunning = false;
+    updateTimerButtons();
+    updateTimerDisplay();
+  } else {
+    resetTimer();
+  }
 }
 
 export function skipBreak() {
-  timeLeft = 0;
-  endTime = Date.now();
+  if (isRunning) {
+    clearInterval(timerId);
+    isRunning = false;
+    // Log partial break time
+    let duration = timerMode === "short" ? config.short : config.long;
+    const elapsedMins = Math.round((duration * 60 - timeLeft) / 60);
+    if (elapsedMins > 0) logSession(timerMode, elapsedMins);
+  }
+
+  timerMode = "pomo";
+  if (savedFocusTime > 0) {
+    timeLeft = savedFocusTime;
+    savedFocusTime = 0; // Clear after restoring
+  } else {
+    resetTimer();
+  }
+  updateTimerButtons();
+  updateTimerDisplay();
+  toggleTimer();
 }
 
 export function stopTimer() {

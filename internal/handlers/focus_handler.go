@@ -15,6 +15,13 @@ type FocusTask struct {
 	Completed bool   `json:"completed"`
 }
 
+type FocusLog struct {
+	Mode         string `json:"mode"`
+	DurationMins int    `json:"duration_mins"`
+	LocalDate    string `json:"local_date"`
+	LocalTime    string `json:"local_time"`
+}
+
 func HandleFocusTasks(w http.ResponseWriter, r *http.Request) {
 	userID, _ := GetUserID(r)
 
@@ -59,6 +66,29 @@ func HandleFocusTasks(w http.ResponseWriter, r *http.Request) {
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+}
+
+func HandleFocusLog(w http.ResponseWriter, r *http.Request) {
+	userID, _ := GetUserID(r)
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var l FocusLog
+	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err := database.DB.Exec("INSERT INTO focus_logs (user_id, mode, duration_mins, log_date, log_time) VALUES ($1, $2, $3, $4, $5)", userID, l.Mode, l.DurationMins, l.LocalDate, l.LocalTime)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }
 
 func HandleFocusTaskActions(w http.ResponseWriter, r *http.Request) {

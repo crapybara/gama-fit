@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	defaultBaseURL    = "http://localhost:8095"
-	cookieFile = ".gama_session"
+	defaultBaseURL = "http://localhost:8095"
+	cookieFile     = ".gama_session"
 )
 
 var dynamicBaseURL string
@@ -31,6 +31,15 @@ type FocusTask struct {
 	ID        int    `json:"id"`
 	Title     string `json:"title"`
 	Completed bool   `json:"completed"`
+}
+
+type CatalogFoodItem struct {
+	Name     string  `json:"name"`
+	Calories int     `json:"calories"`
+	Protein  float64 `json:"protein"`
+	Carbs    float64 `json:"carbs"`
+	Fats     float64 `json:"fats"`
+	Weight   float64 `json:"weight"`
 }
 
 func main() {
@@ -49,38 +58,61 @@ func main() {
 	loadSession(jar)
 
 	switch command {
-	case "login":
+	case "-login":
 		if len(args) < 2 {
-			fmt.Println("Usage: gama login <username> <password>")
+			fmt.Println("Usage: gama -login <username> <password>")
 			return
 		}
 		login(client, args[0], args[1])
 
-	case "addtask":
+	case "-addtask":
 		if len(args) == 0 {
-			fmt.Println("Usage: gama addtask <task name>")
+			fmt.Println("Usage: gama -addtask <task name>")
 			return
 		}
 		addTask(client, strings.Join(args, " "))
 
-	case "list":
+	case "-list":
 		listTasks(client)
 
-	case "done":
+	case "-done":
 		if len(args) == 0 {
-			fmt.Println("Usage: gama done <task number>")
+			fmt.Println("Usage: gama -done <task number>")
 			return
 		}
 		idx, _ := strconv.Atoi(args[0])
 		actionTask(client, idx, "done")
 
-	case "clear":
+	case "-clear":
 		if len(args) == 0 {
-			fmt.Println("Usage: gama clear <task number>")
+			fmt.Println("Usage: gama -clear <task number>")
 			return
 		}
 		idx, _ := strconv.Atoi(args[0])
 		actionTask(client, idx, "clear")
+
+	case "-remove":
+		if len(args) == 0 {
+			fmt.Println("Usage: gama -remove <task number>")
+			return
+		}
+		idx, _ := strconv.Atoi(args[0])
+		actionTask(client, idx, "clear")
+
+	case "-play", "-pause":
+		fmt.Println("The Pomodoro timer is currently a browser-only client-side feature.")
+		fmt.Println("To play or pause the timer, please use the web interface.")
+
+	case "-foodslist":
+		listFoods(client)
+
+	case "-food":
+		if len(args) == 0 {
+			fmt.Println("Usage: gama -food <item number>")
+			return
+		}
+		idx, _ := strconv.Atoi(args[0])
+		logFood(client, idx)
 
 	default:
 		printUsage()
@@ -120,7 +152,7 @@ func addTask(client *http.Client, title string) {
 	if resp.StatusCode == http.StatusCreated {
 		fmt.Printf("Task added: %s\n", title)
 	} else if resp.StatusCode == http.StatusFound || resp.Header.Get("Location") == "/login.html" {
-		fmt.Println("Error: Not logged in. Use 'gama login <user> <pass>'")
+		fmt.Println("Error: Not logged in. Use 'gama -login <user> <pass>'")
 	} else {
 		fmt.Printf("Error: Status %d\n", resp.StatusCode)
 	}
@@ -136,7 +168,7 @@ func listTasks(client *http.Client) {
 
 	if resp.StatusCode != http.StatusOK {
 		if resp.Header.Get("Location") == "/login.html" || resp.StatusCode == http.StatusFound {
-			fmt.Println("Error: Not logged in. Use 'gama login <user> <pass>'")
+			fmt.Println("Error: Not logged in. Use 'gama -login <user> <pass>'")
 		} else {
 			fmt.Printf("Error: Status %d\n", resp.StatusCode)
 		}
@@ -157,7 +189,6 @@ func listTasks(client *http.Client) {
 }
 
 func actionTask(client *http.Client, pos int, action string) {
-	// Need to get ID first
 	resp, _ := client.Get(dynamicBaseURL + "/api/focus")
 	var tasks []FocusTask
 	json.NewDecoder(resp.Body).Decode(&tasks)
@@ -190,10 +221,77 @@ func actionTask(client *http.Client, pos int, action string) {
 		if action == "done" {
 			fmt.Println("Task marked as done!")
 		} else {
-			fmt.Println("Task cleared!")
+			fmt.Println("Task removed!")
 		}
 	} else {
 		fmt.Printf("Error: Status %d\n", resp.StatusCode)
+	}
+}
+
+func listFoods(client *http.Client) {
+	resp, err := client.Get(dynamicBaseURL + "/api/foods/catalog")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.Header.Get("Location") == "/login.html" || resp.StatusCode == http.StatusFound {
+			fmt.Println("Error: Not logged in. Use 'gama -login <user> <pass>'")
+		} else {
+			fmt.Printf("Error: Status %d\n", resp.StatusCode)
+		}
+		return
+	}
+
+	var items []CatalogFoodItem
+	json.NewDecoder(resp.Body).Decode(&items)
+
+	if len(items) == 0 {
+		fmt.Println("Your food catalog is empty.")
+		return
+	}
+
+	fmt.Println("Food Catalog:")
+	for i, item := range items {
+		fmt.Printf("%d. %s (%.0fg) - %d kcal | %.1fP %.1fC %.1fF\n", i+1, item.Name, item.Weight, item.Calories, item.Protein, item.Carbs, item.Fats)
+	}
+}
+
+func logFood(client *http.Client, pos int) {
+	// First fetch catalog to get the name
+	resp, err := client.Get(dynamicBaseURL + "/api/foods/catalog")
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	var items []CatalogFoodItem
+	json.NewDecoder(resp.Body).Decode(&items)
+
+	if pos < 1 || pos > len(items) {
+		fmt.Println("Invalid food item number. Use 'gama -foodslist' to see options.")
+		return
+	}
+	item := items[pos-1]
+
+	data := url.Values{}
+	data.Set("catalog_food", item.Name)
+	data.Set("catalog_grams", fmt.Sprintf("%.0f", item.Weight))
+
+	postResp, err := client.PostForm(dynamicBaseURL+"/api/meals", data)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+	defer postResp.Body.Close()
+
+	if postResp.StatusCode == http.StatusOK {
+		fmt.Printf("Successfully logged %s (%d kcal)!\n", item.Name, item.Calories)
+	} else {
+		fmt.Printf("Failed to log meal. Status: %d\n", postResp.StatusCode)
 	}
 }
 
@@ -224,11 +322,16 @@ func loadSession(jar http.CookieJar) {
 }
 
 func printUsage() {
-	fmt.Println("Gama CLI Focus List (HTTP Mode)")
+	fmt.Println("Gama CLI Companion")
 	fmt.Println("Usage:")
-	fmt.Println("  gama login <user> <pass>   - Log in to sync with web")
-	fmt.Println("  gama addtask <name>        - Add task to Focus List")
-	fmt.Println("  gama list                  - Show Focus List")
-	fmt.Println("  gama done <num>            - Mark task as done")
-	fmt.Println("  gama clear <num>           - Remove task")
+	fmt.Println("  gama -login <user> <pass>   - Log in to sync with web")
+	fmt.Println("  gama -addtask <name>        - Add task to Focus List")
+	fmt.Println("  gama -list                  - Show Focus List")
+	fmt.Println("  gama -done <num>            - Mark task as done")
+	fmt.Println("  gama -clear <num>           - Remove task")
+	fmt.Println("  gama -remove <num>          - Remove task (alias for clear)")
+	fmt.Println("  gama -play                  - Play pomodoro timer (Browser required)")
+	fmt.Println("  gama -pause                 - Pause pomodoro timer (Browser required)")
+	fmt.Println("  gama -foodslist             - List saved foods in catalog")
+	fmt.Println("  gama -food <num>            - Log a food from your catalog")
 }

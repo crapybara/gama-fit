@@ -263,6 +263,54 @@
                 </div>
             </div>
         </div>
+
+        <!-- Focus Stats Section -->
+        <div class="glass-panel rounded-[2.5rem] p-6 lg:p-10 relative overflow-hidden border border-zinc-800/80 shadow-2xl mt-6" id="focus-stats-panel">
+            <div class="absolute top-0 right-0 w-96 h-96 rounded-full blur-[150px] pointer-events-none" style="background:color-mix(in srgb, #00e5ff 7%, transparent);"></div>
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 relative z-10">
+                <div>
+                    <h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2 mb-1">
+                        <span style="color:#00e5ff">⏱️</span> Focus Session Stats
+                    </h3>
+                    <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Focus & Break Distribution</p>
+                </div>
+            </div>
+
+            <div class="relative z-10 w-full" data-focus-chart='{{.FocusChartJSON}}'>
+                <div class="w-full h-[200px] sm:h-[300px] relative mb-8">
+                    <canvas id="focusChart"></canvas>
+                </div>
+                
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Pomodoro</p>
+                        <h4 class="text-white text-xl font-black font-mono">
+                            {{.Focus.PomoFormatted}}
+                        </h4>
+                    </div>
+                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Breaks</p>
+                        <h4 class="text-white text-xl font-black font-mono">
+                            {{.Focus.BreakFormatted}}
+                        </h4>
+                    </div>
+                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Interruptions</p>
+                        <h4 class="text-white text-xl font-black font-mono">
+                            {{.Focus.Interruptions}}
+                        </h4>
+                    </div>
+                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
+                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Break Ratio</p>
+                        <h4 class="text-white text-xl font-black font-mono">
+                            {{printf "%.0f%%" .Focus.BreakRatio}}
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
       </div>
     </div>
   </main>
@@ -280,8 +328,10 @@
           
           if (exChartInst) exChartInst.destroy();
           if (bwChartInst) bwChartInst.destroy();
+          if (focusChartInst) focusChartInst.destroy();
           exChartInst = null;
           bwChartInst = null;
+          focusChartInst = null;
 
           const exSlider  = document.getElementById('ex-pan-slider');
           const bwSlider  = document.getElementById('bw-pan-slider');
@@ -294,9 +344,17 @@
               bwChartInst = renderChart('bodyWeightChart', window.originalChartData.bodyWeightPoints,
                   '#3b82f6', 'rgba(59,130,246,0.1)', bwChartInst, (i) => bwChartInst = i, bwSlider);
           }
+          function refreshFocus() {
+              const focusContainer = document.querySelector('[data-focus-chart]');
+              if (focusContainer) {
+                  const focusPoints = JSON.parse(focusContainer.getAttribute('data-focus-chart') || '[]');
+                  focusChartInst = renderBarChart('focusChart', focusPoints, '#00e5ff', 'rgba(0,229,255,0.1)', focusChartInst, (i) => focusChartInst = i);
+              }
+          }
 
           refreshEx();
           refreshBw();
+          refreshFocus();
 
           if (exSlider) {
               exSlider.removeEventListener('input', refreshEx);
@@ -336,7 +394,60 @@
 
       let exChartInst = null;
       let bwChartInst = null;
+      let focusChartInst = null;
       const VISIBLE_POINTS = 30;
+
+      function renderBarChart(id, points, color, bgColor, currentInst, setInst) {
+          const ctx = document.getElementById(id);
+          if (!ctx) return null;
+          if (!points || points.length === 0) {
+              if (currentInst) currentInst.destroy();
+              setInst(null);
+              return null;
+          }
+
+          if (currentInst) currentInst.destroy();
+
+          const newInst = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: points.map(p => p.label),
+                datasets: [{
+                  data: points.map(p => p.weight),
+                  backgroundColor: color,
+                  borderRadius: 6,
+                  barPercentage: 0.6,
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  x: { grid: { display: false }, ticks: { color: '#71717a', font: { size: 10, weight: 'bold' } } },
+                  y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#71717a', font: { size: 10 } } }
+                },
+                plugins: { 
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        let mins = context.parsed.y;
+                        let h = Math.floor(mins / 60);
+                        let m = mins % 60;
+                        if (h > 0) {
+                            return h + 'h ' + m + 'm';
+                        }
+                        return m + 'm';
+                      }
+                    }
+                  }
+                },
+                animation: { duration: 300 }
+              }
+          });
+          setInst(newInst);
+          return newInst;
+      }
 
       function renderChart(id, allPoints, color, bgColor, currentInst, setInst, sliderEl) {
           const ctx = document.getElementById(id);
