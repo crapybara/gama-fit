@@ -178,9 +178,17 @@ export function handleSearch() {
   searchResults.innerHTML = "";
   const filtered = playlist.filter(track => track.title.toLowerCase().includes(query));
   
-  filtered.slice(0, 50).forEach(track => {
+  filtered.slice(0, 500).forEach(track => {
     const btn = document.createElement("button");
-    btn.textContent = track.title;
+    
+    // Process title: remove leading numbers, then truncate to 20 words
+    let cleanTitle = track.title.replace(/^\d+[\s.-]*/, "").trim();
+    const words = cleanTitle.split(/\s+/);
+    if (words.length > 20) {
+      cleanTitle = words.slice(0, 20).join(" ") + "...";
+    }
+    
+    btn.textContent = cleanTitle;
     btn.addEventListener("click", () => {
       const idx = playlist.indexOf(track);
       setAudioTrack(idx, true);

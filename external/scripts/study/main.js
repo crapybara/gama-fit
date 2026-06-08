@@ -2,7 +2,8 @@ import { qs, qsa } from './utils.js';
 import { 
   toggleTimer, resetTimer, skipBreak, stopTimer,
   fetchPomoSettings, renderTodo, saveTodos, loadTodos,
-  updateStatsDisplay, setTimerMode, timerMode, isRunning
+  updateStatsDisplay, setTimerMode, timerMode, isRunning,
+  loadTimerState
 } from './timer.js';
 import { 
   toggleFullscreen, updateFullscreenIcons 
@@ -158,7 +159,9 @@ async function init() {
   await Promise.all([fetchPomoSettings(), loadUsername(), loadVideos(), loadMusicPresets(), loadQuotes()]);
   loadTodos();
   updateStatsDisplay();
-  resetTimer();
+  if (!loadTimerState()) {
+    resetTimer();
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

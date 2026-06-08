@@ -53,17 +53,53 @@ function updateTimerDisplay() {
   document.title = `${value} - Study`;
 }
 
+function saveTimerState() {
+  const state = {
+    timeLeft,
+    timerMode,
+    isRunning,
+    endTime: isRunning ? endTime : 0,
+    timestamp: Date.now()
+  };
+  localStorage.setItem("study-timer-state", JSON.stringify(state));
+}
+
+export function loadTimerState() {
+  const saved = localStorage.getItem("study-timer-state");
+  if (!saved) return false;
+  
+  const state = JSON.parse(saved);
+  timerMode = state.timerMode || "pomo";
+  
+  if (state.isRunning && state.endTime > Date.now()) {
+    timeLeft = Math.max(0, Math.round((state.endTime - Date.now()) / 1000));
+    endTime = state.endTime;
+    runTimer();
+  } else {
+    timeLeft = state.timeLeft || (config[timerMode] * 60);
+    isRunning = false;
+    updateTimerButtons();
+    updateTimerDisplay();
+  }
+  return true;
+}
+
 function runTimer() {
   clearInterval(timerId);
   isRunning = true;
   updateTimerButtons();
+  saveTimerState();
 
   timerId = setInterval(() => {
     timeLeft = Math.max(0, Math.round((endTime - Date.now()) / 1000));
     updateTimerDisplay();
+    
+    if (timeLeft % 5 === 0) saveTimerState();
+
     if (timeLeft <= 0) {
       clearInterval(timerId);
       isRunning = false;
+      saveTimerState();
       
       const prevMode = timerMode;
       if (timerMode === "pomo") {
@@ -107,6 +143,7 @@ export function toggleTimer() {
     clearInterval(timerId);
     isRunning = false;
     updateTimerButtons();
+    saveTimerState();
     return;
   }
 
@@ -125,6 +162,7 @@ export function resetTimer() {
   isRunning = false;
   updateTimerButtons();
   updateTimerDisplay();
+  saveTimerState();
 }
 
 function saveStats() {
@@ -160,6 +198,7 @@ export function setTimerMode(mode) {
   } else {
     resetTimer();
   }
+  saveTimerState();
 }
 
 export function skipBreak() {
@@ -181,6 +220,7 @@ export function skipBreak() {
   }
   updateTimerButtons();
   updateTimerDisplay();
+  saveTimerState();
   toggleTimer();
 }
 
@@ -253,12 +293,21 @@ export function renderTodo(task) {
 }
 
 export async function saveTodos(title) {
-  await fetch("/api/focus", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: title })
-  });
-  loadTodos();
+  // Optimistic UI: render locally first
+  const tempId = Date.now();
+  renderTodo({ id: tempId, title: title, completed: false });
+  
+  try {
+    const res = await fetch("/api/focus", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: title })
+    });
+    // After successful save, reload to get real IDs
+    if (res.ok) loadTodos();
+  } catch(e) {
+    console.error("Failed to save todo", e);
+  }
 }
 
 export async function loadTodos() {
