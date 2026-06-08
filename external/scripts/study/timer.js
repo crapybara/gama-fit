@@ -64,24 +64,45 @@ function saveTimerState() {
   localStorage.setItem("study-timer-state", JSON.stringify(state));
 }
 
+window.addEventListener("beforeunload", saveTimerState);
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) saveTimerState();
+});
+
 export function loadTimerState() {
   const saved = localStorage.getItem("study-timer-state");
   if (!saved) return false;
   
-  const state = JSON.parse(saved);
-  timerMode = state.timerMode || "pomo";
-  
-  if (state.isRunning && state.endTime > Date.now()) {
-    timeLeft = Math.max(0, Math.round((state.endTime - Date.now()) / 1000));
-    endTime = state.endTime;
-    runTimer();
-  } else {
-    timeLeft = state.timeLeft || (config[timerMode] * 60);
-    isRunning = false;
-    updateTimerButtons();
-    updateTimerDisplay();
+  try {
+    const state = JSON.parse(saved);
+    if (!state || typeof state !== "object") return false;
+
+    timerMode = state.timerMode || "pomo";
+    
+    if (state.isRunning && state.endTime > Date.now()) {
+      timeLeft = Math.max(0, Math.round((state.endTime - Date.now()) / 1000));
+      endTime = state.endTime;
+      runTimer();
+    } else {
+      timeLeft = state.timeLeft !== undefined ? state.timeLeft : (config[timerMode] * 60);
+      
+      // If it was running but endTime is past, it means it finished while away
+      if (state.isRunning && state.endTime <= Date.now() && state.endTime > 0) {
+         timeLeft = 0;
+         isRunning = false;
+      } else {
+         isRunning = false;
+      }
+      
+      endTime = 0;
+      updateTimerButtons();
+      updateTimerDisplay();
+    }
+    return true;
+  } catch (e) {
+    console.error("Failed to load timer state:", e);
+    return false;
   }
-  return true;
 }
 
 function runTimer() {
