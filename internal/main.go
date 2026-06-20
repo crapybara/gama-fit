@@ -51,7 +51,6 @@ func main() {
 	// Core HTMX Endpoints (Protected)
 	http.HandleFunc("/api/goals", handlers.AuthMiddleware(handlers.HandleGoals))
 	http.HandleFunc("/api/goals/", handlers.AuthMiddleware(handlers.HandleGoalActions))
-	http.HandleFunc("/api/coins", handlers.AuthMiddleware(handlers.GetCoins))
 	http.HandleFunc("/api/checkins", handlers.AuthMiddleware(handlers.HandleCheckins))
 	http.HandleFunc("/api/score", handlers.AuthMiddleware(handlers.GetFitnessScore))
 	http.HandleFunc("/api/plans", handlers.AuthMiddleware(handlers.HandleWorkoutPlan))
@@ -60,11 +59,6 @@ func main() {
 	http.HandleFunc("/api/freestyle/marklog", handlers.AuthMiddleware(handlers.HandleMarkLog))
 	http.HandleFunc("/api/cardio", handlers.AuthMiddleware(handlers.HandleCardio))
 	http.HandleFunc("/api/bodyweight", handlers.AuthMiddleware(handlers.HandleBodyWeight))
-	http.HandleFunc("/api/streak", handlers.AuthMiddleware(handlers.GetStreak))
-
-	// shop endpoints
-	http.HandleFunc("/api/shop", handlers.AuthMiddleware(handlers.HandleShop))
-	http.HandleFunc("/api/shop/", handlers.AuthMiddleware(handlers.HandleShop))
 
 	// Nutrition & Macro Endpoints (Protected)
 	http.HandleFunc("/api/macros/summary", handlers.AuthMiddleware(handlers.HandleMacrosSummary))
@@ -83,12 +77,6 @@ func main() {
 	http.HandleFunc("/analytics.html", handlers.AuthMiddleware(analytics.HandleAnalytics))
 	http.HandleFunc("/api/analytics/muscle-1rm", handlers.AuthMiddleware(analytics.HandleMuscle1RM))
 	http.HandleFunc("/api/analytics/heatmap", handlers.AuthMiddleware(analytics.HandleAnalyticsHeatmap))
-
-	// Resource Handlers
-	http.HandleFunc("/api/resources/gifs", handlers.AuthMiddleware(handlers.HandleGifs))
-	http.HandleFunc("/api/resources/music", handlers.AuthMiddleware(handlers.HandleMusicList))
-	http.HandleFunc("/api/resources/music-presets", handlers.AuthMiddleware(handlers.HandleMusicPresets))
-	http.HandleFunc("/api/resources/videos", handlers.AuthMiddleware(handlers.HandleVideos))
 
 	// DB Backup Endpoints (Protected)
 	http.HandleFunc("/api/db/export", handlers.AuthMiddleware(handlers.HandleExportDB))
