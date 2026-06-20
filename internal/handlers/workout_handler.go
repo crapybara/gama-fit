@@ -165,17 +165,19 @@ func HandleMarkLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lines := strings.Split(content, "\n")
-	
+
 	// Default to today's day of week
 	parsedDate, _ := time.Parse("2006-01-02", localDate)
 	currentDayOfWeek := int(parsedDate.Weekday())
 	if currentDayOfWeek == 0 {
 		currentDayOfWeek = 7
 	}
-	
+
 	targetDayOfWeek := currentDayOfWeek
 	targetDate := localDate
 	var aliases map[string]string
+
+	totalSetsLogged := 0
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -226,6 +228,16 @@ func HandleMarkLog(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
+			multiplier := 1
+			if strings.Contains(set, "*") {
+				multParts := strings.SplitN(set, "*", 2)
+				parsedMult, err := strconv.Atoi(strings.TrimSpace(multParts[0]))
+				if err == nil && parsedMult > 0 {
+					multiplier = parsedMult
+				}
+				set = strings.TrimSpace(multParts[1])
+			}
+
 			// Format: 10x60 (reps x weight)
 			setParts := strings.Split(strings.ToLower(set), "x")
 			if len(setParts) != 2 {
@@ -233,24 +245,39 @@ func HandleMarkLog(w http.ResponseWriter, r *http.Request) {
 			}
 
 			reps, _ := strconv.Atoi(strings.TrimSpace(setParts[0]))
-			weight, _ := strconv.ParseFloat(strings.TrimSpace(setParts[1]), 64)
+			weightStr := strings.TrimSpace(setParts[1])
+			weightStr = strings.TrimSuffix(weightStr, "kg")
+			weight, _ := strconv.ParseFloat(weightStr, 64)
 
 			if reps > 0 && weight > 0 {
 				var muscle string
 				database.DB.QueryRow("SELECT muscle FROM workout_plans WHERE user_id = $1 AND exercise_name = $2 LIMIT 1", userID, exerciseName).Scan(&muscle)
 
-				_, err := database.DB.Exec("INSERT INTO freestyle_logs (user_id, exercise_name, weight, reps, sets, muscle, logged_date, logged_time) VALUES ($1, $2, $3, $4, 1, $5, $6, $7)", userID, exerciseName, weight, reps, muscle, targetDate, localTime)
-				if err != nil {
-					log.Printf("Error inserting marklog entry: %v", err)
+				for i := 0; i < multiplier; i++ {
+					_, err := database.DB.Exec("INSERT INTO freestyle_logs (user_id, exercise_name, weight, reps, sets, muscle, logged_date, logged_time) VALUES ($1, $2, $3, $4, 1, $5, $6, $7)", userID, exerciseName, weight, reps, muscle, targetDate, localTime)
+					if err != nil {
+						log.Printf("Error inserting marklog entry: %v", err)
+					} else {
+						totalSetsLogged++
+					}
 				}
 			}
 		}
 	}
 
-	// Trigger HTMX refresh
-	http.Redirect(w, r, "/api/freestyle?local_date="+localDate, http.StatusSeeOther)
+	w.Header().Set("HX-Trigger", "freestyleUpdated")
+	if totalSetsLogged > 0 {
+		fmt.Fprintf(w, `<div class="bg-green-500/20 text-green-400 p-4 rounded-2xl text-sm border border-green-500/30 mb-4 animate-fade-in-up flex items-center justify-center gap-3 font-bold tracking-wide shadow-[0_0_20px_rgba(34,197,94,0.15)]">
+			<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+			Successfully logged %d sets!
+		</div>`, totalSetsLogged)
+	} else {
+		fmt.Fprint(w, `<div class="bg-red-500/20 text-red-400 p-4 rounded-2xl text-sm border border-red-500/30 mb-4 animate-fade-in-up flex items-center justify-center gap-3 font-bold tracking-wide shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+			<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+			Could not parse any valid sets.
+		</div>`)
+	}
 }
-
 
 // --- 2. WORKOUT PLAN (7-Day System) ---
 func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
@@ -273,6 +300,7 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 			setsStr := r.FormValue("sets")
 			reps := r.FormValue("reps")
 			muscle := r.FormValue("muscle")
+			exerciseType := r.FormValue("exercise_type")
 
 			sets, err := strconv.Atoi(setsStr)
 			if err != nil || sets <= 0 {
@@ -280,7 +308,7 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if exercise != "" {
-				_, err = database.DB.Exec("INSERT INTO workout_plans (user_id, day_of_week, exercise_name, sets, reps, muscle) VALUES ($1, $2, $3, $4, $5, $6)", userID, day, exercise, sets, reps, muscle)
+				_, err = database.DB.Exec("INSERT INTO workout_plans (user_id, day_of_week, exercise_name, sets, reps, muscle, exercise_type) VALUES ($1, $2, $3, $4, $5, $6, $7)", userID, day, exercise, sets, reps, muscle, exerciseType)
 				if err != nil {
 					log.Printf("Error inserting workout plan: %v", err)
 				}
@@ -294,7 +322,7 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	rows, err := database.DB.Query("SELECT id, exercise_name, sets, reps, muscle FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 ORDER BY id ASC", userID, day)
+	rows, err := database.DB.Query("SELECT id, exercise_name, sets, reps, muscle, COALESCE(exercise_type, '') FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 ORDER BY id ASC", userID, day)
 	if err != nil {
 		log.Printf("Error fetching workout plans: %v", err)
 		w.Write([]byte(`<div class="text-zinc-500 text-sm text-center py-6">Rest day or no exercises added yet.</div>`))
@@ -307,18 +335,22 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		exerciseCount++
 		var id int
-		var name, reps, msl string
+		var name, reps, msl, eType string
 		var sets int
-		if err := rows.Scan(&id, &name, &sets, &reps, &msl); err == nil {
+		if err := rows.Scan(&id, &name, &sets, &reps, &msl, &eType); err == nil {
+			typeBadge := ""
+			if eType != "" {
+				typeBadge = fmt.Sprintf(`<span class="text-[9px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded ml-2">%s</span>`, eType)
+			}
 			html += fmt.Sprintf(`
 		<div class="flex items-center justify-between bg-zinc-900/40 border border-white/5 rounded-xl p-3 hover:bg-zinc-900/80 transition-colors">
-			<span class="text-zinc-300 text-sm font-medium">%s <span class="text-[9px] text-zinc-500 uppercase tracking-widest ml-2">%s</span></span>
+			<span class="text-zinc-300 text-sm font-medium flex items-center">%s <span class="text-[9px] text-zinc-500 uppercase tracking-widest ml-2">%s</span>%s</span>
 			<div class="flex items-center gap-2 sm:gap-3">
 				<span class="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-400/10 px-2 py-1 rounded">%d Sets</span>
 				<span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-800 px-2 py-1 rounded">%s Reps</span>
 				<button hx-delete="/api/plans?day=%d&id=%d" hx-target="#plans-container" class="text-zinc-600 hover:text-red-500 transition-colors"><svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
 			</div>
-		</div>`, name, msl, sets, reps, day, id)
+		</div>`, name, msl, typeBadge, sets, reps, day, id)
 		}
 	}
 	html += `</div>`
@@ -360,6 +392,12 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 					<option value="neck">Neck</option>
 					<option value="cardio">Cardio</option>
 				</select>
+				<select name="exercise_type" required class="flex-1 bg-zinc-900/50 border border-zinc-700 rounded-xl px-4 py-3 text-xs text-zinc-400 outline-none focus:border-app-pink transition-colors appearance-none font-bold">
+					<option value="" disabled selected>Exercise Type</option>
+					<option value="compound">Compound</option>
+					<option value="isolation">Isolation</option>
+					<option value="bodyweight">Bodyweight</option>
+				</select>
 				<button type="submit" class="bg-app-pink text-white font-bold px-8 rounded-xl hover:bg-pink-500 transition-all shadow-[0_0_15px_rgba(255,0,160,0.2)] flex items-center justify-center">
 					<svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 					ADD EXERCISE
@@ -372,10 +410,13 @@ func HandleWorkoutPlan(w http.ResponseWriter, r *http.Request) {
 }
 
 type MuscleStats struct {
-	Volume    float64 `json:"volume"`
-	Sets      int     `json:"sets"`
-	Exercises int     `json:"exercises"`
-	Change    float64 `json:"change"`
+	Volume          float64 `json:"volume"`
+	Sets            int     `json:"sets"`
+	Exercises       int     `json:"exercises"`
+	Change          float64 `json:"change"`
+	TotalCompounds  int     `json:"totalCompounds"`
+	TotalIsolations int     `json:"totalIsolations"`
+	TotalBodyweight int     `json:"totalBodyweight"`
 }
 
 func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
@@ -392,12 +433,17 @@ func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
 	)`
 
 	// 1. Get Weekly Stats for global normalization and defaults
-	weeklyQuery := fmt.Sprintf("SELECT muscle, SUM(sets * %s), SUM(sets), COUNT(*) FROM workout_plans WHERE user_id = $1 GROUP BY muscle", repsCalc)
+	weeklyQuery := fmt.Sprintf(`SELECT muscle, SUM(sets * %s), SUM(sets), COUNT(*), 
+		COALESCE(SUM(CASE WHEN exercise_type='compound' THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN exercise_type='isolation' THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN exercise_type='bodyweight' THEN 1 ELSE 0 END), 0)
+		FROM workout_plans WHERE user_id = $1 GROUP BY muscle`, repsCalc)
 	rowsW, err := database.DB.Query(weeklyQuery, userID)
 	if err != nil {
 		log.Printf("Weekly heatmap query error: %v", err)
+	} else {
+		defer rowsW.Close()
 	}
-	defer rowsW.Close()
 
 	weeklyStats := make(map[string]MuscleStats)
 	weeklyMax := 0.0
@@ -406,9 +452,16 @@ func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
 	for rowsW.Next() {
 		var muscle string
 		var vol, sts float64 // Scan sets as float to handle SUM then cast
-		var ex int
-		if err := rowsW.Scan(&muscle, &vol, &sts, &ex); err == nil && muscle != "" {
-			stats := MuscleStats{Volume: vol, Sets: int(sts), Exercises: ex}
+		var ex, comp, iso, bw int
+		if err := rowsW.Scan(&muscle, &vol, &sts, &ex, &comp, &iso, &bw); err == nil && muscle != "" {
+			stats := MuscleStats{
+				Volume:          vol,
+				Sets:            int(sts),
+				Exercises:       ex,
+				TotalCompounds:  comp,
+				TotalIsolations: iso,
+				TotalBodyweight: bw,
+			}
 			weeklyStats[muscle] = stats
 			if vol > weeklyMax {
 				weeklyMax = vol
@@ -416,6 +469,9 @@ func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
 			totalWeekly.Volume += vol
 			totalWeekly.Sets += int(sts)
 			totalWeekly.Exercises += ex
+			totalWeekly.TotalCompounds += comp
+			totalWeekly.TotalIsolations += iso
+			totalWeekly.TotalBodyweight += bw
 		}
 	}
 
@@ -425,20 +481,34 @@ func HandleWorkoutHeatmap(w http.ResponseWriter, r *http.Request) {
 
 	if scope == "day" && dayStr != "" {
 		if day, err := strconv.Atoi(dayStr); err == nil {
-			dayQuery := fmt.Sprintf("SELECT muscle, SUM(sets * %s), SUM(sets), COUNT(*) FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 GROUP BY muscle", repsCalc)
+			dayQuery := fmt.Sprintf(`SELECT muscle, SUM(sets * %s), SUM(sets), COUNT(*),
+				COALESCE(SUM(CASE WHEN exercise_type='compound' THEN 1 ELSE 0 END), 0),
+				COALESCE(SUM(CASE WHEN exercise_type='isolation' THEN 1 ELSE 0 END), 0),
+				COALESCE(SUM(CASE WHEN exercise_type='bodyweight' THEN 1 ELSE 0 END), 0)
+				FROM workout_plans WHERE user_id = $1 AND day_of_week = $2 GROUP BY muscle`, repsCalc)
 			rowsD, err := database.DB.Query(dayQuery, userID, day)
 			if err == nil {
 				defer rowsD.Close()
 				for rowsD.Next() {
 					var m string
 					var v, s float64
-					var e int
-					if err := rowsD.Scan(&m, &v, &s, &e); err == nil && m != "" {
-						st := MuscleStats{Volume: v, Sets: int(s), Exercises: e}
+					var e, c, i, b int
+					if err := rowsD.Scan(&m, &v, &s, &e, &c, &i, &b); err == nil && m != "" {
+						st := MuscleStats{
+							Volume:          v,
+							Sets:            int(s),
+							Exercises:       e,
+							TotalCompounds:  c,
+							TotalIsolations: i,
+							TotalBodyweight: b,
+						}
 						heatmap[m] = st
 						totalScoped.Volume += v
 						totalScoped.Sets += int(s)
 						totalScoped.Exercises += e
+						totalScoped.TotalCompounds += c
+						totalScoped.TotalIsolations += i
+						totalScoped.TotalBodyweight += b
 					}
 				}
 			}
@@ -493,8 +563,8 @@ func HandleBodyWeight(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `
 			<div id="bodyweight-content" class="relative z-10 flex-1 flex flex-col items-center justify-center py-4 w-full">
 				<form hx-post="/api/bodyweight" hx-swap="outerHTML" hx-target="#bodyweight-content" class="flex flex-col items-center justify-center gap-3 w-full max-w-[200px] mx-auto px-4">
-					<input type="number" name="weight" step="0.1" placeholder="00.0" required class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3 text-2xl sm:text-3xl text-center text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono">
-					<button type="submit" class="w-full bg-blue-500 text-black font-black py-3 rounded-xl hover:bg-blue-400 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)] hover:shadow-[0_0_25px_rgba(59,130,246,0.5)] uppercase tracking-wider text-xs">Log Weight</button>
+					<input type="number" name="weight" step="0.01" placeholder="00.00" required class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-3 text-2xl sm:text-3xl text-center text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono">
+					<button type="submit" class="w-full bg-blue-500 text-black font-black py-3 rounded-xl hover:bg-blue-400 transition-all shadow-[0_0_15px_rgba(59,130,246,0.3)]  uppercase tracking-wider text-xs">Log Weight</button>
 				</form>
 			</div>
 		`)
@@ -536,8 +606,9 @@ func HandleCardio(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query("SELECT id, heart_rate, duration, pace, intensity FROM cardio_logs WHERE user_id = $1 AND logged_date = $2 ORDER BY id DESC", userID, localDate)
 	if err != nil {
 		log.Printf("Error fetching cardio logs: %v", err)
+	} else {
+		defer rows.Close()
 	}
-	defer rows.Close()
 
 	logsHtml := ""
 	for rows.Next() {
@@ -589,11 +660,11 @@ func HandleCardio(w http.ResponseWriter, r *http.Request) {
 				<p class="text-[8px] text-zinc-500 leading-tight mt-1">Sprints/HIIT</p>
 			</div>
 		</div>
-	`, 
-	int(float64(mhr)*0.5), int(float64(mhr)*0.6),
-	int(float64(mhr)*0.6), int(float64(mhr)*0.75),
-	int(float64(mhr)*0.75), int(float64(mhr)*0.85),
-	int(float64(mhr)*0.85), int(float64(mhr)*0.95))
+	`,
+		int(float64(mhr)*0.5), int(float64(mhr)*0.6),
+		int(float64(mhr)*0.6), int(float64(mhr)*0.75),
+		int(float64(mhr)*0.75), int(float64(mhr)*0.85),
+		int(float64(mhr)*0.85), int(float64(mhr)*0.95))
 
 	formHtml := `
 		<form hx-post="/api/cardio" hx-target="#cardio-list" hx-on::after-request="this.reset()" class="flex flex-col gap-3 mb-6">

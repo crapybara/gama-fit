@@ -77,7 +77,7 @@ func HandleCheckins(w http.ResponseWriter, r *http.Request) {
 		if checkinMap[localDate] {
 			html += `<button disabled class="bg-blue-500/20 text-blue-400 font-bold px-6 py-2.5 rounded-xl cursor-not-allowed border border-blue-500/50 w-full sm:w-auto">✅ Checked In Today</button>`
 		} else {
-			html += fmt.Sprintf(`<button hx-post="/api/checkins?date=%s&year=%d&month=%d&local_date=%s" hx-target="#checkin-board-container" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:scale-105 w-full sm:w-auto">Check In Today</button>`, localDate, targetYear, targetMonth, localDate)
+			html += fmt.Sprintf(`<button hx-post="/api/checkins?date=%s&year=%d&month=%d&local_date=%s" hx-target="#checkin-board-container" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2.5 rounded-xl transition-all w-full sm:w-auto">Check In Today</button>`, localDate, targetYear, targetMonth, localDate)
 		}
 	}
 	html += `</div>`
@@ -104,7 +104,7 @@ func HandleCheckins(w http.ResponseWriter, r *http.Request) {
 			html += fmt.Sprintf(`<div class="%s">%d</div>`, classes, i)
 		} else {
 			if isActive {
-				classes += "bg-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.4)] border border-blue-400 hover:bg-red-500 hover:border-red-400 hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] cursor-pointer"
+				classes += "bg-blue-500 text-white border border-blue-400 hover:bg-red-500 hover:border-red-400 cursor-pointer"
 			} else {
 				classes += "bg-zinc-800/40 text-zinc-500 border border-white/5 hover:border-blue-500 hover:text-blue-400 cursor-pointer"
 			}

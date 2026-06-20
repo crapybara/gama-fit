@@ -92,9 +92,6 @@ func ConnectAndSetup() {
 				age INTEGER DEFAULT 25,
 				gender TEXT DEFAULT 'male',
 				theme TEXT DEFAULT 'default',
-				pomo_duration INTEGER DEFAULT 25,
-				short_break INTEGER DEFAULT 5,
-				long_break INTEGER DEFAULT 15,
 				goal_weight REAL DEFAULT 0
 			);
 		ELSE
@@ -107,9 +104,6 @@ func ConnectAndSetup() {
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS age INTEGER DEFAULT 25;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS gender TEXT DEFAULT 'male';
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'default';
-			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS pomo_duration INTEGER DEFAULT 25;
-			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS short_break INTEGER DEFAULT 5;
-			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS long_break INTEGER DEFAULT 15;
 			ALTER TABLE user_stats ADD COLUMN IF NOT EXISTS goal_weight REAL DEFAULT 0;
 		END IF;
 
@@ -184,11 +178,13 @@ func ConnectAndSetup() {
 				exercise_name TEXT NOT NULL,
 				sets INTEGER NOT NULL DEFAULT 3,
 				reps TEXT NOT NULL DEFAULT '8-10',
-				muscle TEXT
+				muscle TEXT,
+				exercise_type TEXT
 			);
 		ELSE
 			ALTER TABLE workout_plans ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 			ALTER TABLE workout_plans ADD COLUMN IF NOT EXISTS muscle TEXT;
+			ALTER TABLE workout_plans ADD COLUMN IF NOT EXISTS exercise_type TEXT;
 		END IF;
 
 		-- user_macros_final
@@ -290,40 +286,11 @@ func ConnectAndSetup() {
 			ALTER TABLE shop_catalog ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
 		END IF;
 
-		-- focus_tasks
-		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'focus_tasks') THEN
-			CREATE TABLE focus_tasks (
-				id SERIAL PRIMARY KEY,
-				user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-				title TEXT NOT NULL,
-				completed INTEGER NOT NULL DEFAULT 0,
-				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-			);
-		ELSE
-			ALTER TABLE focus_tasks ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
-		END IF;
-
-		-- focus_logs
-		IF NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'focus_logs') THEN
-			CREATE TABLE focus_logs (
-				id SERIAL PRIMARY KEY,
-				user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-				mode TEXT NOT NULL, -- pomo, short, long
-				duration_mins INTEGER NOT NULL,
-				log_date TEXT NOT NULL DEFAULT (CURRENT_DATE::TEXT),
-				log_time TEXT NOT NULL DEFAULT (CURRENT_TIME::TEXT)
-			);
-		ELSE
-			ALTER TABLE focus_logs ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
-		END IF;
-
 		-- Add performance indexes
 		CREATE INDEX IF NOT EXISTS idx_freestyle_logs_user_exercise_date ON freestyle_logs(user_id, exercise_name, logged_date);
 		CREATE INDEX IF NOT EXISTS idx_body_weight_logs_user_date ON body_weight_logs(user_id, log_date);
 		CREATE INDEX IF NOT EXISTS idx_daily_meals_user_date ON daily_meals(user_id, log_date);
 		CREATE INDEX IF NOT EXISTS idx_sleep_logs_user_date ON sleep_logs(user_id, log_date);
-		CREATE INDEX IF NOT EXISTS idx_focus_tasks_user ON focus_tasks(user_id);
-		CREATE INDEX IF NOT EXISTS idx_focus_logs_user_date ON focus_logs(user_id, log_date);
 	END $$;
 	`
 

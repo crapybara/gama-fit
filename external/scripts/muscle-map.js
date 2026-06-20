@@ -122,6 +122,18 @@ function initMuscleMap(containerId, onToggleMuscle) {
                     <span class="stat-label">Exercises</span>
                     <span class="stat-value" id="stat-exercises">0</span>
                 </div>
+                <div class="stat-item border-t border-white/5 pt-2 mt-1">
+                    <span class="stat-label">Compounds</span>
+                    <span class="stat-value" id="stat-compounds">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Isolations</span>
+                    <span class="stat-value" id="stat-isolations">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Bodyweight</span>
+                    <span class="stat-value" id="stat-bodyweight">0</span>
+                </div>
                 ${container.classList.contains('analytics-mode') ? `
                 <div class="stat-item border-t border-white/5 pt-3 mt-1">
                     <span class="stat-label">Volume Change</span>
@@ -298,12 +310,18 @@ function updateStatsDisplay(muscleKey) {
     const volDisplay = document.getElementById('stat-volume');
     const setsDisplay = document.getElementById('stat-sets');
     const exDisplay = document.getElementById('stat-exercises');
+    const compDisplay = document.getElementById('stat-compounds');
+    const isoDisplay = document.getElementById('stat-isolations');
+    const bwDisplay = document.getElementById('stat-bodyweight');
     const changeDisplay = document.getElementById('stat-change');
 
     if (nameDisplay) nameDisplay.innerText = muscleKey ? muscleKey.toUpperCase() : "TOTAL OVERVIEW";
     if (volDisplay) volDisplay.innerHTML = `${Math.round(stats.volume)}<span class="stat-unit">VOL</span>`;
     if (setsDisplay) setsDisplay.innerText = stats.sets;
     if (exDisplay) exDisplay.innerText = stats.exercises;
+    if (compDisplay) compDisplay.innerText = stats.totalCompounds || 0;
+    if (isoDisplay) isoDisplay.innerText = stats.totalIsolations || 0;
+    if (bwDisplay) bwDisplay.innerText = stats.totalBodyweight || 0;
 
     // Handle Uncategorized volume display for Total Overview
     const extra = document.getElementById('muscle-extra-details');

@@ -28,19 +28,3 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
-/* --- Macro Box Hover Swapping --- */
-.macro-box .macro-kcal {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-.macro-box .macro-grams {
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-.macro-box:hover .macro-kcal {
-  opacity: 1;
-}
-.macro-box:hover .macro-grams {
-  opacity: 0;
-}

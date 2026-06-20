@@ -74,7 +74,6 @@ func calculate14DaySleepScore(userID int) int {
 		quality  string
 		duration int
 	}
-	totalDurationMins := 0
 	for rows.Next() {
 		var q string
 		var d int
@@ -83,7 +82,6 @@ func calculate14DaySleepScore(userID int) int {
 				quality  string
 				duration int
 			}{q, d})
-			totalDurationMins += d
 		}
 	}
 
@@ -92,50 +90,26 @@ func calculate14DaySleepScore(userID int) int {
 		return 0
 	}
 
-	avgDurationHours := float64(totalDurationMins) / float64(numLogs) / 60.0
-
-	avgOrBetterCount := 0
-	greatCount := 0
-	allEightPlus := true
-	if numLogs < 13 { // Need at least 13 logs for the high scores
-		allEightPlus = false
-	}
-
+	totalScore := 0.0
 	for _, log := range logs {
-		if log.quality == "avg" || log.quality == "great" {
-			avgOrBetterCount++
-		}
+		// Calculate daily score using Gaussian curve
+		optimumMins := 480.0
+		diff := math.Abs(float64(log.duration) - optimumMins)
+		dailyScore := 80.0 * math.Exp(-0.5*math.Pow(diff/90.0, 2)) // 80 points for duration
+
 		if log.quality == "great" {
-			greatCount++
+			dailyScore += 20.0
+		} else if log.quality == "avg" {
+			dailyScore += 10.0
 		}
-		if log.duration < 480 { // 8 hours = 480 mins
-			allEightPlus = false
+
+		if dailyScore > 100 {
+			dailyScore = 100
 		}
+		totalScore += dailyScore
 	}
 
-	// Special cases (Need at least 13-14 logs)
-	if allEightPlus && greatCount >= 14 && numLogs >= 14 {
-		return 100
-	}
-	if allEightPlus && greatCount >= 13 && numLogs >= 13 {
-		return 98
-	}
-
-	score := 0
-	if greatCount > 13 {
-		score = 70
-	} else if avgOrBetterCount > 10 {
-		score = 50
-	}
-
-	if avgDurationHours > 6.5 {
-		score += 15
-	}
-
-	if score > 100 {
-		return 100
-	}
-	return score
+	return int(math.Round(totalScore / float64(numLogs)))
 }
 
 func HandleSleepSummary(w http.ResponseWriter, r *http.Request) {
@@ -254,7 +228,6 @@ func HandleSleep(w http.ResponseWriter, r *http.Request) {
 		// Resource friendly: Keep only last 30 days of data
 		_, _ = database.DB.Exec("DELETE FROM sleep_logs WHERE user_id = $1 AND log_date < (CURRENT_DATE - INTERVAL '30 days')::TEXT", userID)
 
-
 		fmt.Fprint(w, `<div id="sleep-summary" hx-swap-oob="true" hx-get="/api/sleep/summary" hx-trigger="load" class="glass-panel rounded-[2.5rem] p-8 lg:p-12 relative overflow-hidden page-animate-fade layout-delay"></div>`)
 	} else if r.Method == http.MethodDelete {
 		id := r.URL.Query().Get("id")
@@ -325,4 +298,129 @@ func HandleSleepHistory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprint(w, html)
+}
+
+func HandleRecoveryDashboard(w http.ResponseWriter, r *http.Request) {
+	userID, err := GetUserID(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	localDate, _ := getLocalTime(r)
+
+	// 1. Get Sleep Score
+	sleepScore := calculate14DaySleepScore(userID)
+
+	// 2. Get Muscle Data
+	rows, err := database.DB.Query(`
+		SELECT muscle, MAX(logged_date), COUNT(DISTINCT logged_date) 
+		FROM freestyle_logs 
+		WHERE user_id = $1 AND muscle IS NOT NULL AND muscle != '' AND is_cardio = 0
+		GROUP BY muscle
+	`, userID)
+
+	type MuscleStat struct {
+		Name      string
+		Recovery  int
+		Frequency int
+		Color     string
+	}
+	var muscles []MuscleStat
+	totalRecovery := 0.0
+
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var name string
+			var maxDateStr string
+			var freq int
+			if err := rows.Scan(&name, &maxDateStr, &freq); err == nil {
+				maxDate, _ := time.Parse("2006-01-02", maxDateStr)
+				localDateParsed, _ := time.Parse("2006-01-02", localDate)
+				daysSince := localDateParsed.Sub(maxDate).Hours() / 24.0
+				if daysSince < 0 {
+					daysSince = 0
+				}
+
+				// 3 days to fully recover
+				rec := (daysSince / 3.0) * 100.0
+				if rec > 100 {
+					rec = 100
+				}
+
+				color := "text-emerald-400"
+				if rec < 50 {
+					color = "text-red-400"
+				} else if rec < 80 {
+					color = "text-yellow-400"
+				}
+
+				muscles = append(muscles, MuscleStat{
+					Name:      name,
+					Recovery:  int(rec),
+					Frequency: freq,
+					Color:     color,
+				})
+				totalRecovery += rec
+			}
+		}
+	}
+
+	avgMuscleRecovery := 100.0
+	if len(muscles) > 0 {
+		avgMuscleRecovery = totalRecovery / float64(len(muscles))
+	}
+
+	// Overall Recovery Score
+	overallScore := int((float64(sleepScore) + avgMuscleRecovery) / 2.0)
+	if overallScore == 0 && len(muscles) == 0 {
+		overallScore = 100 // default if no data
+	}
+
+	// Sort muscles by lowest recovery first
+	for i := 0; i < len(muscles); i++ {
+		for j := i + 1; j < len(muscles); j++ {
+			if muscles[i].Recovery > muscles[j].Recovery {
+				muscles[i], muscles[j] = muscles[j], muscles[i]
+			}
+		}
+	}
+
+	htmlOut := fmt.Sprintf(`
+		<div class="flex items-center justify-between mb-8 relative z-10">
+			<h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2">
+				<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+				Recovery Dashboard
+			</h3>
+			<div class="flex items-center gap-2">
+				<span class="text-xs text-zinc-500 uppercase tracking-widest font-bold">Overall</span>
+				<span class="text-2xl font-black text-white">%d%%</span>
+			</div>
+		</div>
+		<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 relative z-10">
+	`, overallScore)
+
+	if len(muscles) == 0 {
+		htmlOut += `<div class="col-span-full text-center py-6 text-zinc-500 text-sm">No recent muscle activity logged.</div>`
+	}
+
+	for _, m := range muscles {
+		htmlOut += fmt.Sprintf(`
+			<div class="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center hover:border-white/10 transition-colors">
+				<div class="relative w-16 h-16 flex items-center justify-center mb-3">
+					<svg class="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+						<path class="text-zinc-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3" />
+						<path class="%s drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" stroke-dasharray="%d, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+					</svg>
+					<span class="text-sm font-black text-white relative z-10">%d%%</span>
+				</div>
+				<span class="text-white font-bold text-xs capitalize truncate w-full mb-1">%s</span>
+				<span class="text-[10px] text-zinc-500 font-mono tracking-wider">%d LOGS</span>
+			</div>
+		`, m.Color, m.Recovery, m.Recovery, m.Name, m.Frequency)
+	}
+
+	htmlOut += `</div>`
+
+	w.Write([]byte(htmlOut))
 }

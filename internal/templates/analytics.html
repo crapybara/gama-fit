@@ -40,7 +40,7 @@
       <a href="caltrack.html" class="nav-link-caltrack group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Nutrition"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8c0-4.4-3.6-8-8-8S2 3.6 2 8c0 3.1 1.7 5.8 4.3 7.2l1.4 6.8c.2.8 1.3.8 1.5 0l1.4-6.8C13.3 13.8 18 11.1 18 8z"/><path d="M22 13.3V5c0-1.7-1.3-3-3-3v14.4c1.3-.4 2.4-1.3 2.8-2.5l.2-.6z"/></svg></a>
       <a href="sleep.html" class="nav-link-sleep group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Sleep"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></a>
       <a href="analytics.html" class="nav-link-analytics group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-app-pink/10 text-app-pink md:bg-app-pink md:text-white transition-all hover:scale-105 shadow-[0_0_15px_rgba(255,0,160,0.3)]" title="Analytics"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></a>
-      <a href="study.html" class="nav-link-study group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Study Mode"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></a>
+
       <a href="settings.html" class="nav-link-settings group relative flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all hover:scale-105" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></a>
     </div>
   </nav>
@@ -157,10 +157,93 @@
                             </div>
                             <div class="text-right border-l border-zinc-800/50 pl-4 sm:pl-6">
                                 <p class="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Lean Mass</p>
-                                <h3 class="text-white font-black text-xl font-outfit">{{printf "%.1f" .LBM}}<span class="text-[10px] text-blue-500 ml-0.5">KG</span></h3>
+                                <h3 class="text-white font-black text-xl font-outfit">{{printf "%.1f" .LeanMass}}<span class="text-[10px] text-blue-500 ml-0.5">KG</span></h3>
+                            </div>
+                            <div class="text-right border-l border-zinc-800/50 pl-4 sm:pl-6">
+                                <p class="text-zinc-500 text-[9px] font-black uppercase tracking-widest mb-1">Body Fat</p>
+                                <h3 class="text-white font-black text-xl font-outfit">{{printf "%.1f" .BodyFat}}<span class="text-[10px] text-blue-500 ml-0.5">%</span></h3>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Goal Progress Card -->
+        <div class="grid grid-cols-1 gap-5 mb-6">
+            <div class="glass-panel rounded-[2rem] p-6 sm:p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 rounded-full blur-[100px] pointer-events-none" style="background:color-mix(in srgb, var(--app-emerald) 12%, transparent);"></div>
+                
+                <h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2 mb-6 relative z-10">
+                    <span class="text-emerald-400">🎯</span> Total Overview
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8 relative z-10">
+                    
+                    <!-- Weight Progress -->
+                    <div>
+                        <div class="flex items-end justify-between mb-2">
+                            <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Weight Goal</p>
+                            <span class="text-white font-bold text-xs">{{printf "%.1f" .CurrentWeight}} / {{printf "%.1f" .GoalWeight}} KG</span>
+                        </div>
+                        <div class="w-full bg-zinc-900 rounded-full h-2 mb-1 border border-white/5">
+                            <div class="bg-emerald-400 h-2 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)]" style="width: {{printf "%.0f" .WeightProgressPct}}%"></div>
+                        </div>
+                        <p class="text-right text-[9px] font-bold text-emerald-400 uppercase tracking-wider">{{printf "%.0f" .WeightProgressPct}}% Achieved</p>
+                    </div>
+
+                    <!-- Macro Progress: Calories -->
+                    <div>
+                        <div class="flex items-end justify-between mb-2">
+                            <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Weekly Calories</p>
+                            <span class="text-white font-bold text-xs">{{.WeeklyLoggedCals}} / {{.WeeklyTargetCals}}</span>
+                        </div>
+                        <div class="w-full bg-zinc-900 rounded-full h-2 mb-1 border border-white/5">
+                            <div class="bg-app-yellow h-2 rounded-full shadow-[0_0_10px_rgba(250,204,21,0.5)]" style="width: {{printf "%.0f" .CalProgressWidth}}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">T: {{.WeeklyTargetCals}}/wk | Avg: {{.AvgCalories}}/d</p>
+                            <p class="text-[9px] font-bold text-app-yellow uppercase tracking-wider">{{printf "%.0f" .CalProgressPct}}%</p>
+                        </div>
+                    </div>
+
+                    <!-- Macro Progress: Protein -->
+                    <div>
+                        <div class="flex items-end justify-between mb-2">
+                            <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Weekly Protein</p>
+                            <span class="text-white font-bold text-xs">{{.WeeklyLoggedPro}} / {{.WeeklyTargetPro}}g</span>
+                        </div>
+                        <div class="w-full bg-zinc-900 rounded-full h-2 mb-1 border border-white/5">
+                            <div class="bg-app-pink h-2 rounded-full shadow-[0_0_10px_rgba(255,0,160,0.5)]" style="width: {{printf "%.0f" .ProProgressWidth}}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">T: {{.WeeklyTargetPro}}g/wk | Avg: {{.AvgProtein}}g/d</p>
+                            <p class="text-[9px] font-bold text-app-pink uppercase tracking-wider">{{printf "%.0f" .ProProgressPct}}%</p>
+                        </div>
+                    </div>
+
+                    <!-- Volume Progress -->
+                    <div>
+                        <div class="flex items-end justify-between mb-2">
+                            <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Volume Goal</p>
+                            <span class="text-white font-bold text-xs">{{.LoggedVolume}} / {{.PlannedVolume}} VOL</span>
+                        </div>
+                        <div class="w-full bg-zinc-900 rounded-full h-2 mb-1 border border-white/5">
+                            <div class="bg-blue-400 h-2 rounded-full shadow-[0_0_10px_rgba(96,165,250,0.5)]" style="width: {{printf "%.0f" .VolProgressWidth}}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <p class="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">{{.LoggedSets}}/{{.PlannedSets}} Sets • {{.LoggedExercises}}/{{.PlannedExercises}} Ex</p>
+                            {{if gt .VolProgressPct 100.0}}
+                                <div class="text-right">
+                                    <p class="text-[9px] font-bold text-blue-400 uppercase tracking-wider mb-0.5">✔ {{printf "%.0f" .VolProgressPct}}% of Goal</p>
+                                    <p class="text-[9px] font-bold text-blue-400 uppercase tracking-wider">+{{.ExtraVolume}} VOL</p>
+                                </div>
+                            {{else}}
+                                <p class="text-[9px] font-bold text-blue-400 uppercase tracking-wider">{{printf "%.0f" .VolProgressPct}}%</p>
+                            {{end}}
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -176,13 +259,18 @@
                     </h3>
                     <p class="text-zinc-500 text-xs font-bold uppercase tracking-widest">Weight (kg) vs Time</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Exercise:</span>
-                    <form method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML">
-                        <input type="hidden" name="year" value="{{.SelectedYear}}">
-                        <input type="hidden" name="range" value="{{.SelectedRange}}">
-                        <div class="relative group">
-                            <select name="exercise" onchange="this.form.dispatchEvent(new Event('submit'))" class="bg-zinc-900/80 border border-zinc-700 hover:border-pink-500 text-white pl-4 pr-10 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all outline-none cursor-pointer shadow-lg appearance-none min-w-[160px]">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div class="bg-zinc-900/80 border border-zinc-800 rounded-xl p-1 flex items-center">
+                        <button onclick="setExMode('avg')" id="btn-ex-avg" type="button" class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-white bg-zinc-800">Avg</button>
+                        <button onclick="setExMode('max')" id="btn-ex-max" type="button" class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:text-white">Top Set</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Exercise:</span>
+                        <form method="GET" action="/analytics.html" hx-get="/analytics.html" hx-target="#analytics-shell" hx-select="#analytics-shell" hx-push-url="true" hx-swap="outerHTML">
+                            <input type="hidden" name="year" value="{{.SelectedYear}}">
+                            <input type="hidden" name="range" value="{{.SelectedRange}}">
+                            <div class="relative group">
+                                <select name="exercise" onchange="this.form.dispatchEvent(new Event('submit'))" class="bg-zinc-900/80 border border-zinc-700 hover:border-pink-500 text-white pl-4 pr-10 py-2.5 rounded-xl text-xs font-bold tracking-wider transition-all outline-none cursor-pointer shadow-lg appearance-none min-w-[160px]">
                                 {{if not .Exercises}}
                                 <option value="">No logs found</option>
                                 {{else}}
@@ -196,6 +284,7 @@
                             </div>
                         </div>
                     </form>
+                    </div>
                 </div>
             </div>
 
@@ -264,53 +353,6 @@
             </div>
         </div>
 
-        <!-- Focus Stats Section -->
-        <div class="glass-panel rounded-[2.5rem] p-6 lg:p-10 relative overflow-hidden border border-zinc-800/80 shadow-2xl mt-6" id="focus-stats-panel">
-            <div class="absolute top-0 right-0 w-96 h-96 rounded-full blur-[150px] pointer-events-none" style="background:color-mix(in srgb, #00e5ff 7%, transparent);"></div>
-            
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 relative z-10">
-                <div>
-                    <h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2 mb-1">
-                        <span style="color:#00e5ff">⏱️</span> Focus Session Stats
-                    </h3>
-                    <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Focus & Break Distribution</p>
-                </div>
-            </div>
-
-            <div class="relative z-10 w-full" data-focus-chart='{{.FocusChartJSON}}'>
-                <div class="w-full h-[200px] sm:h-[300px] relative mb-8">
-                    <canvas id="focusChart"></canvas>
-                </div>
-                
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
-                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Pomodoro</p>
-                        <h4 class="text-white text-xl font-black font-mono">
-                            {{.Focus.PomoFormatted}}
-                        </h4>
-                    </div>
-                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
-                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Breaks</p>
-                        <h4 class="text-white text-xl font-black font-mono">
-                            {{.Focus.BreakFormatted}}
-                        </h4>
-                    </div>
-                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
-                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Interruptions</p>
-                        <h4 class="text-white text-xl font-black font-mono">
-                            {{.Focus.Interruptions}}
-                        </h4>
-                    </div>
-                    <div class="text-center p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
-                        <p class="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-1">Break Ratio</p>
-                        <h4 class="text-white text-xl font-black font-mono">
-                            {{printf "%.0f%%" .Focus.BreakRatio}}
-                        </h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-
       </div>
     </div>
   </main>
@@ -328,33 +370,45 @@
           
           if (exChartInst) exChartInst.destroy();
           if (bwChartInst) bwChartInst.destroy();
-          if (focusChartInst) focusChartInst.destroy();
           exChartInst = null;
           bwChartInst = null;
-          focusChartInst = null;
 
           const exSlider  = document.getElementById('ex-pan-slider');
           const bwSlider  = document.getElementById('bw-pan-slider');
 
+          window.exerciseMode = window.exerciseMode || 'avg';
+
           function refreshEx() {
-              exChartInst = renderChart('exerciseChart', window.originalChartData.exercisePoints,
+              let mappedPoints = window.originalChartData.exercisePoints.map(p => {
+                  return {
+                      label: p.label,
+                      weight: window.exerciseMode === 'max' ? p.maxWeight : p.avgWeight,
+                      reps: window.exerciseMode === 'max' ? p.maxReps : Math.round(p.avgReps)
+                  };
+              });
+              exChartInst = renderChart('exerciseChart', mappedPoints,
                   '#ff00a0', 'rgba(255,0,160,0.1)', exChartInst, (i) => exChartInst = i, exSlider);
           }
+
+          window.setExMode = function(mode) {
+              window.exerciseMode = mode;
+              const btnAvg = document.getElementById('btn-ex-avg');
+              const btnMax = document.getElementById('btn-ex-max');
+              if(mode === 'avg') {
+                  btnAvg.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-white bg-zinc-800';
+                  btnMax.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:text-white';
+              } else {
+                  btnMax.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-white bg-zinc-800';
+                  btnAvg.className = 'px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:text-white';
+              }
+              refreshEx();
+          };
           function refreshBw() {
               bwChartInst = renderChart('bodyWeightChart', window.originalChartData.bodyWeightPoints,
                   '#3b82f6', 'rgba(59,130,246,0.1)', bwChartInst, (i) => bwChartInst = i, bwSlider);
           }
-          function refreshFocus() {
-              const focusContainer = document.querySelector('[data-focus-chart]');
-              if (focusContainer) {
-                  const focusPoints = JSON.parse(focusContainer.getAttribute('data-focus-chart') || '[]');
-                  focusChartInst = renderBarChart('focusChart', focusPoints, '#00e5ff', 'rgba(0,229,255,0.1)', focusChartInst, (i) => focusChartInst = i);
-              }
-          }
-
           refreshEx();
           refreshBw();
-          refreshFocus();
 
           if (exSlider) {
               exSlider.removeEventListener('input', refreshEx);
@@ -394,60 +448,7 @@
 
       let exChartInst = null;
       let bwChartInst = null;
-      let focusChartInst = null;
       const VISIBLE_POINTS = 30;
-
-      function renderBarChart(id, points, color, bgColor, currentInst, setInst) {
-          const ctx = document.getElementById(id);
-          if (!ctx) return null;
-          if (!points || points.length === 0) {
-              if (currentInst) currentInst.destroy();
-              setInst(null);
-              return null;
-          }
-
-          if (currentInst) currentInst.destroy();
-
-          const newInst = new Chart(ctx, {
-              type: 'bar',
-              data: {
-                labels: points.map(p => p.label),
-                datasets: [{
-                  data: points.map(p => p.weight),
-                  backgroundColor: color,
-                  borderRadius: 6,
-                  barPercentage: 0.6,
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  x: { grid: { display: false }, ticks: { color: '#71717a', font: { size: 10, weight: 'bold' } } },
-                  y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#71717a', font: { size: 10 } } }
-                },
-                plugins: { 
-                  legend: { display: false },
-                  tooltip: {
-                    callbacks: {
-                      label: function(context) {
-                        let mins = context.parsed.y;
-                        let h = Math.floor(mins / 60);
-                        let m = mins % 60;
-                        if (h > 0) {
-                            return h + 'h ' + m + 'm';
-                        }
-                        return m + 'm';
-                      }
-                    }
-                  }
-                },
-                animation: { duration: 300 }
-              }
-          });
-          setInst(newInst);
-          return newInst;
-      }
 
       function renderChart(id, allPoints, color, bgColor, currentInst, setInst, sliderEl) {
           const ctx = document.getElementById(id);

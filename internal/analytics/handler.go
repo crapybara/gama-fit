@@ -1,6 +1,7 @@
 package analytics
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"gama-fit/database"
 	"gama-fit/handlers"
 )
 
@@ -28,18 +30,39 @@ type AnalyticsData struct {
 	BodyWeightPointsJSON template.JS
 
 	// New Lifting Stats
-	ThisWeekVolume   float64
-	VolumeChange     float64
-	BestLift         BestLift
-	
-	// Body Composition
-	BMI  float64
-	FFMI float64
-	LBM  float64
+	ThisWeekVolume float64
+	VolumeChange   float64
+	BestLift       BestLift
 
-	// Focus Stats
-	Focus          FocusSummary
-	FocusChartJSON template.JS
+	// Body Composition
+	BMI      float64
+	FFMI     float64
+	LeanMass float64
+	BodyFat  float64
+
+	// Goal Progress
+	WeightProgressPct float64
+	GoalWeight        float64
+	CurrentWeight     float64
+	WeeklyTargetCals  int
+	WeeklyLoggedCals  int
+	WeeklyTargetPro   int
+	WeeklyLoggedPro   int
+	PlannedVolume     int
+	LoggedVolume      int
+	PlannedSets       int
+	LoggedSets        int
+	PlannedExercises  int
+	LoggedExercises   int
+
+	// Percentages
+	CalProgressPct   float64
+	ProProgressPct   float64
+	VolProgressPct   float64
+	CalProgressWidth float64
+	ProProgressWidth float64
+	VolProgressWidth float64
+	ExtraVolume      int
 }
 
 type cacheEntry struct {
@@ -58,7 +81,7 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	
+
 	yearStr := r.URL.Query().Get("year")
 	if yearStr == "" {
 		yearStr = fmt.Sprintf("%d", time.Now().Year())
@@ -136,29 +159,57 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 
 	bestLift := FetchBestLift(userID, fixedThisWeekStart, now)
 
-	bmi, ffmi, lbm := FetchBodyComposition(userID)
+	bmi, ffmi, lbm, bodyFat := FetchBodyComposition(userID)
 
 	exPoints := FetchExercisePoints(userID, selectedExercise, start, end)
 	bwPoints := FetchBodyWeightPoints(userID, start, end)
 
-	// Calculate Focus week (Monday to Sunday) for current week
-	daysSinceMonday := int(now.Weekday()) - 1
-	if daysSinceMonday < 0 {
-		daysSinceMonday = 6 // Sunday
-	}
-	currentMonday := now.AddDate(0, 0, -daysSinceMonday)
-	focusStart := currentMonday
-	focusEnd := focusStart.AddDate(0, 0, 6)
-	
-	// Ensure bounds
-	focusStart = time.Date(focusStart.Year(), focusStart.Month(), focusStart.Day(), 0, 0, 0, 0, time.Local)
-	focusEnd = time.Date(focusEnd.Year(), focusEnd.Month(), focusEnd.Day(), 23, 59, 59, 0, time.Local)
-
-	focusStats := GetFocusStats(userID, focusStart, focusEnd)
-
 	exJSON, _ := json.Marshal(exPoints)
 	bwJSON, _ := json.Marshal(bwPoints)
-	focusJSON, _ := json.Marshal(focusStats.DailyChart)
+
+	// --- Goal Progress Calculations ---
+	var startWeight, goalWeight, currentWeight float64
+	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 ORDER BY log_date ASC LIMIT 1", userID).Scan(&startWeight)
+	_ = database.DB.QueryRow("SELECT goal_weight FROM user_stats WHERE user_id = $1", userID).Scan(&goalWeight)
+	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 ORDER BY log_date DESC LIMIT 1", userID).Scan(&currentWeight)
+
+	weightProgress := 0.0
+	if startWeight > 0 && goalWeight > 0 && startWeight != goalWeight {
+		weightProgress = (currentWeight - startWeight) / (goalWeight - startWeight) * 100
+		if weightProgress < 0 {
+			weightProgress = 0
+		}
+		if weightProgress > 100 {
+			weightProgress = 100
+		}
+	}
+
+	var targetCal, targetPro int
+	_ = database.DB.QueryRow("SELECT calories, protein FROM user_macros_final WHERE user_id = $1", userID).Scan(&targetCal, &targetPro)
+	weeklyTargetCals := targetCal * 7
+	weeklyTargetPro := targetPro * 7
+
+	var weeklyLoggedCals, weeklyLoggedPro int
+	_ = database.DB.QueryRow("SELECT COALESCE(SUM(calories),0), COALESCE(SUM(protein),0) FROM daily_meals WHERE user_id = $1 AND log_date >= $2", userID, fixedThisWeekStart.Format("2006-01-02")).Scan(&weeklyLoggedCals, &weeklyLoggedPro)
+
+	var plannedVolume, plannedSets, plannedExercises int
+	_ = database.DB.QueryRow(`
+		SELECT 
+			COALESCE(SUM(sets * CAST(SPLIT_PART(reps, '-', 1) AS INTEGER)), 0) as pv, 
+			COALESCE(SUM(sets), 0) as ps, 
+			COUNT(*) as pe 
+		FROM workout_plans WHERE user_id = $1
+	`, userID).Scan(&plannedVolume, &plannedSets, &plannedExercises)
+
+	var loggedVolume, loggedSets, loggedExercises int
+	_ = database.DB.QueryRow(`
+		SELECT 
+			COALESCE(SUM(sets * reps), 0) as lv, 
+			COALESCE(SUM(sets), 0) as ls, 
+			COUNT(DISTINCT exercise_name) as le 
+		FROM freestyle_logs 
+		WHERE user_id = $1 AND logged_date >= $2 AND is_cardio = 0
+	`, userID, fixedThisWeekStart.Format("2006-01-02")).Scan(&loggedVolume, &loggedSets, &loggedExercises)
 
 	data := AnalyticsData{
 		SelectedYear:         selectedYear,
@@ -171,20 +222,53 @@ func HandleAnalytics(w http.ResponseWriter, r *http.Request) {
 		AvgProtein:           avgProtein,
 		ExercisePointsJSON:   template.JS(exJSON),
 		BodyWeightPointsJSON: template.JS(bwJSON),
-		
-		// New Stats
-		ThisWeekVolume:   thisWeekVol,
-		VolumeChange:     volChange,
-		BestLift:         bestLift,
-		
-		// Body Composition
-		BMI:  bmi,
-		FFMI: ffmi,
-		LBM:  lbm,
 
-		// Focus Stats
-		Focus:          focusStats,
-		FocusChartJSON: template.JS(focusJSON),
+		// New Stats
+		ThisWeekVolume: thisWeekVol,
+		VolumeChange:   volChange,
+		BestLift:       bestLift,
+
+		// Body Composition
+		BMI:      bmi,
+		FFMI:     ffmi,
+		LeanMass: lbm,
+		BodyFat:  bodyFat,
+
+		// Goal Progress
+		WeightProgressPct: weightProgress,
+		GoalWeight:        goalWeight,
+		CurrentWeight:     currentWeight,
+		WeeklyTargetCals:  weeklyTargetCals,
+		WeeklyLoggedCals:  weeklyLoggedCals,
+		WeeklyTargetPro:   weeklyTargetPro,
+		WeeklyLoggedPro:   weeklyLoggedPro,
+		PlannedVolume:     plannedVolume,
+		LoggedVolume:      loggedVolume,
+		PlannedSets:       plannedSets,
+		LoggedSets:        loggedSets,
+		PlannedExercises:  plannedExercises,
+		LoggedExercises:   loggedExercises,
+
+		CalProgressPct: 0.0,
+		ProProgressPct: 0.0,
+		VolProgressPct: 0.0,
+	}
+
+	if data.WeeklyTargetCals > 0 {
+		data.CalProgressPct = float64(data.WeeklyLoggedCals) / float64(data.WeeklyTargetCals) * 100
+	}
+	if data.WeeklyTargetPro > 0 {
+		data.ProProgressPct = float64(data.WeeklyLoggedPro) / float64(data.WeeklyTargetPro) * 100
+	}
+	if data.PlannedVolume > 0 {
+		data.VolProgressPct = float64(data.LoggedVolume) / float64(data.PlannedVolume) * 100
+	}
+
+	data.CalProgressWidth = math.Min(100, data.CalProgressPct)
+	data.ProProgressWidth = math.Min(100, data.ProProgressPct)
+	data.VolProgressWidth = math.Min(100, data.VolProgressPct)
+	if data.LoggedVolume > data.PlannedVolume {
+		data.ExtraVolume = data.LoggedVolume - data.PlannedVolume
 	}
 
 	// Save to cache (expiring in 5 minutes)
@@ -282,10 +366,14 @@ func HandleAnalyticsHeatmap(w http.ResponseWriter, r *http.Request) {
 
 func renderAnalytics(w http.ResponseWriter, data AnalyticsData) {
 	if handlers.Templates != nil {
-		err := handlers.Templates.ExecuteTemplate(w, "analytics.html", data)
+		var buf bytes.Buffer
+		err := handlers.Templates.ExecuteTemplate(&buf, "analytics.html", data)
 		if err != nil {
+			fmt.Printf("TEMPLATE ERROR: %v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+		w.Write(buf.Bytes())
 	} else {
 		http.Error(w, "Templates not initialized", http.StatusInternalServerError)
 	}

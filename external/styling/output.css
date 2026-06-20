@@ -3330,8 +3330,8 @@ h1, h2, h3, h4, .font-display {
     radial-gradient(circle at 12% 8%, rgba(245, 194, 231, 0.12), transparent 34%),
     radial-gradient(circle at 88% 84%, rgba(137, 180, 250, 0.1), transparent 30%);
 }
-body:not(.study-mode) { color: var(--app-text-soft); }
-body:not(.study-mode) .glass-panel:hover {
+body { color: var(--app-text-soft); }
+.glass-panel:hover {
   border-color: color-mix(in srgb, var(--app-pink) 34%, var(--glass-border)) !important;
   box-shadow: 0 14px 42px rgba(0, 0, 0, 0.52), 0 0 24px var(--app-accent-glow) !important;
 }
@@ -3384,90 +3384,90 @@ body:not(.study-mode) .glass-panel:hover {
   .md\:bg-app-pink { background-color: var(--app-pink) !important; }
   .md\:text-white { color: var(--app-on-accent) !important; }
 }
-body:not(.study-mode) nav {
+nav {
   background-color: color-mix(in srgb, var(--app-nav) 92%, transparent) !important;
   border-color: var(--app-border) !important;
 }
-body:not(.study-mode) .text-white { color: var(--app-text) !important; }
-body:not(.study-mode) .text-zinc-100,
-body:not(.study-mode) .text-zinc-200,
-body:not(.study-mode) .text-zinc-300 { color: var(--app-text-soft) !important; }
-body:not(.study-mode) .text-zinc-400 { color: color-mix(in srgb, var(--app-text-soft) 82%, var(--app-muted)) !important; }
-body:not(.study-mode) .text-zinc-500 { color: var(--app-muted) !important; }
-body:not(.study-mode) .text-zinc-600 { color: color-mix(in srgb, var(--app-muted) 68%, transparent) !important; }
-body:not(.study-mode) .text-blue-300,
-body:not(.study-mode) .text-blue-400,
-body:not(.study-mode) .text-blue-500,
-body:not(.study-mode) .text-blue-600 { color: var(--app-blue) !important; }
-body:not(.study-mode) .text-indigo-400 { color: var(--app-sleep) !important; }
-body:not(.study-mode) .text-fuchsia-500,
-body:not(.study-mode) .text-pink-500 { color: var(--app-pink) !important; }
-body:not(.study-mode) .text-emerald-400,
-body:not(.study-mode) .text-emerald-500,
-body:not(.study-mode) .text-green-500 { color: var(--app-success) !important; }
-body:not(.study-mode) .text-red-400,
-body:not(.study-mode) .text-red-500 { color: var(--app-danger) !important; }
-body:not(.study-mode) .text-orange-400 { color: var(--app-warning) !important; }
-body:not(.study-mode) .text-yellow-400 { color: var(--app-yellow) !important; }
-body:not(.study-mode) .bg-zinc-950,
-body:not(.study-mode) .bg-zinc-900 { background-color: var(--app-input) !important; }
-body:not(.study-mode) .bg-zinc-900\/20 { background-color: color-mix(in srgb, var(--app-input) 20%, transparent) !important; }
-body:not(.study-mode) .bg-zinc-900\/30 { background-color: color-mix(in srgb, var(--app-input) 30%, transparent) !important; }
-body:not(.study-mode) .bg-zinc-900\/50 { background-color: color-mix(in srgb, var(--app-input) 55%, transparent) !important; }
-body:not(.study-mode) .bg-zinc-900\/60 { background-color: color-mix(in srgb, var(--app-input) 62%, transparent) !important; }
-body:not(.study-mode) .bg-zinc-900\/70 { background-color: color-mix(in srgb, var(--app-input) 72%, transparent) !important; }
-body:not(.study-mode) .bg-zinc-900\/80 { background-color: color-mix(in srgb, var(--app-input) 82%, transparent) !important; }
-body:not(.study-mode) .bg-zinc-800 { background-color: var(--app-card-elevated) !important; }
-body:not(.study-mode) .bg-zinc-800\/50 { background-color: color-mix(in srgb, var(--app-card-elevated) 52%, transparent) !important; }
-body:not(.study-mode) .bg-zinc-100,
-body:not(.study-mode) .bg-zinc-50,
-body:not(.study-mode) .bg-white { background-color: var(--app-text) !important; }
-body:not(.study-mode) .bg-white\/5 { background-color: color-mix(in srgb, var(--app-text) 5%, transparent) !important; }
-body:not(.study-mode) .bg-white\/10 { background-color: color-mix(in srgb, var(--app-text) 10%, transparent) !important; }
-body:not(.study-mode) .bg-blue-400,
-body:not(.study-mode) .bg-blue-500,
-body:not(.study-mode) .bg-blue-600 { background-color: var(--app-blue) !important; }
-body:not(.study-mode) .bg-blue-400\/10,
-body:not(.study-mode) .bg-blue-500\/10 { background-color: color-mix(in srgb, var(--app-blue) 10%, transparent) !important; }
-body:not(.study-mode) .bg-red-500,
-body:not(.study-mode) .hover\:bg-red-500:hover { background-color: var(--app-danger) !important; }
-body:not(.study-mode) .bg-red-500\/10,
-body:not(.study-mode) .bg-red-500\/20 { background-color: color-mix(in srgb, var(--app-danger) 14%, transparent) !important; }
-body:not(.study-mode) .border-zinc-700,
-body:not(.study-mode) .border-zinc-800,
-body:not(.study-mode) .border-zinc-800\/50,
-body:not(.study-mode) .border-zinc-800\/80,
-body:not(.study-mode) .border-white\/5,
-body:not(.study-mode) .border-white\/10 { border-color: var(--app-border) !important; }
-body:not(.study-mode) .border-blue-400,
-body:not(.study-mode) .border-blue-500,
-body:not(.study-mode) .border-blue-500\/20,
-body:not(.study-mode) .border-blue-400\/30 { border-color: color-mix(in srgb, var(--app-blue) 44%, transparent) !important; }
-body:not(.study-mode) .border-red-500 { border-color: var(--app-danger) !important; }
-body:not(.study-mode) input:not([type="range"]),
-body:not(.study-mode) select,
-body:not(.study-mode) textarea {
+.text-white { color: var(--app-text) !important; }
+.text-zinc-100,
+.text-zinc-200,
+.text-zinc-300 { color: var(--app-text-soft) !important; }
+.text-zinc-400 { color: color-mix(in srgb, var(--app-text-soft) 82%, var(--app-muted)) !important; }
+.text-zinc-500 { color: var(--app-muted) !important; }
+.text-zinc-600 { color: color-mix(in srgb, var(--app-muted) 68%, transparent) !important; }
+.text-blue-300,
+.text-blue-400,
+.text-blue-500,
+.text-blue-600 { color: var(--app-blue) !important; }
+.text-indigo-400 { color: var(--app-sleep) !important; }
+.text-fuchsia-500,
+.text-pink-500 { color: var(--app-pink) !important; }
+.text-emerald-400,
+.text-emerald-500,
+.text-green-500 { color: var(--app-success) !important; }
+.text-red-400,
+.text-red-500 { color: var(--app-danger) !important; }
+.text-orange-400 { color: var(--app-warning) !important; }
+.text-yellow-400 { color: var(--app-yellow) !important; }
+.bg-zinc-950,
+.bg-zinc-900 { background-color: var(--app-input) !important; }
+.bg-zinc-900\/20 { background-color: color-mix(in srgb, var(--app-input) 20%, transparent) !important; }
+.bg-zinc-900\/30 { background-color: color-mix(in srgb, var(--app-input) 30%, transparent) !important; }
+.bg-zinc-900\/50 { background-color: color-mix(in srgb, var(--app-input) 55%, transparent) !important; }
+.bg-zinc-900\/60 { background-color: color-mix(in srgb, var(--app-input) 62%, transparent) !important; }
+.bg-zinc-900\/70 { background-color: color-mix(in srgb, var(--app-input) 72%, transparent) !important; }
+.bg-zinc-900\/80 { background-color: color-mix(in srgb, var(--app-input) 82%, transparent) !important; }
+.bg-zinc-800 { background-color: var(--app-card-elevated) !important; }
+.bg-zinc-800\/50 { background-color: color-mix(in srgb, var(--app-card-elevated) 52%, transparent) !important; }
+.bg-zinc-100,
+.bg-zinc-50,
+.bg-white { background-color: var(--app-text) !important; }
+.bg-white\/5 { background-color: color-mix(in srgb, var(--app-text) 5%, transparent) !important; }
+.bg-white\/10 { background-color: color-mix(in srgb, var(--app-text) 10%, transparent) !important; }
+.bg-blue-400,
+.bg-blue-500,
+.bg-blue-600 { background-color: var(--app-blue) !important; }
+.bg-blue-400\/10,
+.bg-blue-500\/10 { background-color: color-mix(in srgb, var(--app-blue) 10%, transparent) !important; }
+.bg-red-500,
+.hover\:bg-red-500:hover { background-color: var(--app-danger) !important; }
+.bg-red-500\/10,
+.bg-red-500\/20 { background-color: color-mix(in srgb, var(--app-danger) 14%, transparent) !important; }
+.border-zinc-700,
+.border-zinc-800,
+.border-zinc-800\/50,
+.border-zinc-800\/80,
+.border-white\/5,
+.border-white\/10 { border-color: var(--app-border) !important; }
+.border-blue-400,
+.border-blue-500,
+.border-blue-500\/20,
+.border-blue-400\/30 { border-color: color-mix(in srgb, var(--app-blue) 44%, transparent) !important; }
+.border-red-500 { border-color: var(--app-danger) !important; }
+input:not([type="range"]),
+select,
+textarea {
   background-color: color-mix(in srgb, var(--app-input) 78%, transparent) !important;
   border-color: var(--app-border) !important;
   color: var(--app-text) !important;
 }
-body:not(.study-mode) ::placeholder { color: color-mix(in srgb, var(--app-muted) 72%, transparent) !important; }
-body:not(.study-mode) .hover\:bg-zinc-700:hover,
-body:not(.study-mode) .hover\:bg-zinc-800:hover,
-body:not(.study-mode) .hover\:bg-zinc-900\/80:hover { background-color: var(--app-card-elevated) !important; }
-body:not(.study-mode) .hover\:bg-pink-500:hover { background-color: var(--app-pink-dark) !important; }
-body:not(.study-mode) .hover\:bg-yellow-400:hover { background-color: color-mix(in srgb, var(--app-yellow) 82%, white) !important; }
-body:not(.study-mode) .hover\:bg-blue-400:hover { background-color: color-mix(in srgb, var(--app-blue) 82%, white) !important; }
-body:not(.study-mode) .hover\:border-zinc-500:hover,
-body:not(.study-mode) .hover\:border-zinc-600:hover,
-body:not(.study-mode) .hover\:border-zinc-700:hover { border-color: color-mix(in srgb, var(--app-text) 28%, var(--app-border)) !important; }
-body:not(.study-mode) .hover\:text-white:hover { color: var(--app-text) !important; }
-body:not(.study-mode) .hover\:text-red-500:hover { color: var(--app-danger) !important; }
-body:not(.study-mode) .group:hover .group-hover\:text-white { color: var(--app-text) !important; }
-body:not(.study-mode) .group:hover .group-hover\:text-app-yellow { color: var(--app-yellow) !important; }
-body:not(.study-mode) .group:hover .group-hover\:text-app-sleep { color: var(--app-sleep) !important; }
-body:not(.study-mode) .group:hover .group-hover\:text-blue-400 { color: var(--app-blue) !important; }
-body:not(.study-mode) .group:hover .group-hover\:text-orange-400 { color: var(--app-warning) !important; }
+::placeholder { color: color-mix(in srgb, var(--app-muted) 72%, transparent) !important; }
+.hover\:bg-zinc-700:hover,
+.hover\:bg-zinc-800:hover,
+.hover\:bg-zinc-900\/80:hover { background-color: var(--app-card-elevated) !important; }
+.hover\:bg-pink-500:hover { background-color: var(--app-pink-dark) !important; }
+.hover\:bg-yellow-400:hover { background-color: color-mix(in srgb, var(--app-yellow) 82%, white) !important; }
+.hover\:bg-blue-400:hover { background-color: color-mix(in srgb, var(--app-blue) 82%, white) !important; }
+.hover\:border-zinc-500:hover,
+.hover\:border-zinc-600:hover,
+.hover\:border-zinc-700:hover { border-color: color-mix(in srgb, var(--app-text) 28%, var(--app-border)) !important; }
+.hover\:text-white:hover { color: var(--app-text) !important; }
+.hover\:text-red-500:hover { color: var(--app-danger) !important; }
+.group:hover .group-hover\:text-white { color: var(--app-text) !important; }
+.group:hover .group-hover\:text-app-yellow { color: var(--app-yellow) !important; }
+.group:hover .group-hover\:text-app-sleep { color: var(--app-sleep) !important; }
+.group:hover .group-hover\:text-blue-400 { color: var(--app-blue) !important; }
+.group:hover .group-hover\:text-orange-400 { color: var(--app-warning) !important; }
 .peer:checked ~ .peer-checked\:border-app-yellow { border-color: var(--app-yellow) !important; }
 .peer:checked ~ .peer-checked\:text-app-yellow { color: var(--app-yellow) !important; }
 .peer:checked ~ .peer-checked\:bg-app-yellow\/10 { background-color: color-mix(in srgb, var(--app-yellow) 10%, transparent) !important; }

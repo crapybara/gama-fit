@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"strconv"
 
+	"time"
+
 	"gama-fit/database"
 )
 
@@ -20,21 +22,29 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 	var targetPro, targetCarb, targetFat float64
 	var age int
 	var gender string
-	var height float64
+	var height, goalWeight float64
 	_ = database.DB.QueryRow("SELECT calories, protein, carbs, fats FROM user_macros_final WHERE user_id = $1", userID).Scan(&targetCal, &targetPro, &targetCarb, &targetFat)
-	_ = database.DB.QueryRow("SELECT age, gender, height FROM user_stats WHERE user_id = $1", userID).Scan(&age, &gender, &height)
+	_ = database.DB.QueryRow("SELECT age, gender, height, goal_weight FROM user_stats WHERE user_id = $1", userID).Scan(&age, &gender, &height, &goalWeight)
 
 	if targetCal == 0 {
 		targetCal, targetPro, targetCarb, targetFat = 2500, 200, 300, 70
 	}
-	if age <= 0 { age = 25 }
-	if gender == "" { gender = "male" }
-	if height <= 0 { height = 175 }
+	if age <= 0 {
+		age = 25
+	}
+	if gender == "" {
+		gender = "male"
+	}
+	if height <= 0 {
+		height = 175
+	}
 
 	// 2. Fetch Today's Weight
 	var weight float64
 	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 AND log_date = $2", userID, localDate).Scan(&weight)
-	if weight <= 0 { weight = 75 }
+	if weight <= 0 {
+		weight = 75
+	}
 
 	// 3. Calculate BMR (Mifflin-St Jeor)
 	bmr := 10*weight + 6.25*height - 5*float64(age)
@@ -61,9 +71,12 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 			if err := rows.Scan(&intensity, &duration); err == nil {
 				met := 6.0 // Default Moderate
 				switch intensity {
-				case "Light": met = 3.5
-				case "Vigorous": met = 9.0
-				case "Very Hard": met = 12.0
+				case "Light":
+					met = 3.5
+				case "Vigorous":
+					met = 9.0
+				case "Very Hard":
+					met = 12.0
 				}
 				activeBurn += (met * weight * (float64(duration) / 60.0))
 			}
@@ -77,25 +90,37 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 	// 6. Percentages for Rings
 	pctCal := (float64(calories) / float64(targetCal)) * 100
 	pctBMR := (bmr / 2500.0) * 100 // Scale relative to a baseline or itself
-	if pctBMR > 100 { pctBMR = 100 }
-	
-	pctBurn := (activeBurn / 1000.0) * 100 // Scale relative to a daily active goal
-	if pctBurn > 100 { pctBurn = 100 }
+	if pctBMR > 100 {
+		pctBMR = 100
+	}
 
-	if pctCal > 100 { pctCal = 100 }
-	
+	pctBurn := (activeBurn / 1000.0) * 100 // Scale relative to a daily active goal
+	if pctBurn > 100 {
+		pctBurn = 100
+	}
+
+	if pctCal > 100 {
+		pctCal = 100
+	}
+
 	pctPro := (protein / targetPro) * 100
 	pctCarb := (carbs / targetCarb) * 100
 	pctFat := (fats / targetFat) * 100
-	if pctPro > 100 { pctPro = 100 }
-	if pctCarb > 100 { pctCarb = 100 }
-	if pctFat > 100 { pctFat = 100 }
+	if pctPro > 100 {
+		pctPro = 100
+	}
+	if pctCarb > 100 {
+		pctCarb = 100
+	}
+	if pctFat > 100 {
+		pctFat = 100
+	}
 
 	// 7. SVG Dimensions
 	c1 := 2 * math.Pi * 45.0 // Consumed (Outer)
 	c2 := 2 * math.Pi * 37.0 // BMR (Middle)
 	c3 := 2 * math.Pi * 29.0 // Burned (Inner)
-	
+
 	off1 := c1 - (pctCal / 100.0 * c1)
 	off2 := c2 - (pctBMR / 100.0 * c2)
 	off3 := c3 - (pctBurn / 100.0 * c3)
@@ -104,6 +129,24 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 	proOffset := macroCircumference - (pctPro / 100.0 * macroCircumference)
 	carbOffset := macroCircumference - (pctCarb / 100.0 * macroCircumference)
 	fatOffset := macroCircumference - (pctFat / 100.0 * macroCircumference)
+
+	// 8. Weight Prediction
+	predictionHTML := ""
+	if goalWeight > 0 {
+		_, _, _, hasEnoughData, statusMsg := CalculateWeightTrajectory(userID)
+
+		textColor := "text-white"
+		if !hasEnoughData {
+			textColor = "text-zinc-500" // Muted gray for "Not enough data"
+		}
+
+		predictionHTML = fmt.Sprintf(`
+			<div class="mt-8 border-t border-white/5 pt-6 relative z-10 w-full flex flex-col items-center justify-center">
+				<p class="text-zinc-500 text-[10px] uppercase font-black tracking-[0.2em] mb-2">Weight Trajectory</p>
+				<p class="%s text-sm font-bold bg-zinc-900/80 px-4 py-2 rounded-xl border border-white/5 shadow-lg">%s</p>
+			</div>
+		`, textColor, statusMsg)
+	}
 
 	fmt.Fprintf(w, `
 		<div class="flex items-center justify-between mb-8 relative z-10">
@@ -134,7 +177,6 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 						<circle class="text-app-yellow macro-ring cursor-pointer" 
 								onmouseenter="setCalView('consumed')" onmouseleave="setCalView('default')"
 								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;">
-							<title>%d kcal</title>
 						</circle>
 						
 						<!-- BMR Ring (Middle) -->
@@ -142,7 +184,6 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 						<circle class="text-blue-500 macro-ring cursor-pointer" 
 								onmouseenter="setCalView('bmr')" onmouseleave="setCalView('default')"
 								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="37" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;">
-							<title>%.0f kcal</title>
 						</circle>
 
 						<!-- Burned Ring (Inner) -->
@@ -150,7 +191,6 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 						<circle class="text-emerald-500 macro-ring cursor-pointer" 
 								onmouseenter="setCalView('active')" onmouseleave="setCalView('default')"
 								stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="29" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;">
-							<title>%.0f kcal</title>
 						</circle>
 					</svg>
 
@@ -177,12 +217,30 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 						<span class="font-display font-black text-4xl sm:text-6xl text-white drop-shadow-lg tracking-tighter">%.0f</span>
 						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-zinc-400 tracking-widest mt-1 bg-zinc-900/50 px-2 sm:px-3 py-1 rounded-full border border-white/10">Total Out</span>
 					</div>
+
+					<!-- Protein View -->
+					<div id="view-protein" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-0 scale-90 pointer-events-none">
+						<span class="font-display font-black text-4xl sm:text-6xl text-app-pink drop-shadow-lg tracking-tighter">%.1fg</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-app-pink tracking-widest mt-1 bg-app-pink/10 px-2 sm:px-3 py-1 rounded-full border border-app-pink/20">Protein Target: %.1fg</span>
+					</div>
+
+					<!-- Carbs View -->
+					<div id="view-carbs" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-0 scale-90 pointer-events-none">
+						<span class="font-display font-black text-4xl sm:text-6xl text-blue-400 drop-shadow-lg tracking-tighter">%.1fg</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-blue-400 tracking-widest mt-1 bg-blue-500/10 px-2 sm:px-3 py-1 rounded-full border border-blue-500/20">Carbs Target: %.1fg</span>
+					</div>
+
+					<!-- Fats View -->
+					<div id="view-fats" class="absolute inset-0 flex flex-col items-center justify-center text-center transition-all duration-300 opacity-0 scale-90 pointer-events-none">
+						<span class="font-display font-black text-4xl sm:text-6xl text-emerald-400 drop-shadow-lg tracking-tighter">%.1fg</span>
+						<span class="text-[9px] sm:text-[10px] uppercase font-bold text-emerald-400 tracking-widest mt-1 bg-emerald-500/10 px-2 sm:px-3 py-1 rounded-full border border-emerald-500/20">Fats Target: %.1fg</span>
+					</div>
 				</div>
 			</div>
 
 			<script>
 				function setCalView(view) {
-					const views = ['consumed', 'bmr', 'active', 'total'];
+					const views = ['consumed', 'bmr', 'active', 'total', 'protein', 'carbs', 'fats'];
 					const glow = document.getElementById('ring-glow');
 					
 					views.forEach(v => {
@@ -201,56 +259,62 @@ func HandleMacrosSummary(w http.ResponseWriter, r *http.Request) {
 					if(glow) {
 						if(view === 'bmr') glow.className = "absolute inset-0 bg-blue-500/10 blur-3xl rounded-full scale-90 transition-all duration-500";
 						else if(view === 'active') glow.className = "absolute inset-0 bg-emerald-500/10 blur-3xl rounded-full scale-90 transition-all duration-500";
+						else if(view === 'protein') glow.className = "absolute inset-0 bg-app-pink/10 blur-3xl rounded-full scale-90 transition-all duration-500";
+						else if(view === 'carbs') glow.className = "absolute inset-0 bg-blue-500/10 blur-3xl rounded-full scale-90 transition-all duration-500";
+						else if(view === 'fats') glow.className = "absolute inset-0 bg-emerald-500/10 blur-3xl rounded-full scale-90 transition-all duration-500";
 						else glow.className = "absolute inset-0 bg-app-yellow/10 blur-3xl rounded-full scale-90 transition-all duration-500";
 					}
 				}
 			</script>
 
 			<div class="flex-1 w-full grid grid-cols-3 gap-3 sm:gap-4">
-				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
+				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300"
+				     onmouseenter="setCalView('protein')" onmouseleave="setCalView('default')">
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
 							<circle class="text-app-pink macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
 						<div class="macro-grams absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm transition-opacity">%.1fg</div>
-						<div class="macro-kcal absolute inset-0 flex items-center justify-center text-app-pink font-bold text-[10px] sm:text-sm opacity-0 transition-opacity">%.0f kcal</div>
 					</div>
 					<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Protein</span>
 				</div>
 
-				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
+				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300"
+				     onmouseenter="setCalView('carbs')" onmouseleave="setCalView('default')">
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
 							<circle class="text-blue-500 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
 						<div class="macro-grams absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm transition-opacity">%.1fg</div>
-						<div class="macro-kcal absolute inset-0 flex items-center justify-center text-blue-400 font-bold text-[10px] sm:text-sm opacity-0 transition-opacity">%.0f kcal</div>
 					</div>
 					<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Carbs</span>
 				</div>
 
-				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300">
+				<div class="macro-box group bg-zinc-900/50 border border-white/5 rounded-2xl sm:rounded-[1.5rem] p-3 sm:p-5 flex flex-col items-center justify-center hover:bg-zinc-900/80 transition-all duration-300"
+				     onmouseenter="setCalView('fats')" onmouseleave="setCalView('default')">
 					<div class="relative w-14 h-14 sm:w-20 sm:h-20 mb-2 sm:mb-3">
 						<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
 							<circle class="text-zinc-800/40" stroke-width="6" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50"/>
 							<circle class="text-emerald-400 macro-ring" stroke-width="6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" data-target="%.1f" style="stroke-dasharray: %.2f; stroke-dashoffset: %.2f;"/>
 					</svg>
 						<div class="macro-grams absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm transition-opacity">%.1fg</div>
-						<div class="macro-kcal absolute inset-0 flex items-center justify-center text-emerald-400 font-bold text-[10px] sm:text-sm opacity-0 transition-opacity">%.0f kcal</div>
 					</div>
 					<span class="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Fats</span>
 				</div>
 			</div>
 		</div>
-	`, pctCal, calories, c1, off1, 
-		pctBMR, bmr, c2, off2, 
-		pctBurn, activeBurn, c3, off3, 
+		%s
+	`, pctCal, c1, off1,
+		pctBMR, c2, off2,
+		pctBurn, c3, off3,
 		calories, bmr, activeBurn, bmr+activeBurn,
-		pctPro, macroCircumference, proOffset, protein, protein*4,
-		pctCarb, macroCircumference, carbOffset, carbs, carbs*4,
-		pctFat, macroCircumference, fatOffset, fats, fats*9)
+		protein, targetPro, carbs, targetCarb, fats, targetFat,
+		pctPro, macroCircumference, proOffset, protein,
+		pctCarb, macroCircumference, carbOffset, carbs,
+		pctFat, macroCircumference, fatOffset, fats,
+		predictionHTML)
 }
 
 func HandleSetTargets(w http.ResponseWriter, r *http.Request) {
@@ -367,7 +431,7 @@ func HandleMeals(w http.ResponseWriter, r *http.Request) {
 			catalogHtml += fmt.Sprintf(`<option value="%s">%s ( %d kcal | %.1fg: %.1fP | %.1fC | %.1fF )</option>`, name, name, cal, weight, pro, carb, fat)
 			manageListHtml += fmt.Sprintf(`
 				<div class="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 rounded-xl p-3 mb-2 group hover:border-zinc-600 transition-colors">
-					<div title="%d calories">
+					<div>
 						<div class="text-white text-sm font-bold">%s</div>
 						<div class="text-zinc-500 text-[10px] uppercase font-bold tracking-widest">%d kcal | %.1fg serving: %.1fP | %.1fC | %.1fF</div>
 					</div>
@@ -375,7 +439,7 @@ func HandleMeals(w http.ResponseWriter, r *http.Request) {
 						<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
 					</button>
 				</div>
-			`, cal, name, cal, weight, pro, carb, fat, url.QueryEscape(name))
+			`, name, cal, weight, pro, carb, fat, url.QueryEscape(name))
 		}
 	}
 	if !hasCatalog {
@@ -398,7 +462,7 @@ func HandleMeals(w http.ResponseWriter, r *http.Request) {
 			<div class="relative flex-1">
 				<input type="number" step="0.1" name="catalog_grams" placeholder="Grams" required class="w-full bg-zinc-900/80 border border-zinc-700 rounded-xl px-4 py-4 text-sm text-center text-white outline-none focus:border-app-yellow font-mono shadow-lg">
 			</div>
-			<button type="submit" class="bg-app-yellow text-black font-black px-8 py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_20px_rgba(251,255,0,0.3)] hover:shadow-[0_0_30px_rgba(251,255,0,0.5)] uppercase tracking-wider text-sm flex-shrink-0">Log Meal</button>
+			<button type="submit" class="bg-app-yellow text-black font-black px-8 py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-[0_0_20px_rgba(251,255,0,0.3)]  uppercase tracking-wider text-sm flex-shrink-0">Log Meal</button>
 		</form>
 	`, catalogHtml)
 
@@ -483,4 +547,220 @@ func HandleFoodCatalogJSON(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)
+}
+
+func CalculateWeightTrajectory(userID int) (currentWeight float64, weeklyTrend float64, daysRemaining float64, hasEnoughData bool, statusMsg string) {
+	var goalWeight float64
+	err := database.DB.QueryRow("SELECT goal_weight FROM user_stats WHERE user_id = $1", userID).Scan(&goalWeight)
+	if err != nil || goalWeight <= 0 {
+		return 0, 0, 0, false, "No goal weight set"
+	}
+
+	rows, err := database.DB.Query("SELECT log_date, weight FROM body_weight_logs WHERE user_id = $1 ORDER BY log_date DESC LIMIT 90", userID)
+	if err != nil {
+		return 0, 0, 0, false, "Not enough data"
+	}
+	defer rows.Close()
+
+	var dates []time.Time
+	var weights []float64
+
+	for rows.Next() {
+		var d string
+		var w float64
+		if err := rows.Scan(&d, &w); err == nil {
+			if parsed, err := time.Parse("2006-01-02", d); err == nil {
+				dates = append(dates, parsed)
+				weights = append(weights, w)
+			}
+		}
+	}
+
+	if len(weights) < 7 {
+		return 0, 0, 0, false, "Not enough data"
+	}
+
+	// Reverse to chronological order
+	for i, j := 0, len(weights)-1; i < j; i, j = i+1, j-1 {
+		weights[i], weights[j] = weights[j], weights[i]
+		dates[i], dates[j] = dates[j], dates[i]
+	}
+
+	// Linear Regression
+	// X = days since first log, Y = weight
+	var sumX, sumY, sumXY, sumX2 float64
+	n := float64(len(weights))
+	baseDate := dates[0]
+
+	for i := 0; i < len(weights); i++ {
+		x := dates[i].Sub(baseDate).Hours() / 24.0
+		y := weights[i]
+
+		sumX += x
+		sumY += y
+		sumXY += x * y
+		sumX2 += x * x
+	}
+
+	// Calculate slope m (kg/day)
+	denominator := (n * sumX2) - (sumX * sumX)
+	var slope float64
+	if denominator != 0 {
+		slope = ((n * sumXY) - (sumX * sumY)) / denominator
+	}
+
+	weeklyTrend = slope * 7.0
+	currentWeight = weights[len(weights)-1]
+
+	if slope == 0 {
+		return currentWeight, weeklyTrend, 0, true, "Maintaining weight perfectly."
+	}
+
+	if goalWeight < currentWeight {
+		// Cutting phase
+		if slope < 0 {
+			daysRemaining = (currentWeight - goalWeight) / math.Abs(slope)
+			statusMsg = fmt.Sprintf("↓ %.2f kg/week. Goal in ~%d days.", math.Abs(weeklyTrend), int(daysRemaining))
+		} else {
+			statusMsg = "You are gaining. Decrease calories to lose."
+		}
+	} else if goalWeight > currentWeight {
+		// Gaining phase
+		if slope > 0 {
+			daysRemaining = (goalWeight - currentWeight) / math.Abs(slope)
+			statusMsg = fmt.Sprintf("↑ %.2f kg/week. Goal in ~%d days.", math.Abs(weeklyTrend), int(daysRemaining))
+		} else {
+			statusMsg = "You are losing. Increase calories to gain."
+		}
+	} else {
+		statusMsg = "You have reached your goal weight!"
+	}
+
+	return currentWeight, weeklyTrend, daysRemaining, true, statusMsg
+}
+
+func HandleMacroTargets(w http.ResponseWriter, r *http.Request) {
+	userID, err := GetUserID(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	localDate, _ := getLocalTime(r)
+
+	// Fetch Stats
+	var age int
+	var gender string
+	var height, weight float64
+	_ = database.DB.QueryRow("SELECT age, gender, height FROM user_stats WHERE user_id = $1", userID).Scan(&age, &gender, &height)
+	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 AND log_date <= $2 ORDER BY log_date DESC LIMIT 1", userID, localDate).Scan(&weight)
+
+	if weight <= 0 {
+		weight = 75
+	}
+	if height <= 0 {
+		height = 175
+	}
+	if age <= 0 {
+		age = 25
+	}
+	if gender == "" {
+		gender = "male"
+	}
+
+	// Calculate BMR (Mifflin-St Jeor)
+	bmr := 10*weight + 6.25*height - 5*float64(age)
+	if gender == "male" {
+		bmr += 5
+	} else {
+		bmr -= 161
+	}
+
+	// Active Calories Burnt (simplified average over last 7 days or just typical 1.2 multiplier)
+	// For a static chart, we will use a standard activity multiplier of 1.375 (Lightly Active)
+	// or 1.2 (Sedentary). Let's use 1.375 as they are using a fitness app.
+	tdee := bmr * 1.375
+
+	// Define speeds
+	type Target struct {
+		Label string
+		Cal   int
+		Pro   int
+		Carb  int
+		Fat   int
+		Color string
+	}
+
+	calcMacros := func(cals float64) Target {
+		// Minimum healthy calories
+		if cals < 1200 {
+			cals = 1200
+		}
+
+		pro := weight * 2.2 // 2.2g per kg
+		fat := weight * 0.8 // 0.8g per kg
+
+		proCals := pro * 4
+		fatCals := fat * 9
+		carbCals := cals - proCals - fatCals
+
+		if carbCals < 0 {
+			carbCals = 0
+		}
+		carb := carbCals / 4
+
+		return Target{
+			Cal:  int(math.Round(cals)),
+			Pro:  int(math.Round(pro)),
+			Carb: int(math.Round(carb)),
+			Fat:  int(math.Round(fat)),
+		}
+	}
+
+	targets := []Target{
+		{Label: "Loss 2x", Cal: calcMacros(tdee - 1000).Cal, Pro: calcMacros(tdee - 1000).Pro, Carb: calcMacros(tdee - 1000).Carb, Fat: calcMacros(tdee - 1000).Fat, Color: "text-red-400"},
+		{Label: "Loss 1x", Cal: calcMacros(tdee - 500).Cal, Pro: calcMacros(tdee - 500).Pro, Carb: calcMacros(tdee - 500).Carb, Fat: calcMacros(tdee - 500).Fat, Color: "text-orange-400"},
+		{Label: "Loss 0.5x", Cal: calcMacros(tdee - 250).Cal, Pro: calcMacros(tdee - 250).Pro, Carb: calcMacros(tdee - 250).Carb, Fat: calcMacros(tdee - 250).Fat, Color: "text-yellow-400"},
+		{Label: "Maintenance", Cal: calcMacros(tdee).Cal, Pro: calcMacros(tdee).Pro, Carb: calcMacros(tdee).Carb, Fat: calcMacros(tdee).Fat, Color: "text-zinc-300"},
+		{Label: "Gain 0.5x", Cal: calcMacros(tdee + 250).Cal, Pro: calcMacros(tdee + 250).Pro, Carb: calcMacros(tdee + 250).Carb, Fat: calcMacros(tdee + 250).Fat, Color: "text-emerald-400"},
+		{Label: "Gain 1x", Cal: calcMacros(tdee + 500).Cal, Pro: calcMacros(tdee + 500).Pro, Carb: calcMacros(tdee + 500).Carb, Fat: calcMacros(tdee + 500).Fat, Color: "text-blue-400"},
+		{Label: "Gain 2x", Cal: calcMacros(tdee + 1000).Cal, Pro: calcMacros(tdee + 1000).Pro, Carb: calcMacros(tdee + 1000).Carb, Fat: calcMacros(tdee + 1000).Fat, Color: "text-indigo-400"},
+	}
+
+	html := `
+	<div class="flex items-center justify-between mb-6 relative z-10 w-full">
+		<h3 class="text-white font-black uppercase tracking-wider text-sm flex items-center gap-2">
+			<svg class="w-5 h-5 text-app-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+			Speed Targets
+		</h3>
+	</div>
+	<div class="w-full relative z-10 overflow-x-auto custom-scrollbar">
+		<table class="w-full text-left border-collapse min-w-[300px]">
+			<thead>
+				<tr class="border-b border-white/5">
+					<th class="py-2 text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Goal</th>
+					<th class="py-2 text-[10px] uppercase font-bold text-zinc-500 tracking-wider text-right">KCAL</th>
+					<th class="py-2 text-[10px] uppercase font-bold text-zinc-500 tracking-wider text-right">PRO</th>
+					<th class="py-2 text-[10px] uppercase font-bold text-zinc-500 tracking-wider text-right">CRB</th>
+					<th class="py-2 text-[10px] uppercase font-bold text-zinc-500 tracking-wider text-right">FAT</th>
+				</tr>
+			</thead>
+			<tbody>`
+
+	for _, t := range targets {
+		html += fmt.Sprintf(`
+				<tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+					<td class="py-3 text-xs font-black uppercase tracking-tight %s">%s</td>
+					<td class="py-3 text-sm font-mono font-bold text-white text-right">%d</td>
+					<td class="py-3 text-xs font-mono font-bold text-zinc-400 text-right">%d</td>
+					<td class="py-3 text-xs font-mono font-bold text-zinc-400 text-right">%d</td>
+					<td class="py-3 text-xs font-mono font-bold text-zinc-400 text-right">%d</td>
+				</tr>`, t.Color, t.Label, t.Cal, t.Pro, t.Carb, t.Fat)
+	}
+
+	html += `
+			</tbody>
+		</table>
+	</div>`
+
+	w.Write([]byte(html))
 }

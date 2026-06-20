@@ -2,7 +2,6 @@ package analytics
 
 import (
 	"database/sql"
-	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -11,9 +10,13 @@ import (
 )
 
 type ChartPoint struct {
-	Label  string  `json:"label"`
-	Weight float64 `json:"weight"`
-	Reps   int     `json:"reps,omitempty"`
+	Label     string  `json:"label"`
+	Weight    float64 `json:"weight"`
+	Reps      int     `json:"reps,omitempty"`
+	AvgWeight float64 `json:"avgWeight,omitempty"`
+	AvgReps   float64 `json:"avgReps,omitempty"`
+	MaxWeight float64 `json:"maxWeight,omitempty"`
+	MaxReps   int     `json:"maxReps,omitempty"`
 }
 
 type BestLift struct {
@@ -115,11 +118,21 @@ func FetchExercisePoints(userID int, exercise string, start, end time.Time) []Ch
 		return points
 	}
 	query := `
-		SELECT logged_date, AVG(weight), MAX(reps)
-		FROM freestyle_logs 
-		WHERE user_id = $1 AND exercise_name = $2 AND logged_date >= $3 AND logged_date <= $4
-		GROUP BY logged_date
-		ORDER BY logged_date ASC
+		WITH top_sets AS (
+			SELECT DISTINCT ON (logged_date) logged_date, weight as max_weight, reps as max_reps
+			FROM freestyle_logs
+			WHERE user_id = $1 AND exercise_name = $2 AND logged_date >= $3 AND logged_date <= $4
+			ORDER BY logged_date, weight DESC, reps DESC
+		),
+		avg_sets AS (
+			SELECT logged_date, AVG(weight) as avg_weight, AVG(reps) as avg_reps
+			FROM freestyle_logs
+			WHERE user_id = $1 AND exercise_name = $2 AND logged_date >= $3 AND logged_date <= $4
+			GROUP BY logged_date
+		)
+		SELECT a.logged_date, a.avg_weight, a.avg_reps, t.max_weight, t.max_reps
+		FROM avg_sets a JOIN top_sets t ON a.logged_date = t.logged_date
+		ORDER BY a.logged_date ASC
 	`
 	rows, err := database.DB.Query(query, userID, exercise, start.Format("2006-01-02"), end.Format("2006-01-02"))
 	if err != nil {
@@ -129,14 +142,18 @@ func FetchExercisePoints(userID int, exercise string, start, end time.Time) []Ch
 
 	for rows.Next() {
 		var d string
-		var w float64
-		var r int
-		if err := rows.Scan(&d, &w, &r); err == nil {
+		var aw, ar, mw float64
+		var mr int
+		if err := rows.Scan(&d, &aw, &ar, &mw, &mr); err == nil {
 			t, _ := time.Parse("2006-01-02", d)
 			points = append(points, ChartPoint{
-				Label:  strings.ToLower(t.Format("02 Jan")),
-				Weight: w,
-				Reps:   r,
+				Label:     strings.ToLower(t.Format("02 Jan")),
+				AvgWeight: aw,
+				AvgReps:   ar,
+				MaxWeight: mw,
+				MaxReps:   mr,
+				Weight:    aw,
+				Reps:      int(ar),
 			})
 		}
 	}
@@ -165,7 +182,7 @@ func FetchBodyWeightPoints(userID int, start, end time.Time) []ChartPoint {
 			t, _ := time.Parse("2006-01-02", d)
 			points = append(points, ChartPoint{
 				Label:  strings.ToLower(t.Format("02 Jan")),
-				Weight: math.Round(w*10)/10,
+				Weight: math.Round(w*10) / 10,
 			})
 		}
 	}
@@ -222,7 +239,7 @@ func FetchAverageNutrition(userID int, start, end time.Time) (int, int) {
 	return totalCalories / days, int(math.Round(totalProtein / float64(days)))
 }
 
-func FetchBodyComposition(userID int) (bmi, ffmi, lbm float64) {
+func FetchBodyComposition(userID int) (bmi, ffmi, lbm, bf float64) {
 	var weight float64
 	_ = database.DB.QueryRow("SELECT weight FROM body_weight_logs WHERE user_id = $1 ORDER BY log_date DESC LIMIT 1", userID).Scan(&weight)
 
@@ -231,31 +248,37 @@ func FetchBodyComposition(userID int) (bmi, ffmi, lbm float64) {
 	_ = database.DB.QueryRow("SELECT height, neck, belly, gender FROM user_stats WHERE user_id = $1", userID).Scan(&height, &neck, &belly, &gender)
 
 	if height <= 0 || weight <= 0 {
-		return 0, 0, 0
+		return 0, 0, 0, 0
 	}
 
 	hMeter := height / 100.0
 	bmi = weight / (hMeter * hMeter)
 
-	// Body Fat % (Navy Method)
-	var bf float64
+	// Body Fat % and Lean Body Mass
 	if neck > 0 && belly > neck {
+		// Navy Method
 		if gender == "female" {
 			bf = 163.205*math.Log10(belly-neck) - 97.684*math.Log10(height) - 78.387
 		} else {
 			bf = 86.010*math.Log10(belly-neck) - 70.041*math.Log10(height) + 36.76
 		}
+		if bf < 3 {
+			bf = 3
+		}
+		lbm = weight * (1 - bf/100.0)
 	} else {
-		// Fallback if measurements are missing
-		bf = 20.0 
+		// Fallback: Janmahasatian formula for Lean Body Mass
+		if gender == "female" {
+			lbm = (9270.0 * weight) / (8780.0 + 244.0*bmi)
+		} else {
+			lbm = (9270.0 * weight) / (6680.0 + 216.0*bmi)
+		}
+		bf = (weight - lbm) / weight * 100.0
 	}
 
-	if bf < 3 { bf = 3 }
-
-	lbm = weight * (1 - bf/100.0)
 	ffmi = lbm / (hMeter * hMeter)
 
-	return bmi, ffmi, lbm
+	return bmi, ffmi, lbm, bf
 }
 
 type AnalyticsMuscleStats struct {
@@ -263,79 +286,6 @@ type AnalyticsMuscleStats struct {
 	Sets      int     `json:"sets"`
 	Exercises int     `json:"exercises"`
 	Change    float64 `json:"change"` // Percentage change vs previous period
-}
-
-type FocusSummary struct {
-	TotalPomoMins  int          `json:"total_pomo_mins"`
-	TotalBreakMins int          `json:"total_break_mins"`
-	PomoFormatted  string       `json:"pomo_formatted"`
-	BreakFormatted string       `json:"break_formatted"`
-	Interruptions  int          `json:"interruptions"`
-	BreakRatio     float64      `json:"break_ratio"`
-	DailyChart     []ChartPoint `json:"daily_chart"`
-}
-
-func GetFocusStats(userID int, start, end time.Time) FocusSummary {
-	summary := FocusSummary{DailyChart: []ChartPoint{}}
-
-	// Get totals for date range
-	row := database.DB.QueryRow(`
-		SELECT 
-			COALESCE(SUM(CASE WHEN mode = 'pomo' THEN duration_mins ELSE 0 END), 0),
-			COALESCE(SUM(CASE WHEN mode IN ('short', 'long') THEN duration_mins ELSE 0 END), 0)
-		FROM focus_logs 
-		WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3`, userID, start.Format("2006-01-02"), end.Format("2006-01-02"))
-	_ = row.Scan(&summary.TotalPomoMins, &summary.TotalBreakMins)
-
-	// Format times
-	if summary.TotalPomoMins >= 60 {
-		summary.PomoFormatted = fmt.Sprintf("%dh %dm", summary.TotalPomoMins/60, summary.TotalPomoMins%60)
-	} else {
-		summary.PomoFormatted = fmt.Sprintf("%dm", summary.TotalPomoMins)
-	}
-
-	if summary.TotalBreakMins >= 60 {
-		summary.BreakFormatted = fmt.Sprintf("%dh %dm", summary.TotalBreakMins/60, summary.TotalBreakMins%60)
-	} else {
-		summary.BreakFormatted = fmt.Sprintf("%dm", summary.TotalBreakMins)
-	}
-
-	if summary.TotalPomoMins+summary.TotalBreakMins > 0 {
-		summary.BreakRatio = float64(summary.TotalBreakMins) / float64(summary.TotalPomoMins+summary.TotalBreakMins) * 100
-	}
-
-	// Create a map of existing data
-	dailyTotals := make(map[string]float64)
-	rows, err := database.DB.Query(`
-		SELECT 
-			log_date,
-			SUM(duration_mins) as total
-		FROM focus_logs
-		WHERE user_id = $1 AND log_date >= $2 AND log_date <= $3 AND mode = 'pomo'
-		GROUP BY log_date`, userID, start.Format("2006-01-02"), end.Format("2006-01-02"))
-	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var d string
-			var w float64
-			if err := rows.Scan(&d, &w); err == nil {
-				dailyTotals[d] = w
-			}
-		}
-	}
-
-	// Fill exactly 7 days
-	days := []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
-	for i := 0; i < 7; i++ {
-		currentDay := start.AddDate(0, 0, i)
-		dateStr := currentDay.Format("2006-01-02")
-		summary.DailyChart = append(summary.DailyChart, ChartPoint{
-			Label:  days[i],
-			Weight: dailyTotals[dateStr],
-		})
-	}
-
-	return summary
 }
 
 func FetchAnalyticsHeatmap(userID int, start, end time.Time) (map[string]AnalyticsMuscleStats, AnalyticsMuscleStats, float64) {
@@ -353,8 +303,12 @@ func FetchAnalyticsHeatmap(userID int, start, end time.Time) (map[string]Analyti
 
 	// All unique muscles from both periods
 	muscles := make(map[string]bool)
-	for m := range currentStats { muscles[m] = true }
-	for m := range prevStats { muscles[m] = true }
+	for m := range currentStats {
+		muscles[m] = true
+	}
+	for m := range prevStats {
+		muscles[m] = true
+	}
 
 	for m := range muscles {
 		curr := currentStats[m]
@@ -419,4 +373,3 @@ func fetchMuscleStats(userID int, start, end time.Time) map[string]AnalyticsMusc
 	}
 	return stats
 }
-

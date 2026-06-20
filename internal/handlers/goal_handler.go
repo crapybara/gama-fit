@@ -40,7 +40,7 @@ const goalsHTML = `
 			<span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Claimed</span>
 		{{end}}
 		
-		<button hx-delete="/api/goals/{{.ID}}" hx-target="#goals-container" class="p-1.5 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors" title="Remove Goal">
+		<button hx-delete="/api/goals/{{.ID}}" hx-target="#goals-container" class="p-1.5 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors">
 			<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
 		</button>
 	</div>

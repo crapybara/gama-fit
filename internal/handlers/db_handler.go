@@ -24,7 +24,7 @@ func HandleExportDB(w http.ResponseWriter, r *http.Request) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	err := cmd.Run()
-	
+
 	if err != nil {
 		log.Printf("Export error: %v\nStderr: %s", err, stderr.String())
 		w.Header().Set("Content-Type", "text/plain")
@@ -94,7 +94,7 @@ func HandleDeleteAllData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, _ := GetUserID(r)
-	
+
 	// Transactional delete of all user data
 	tx, err := database.DB.Begin()
 	if err != nil {
@@ -103,10 +103,10 @@ func HandleDeleteAllData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tables := []string{
-		"workout_plans", "freestyle_logs", "body_weight_logs", 
-		"cardio_logs", "gym_logs", "user_macros_final", 
-		"daily_meals", "food_catalog", "sleep_logs", 
-		"focus_tasks", "focus_logs", "checkins", "goals", "shop_catalog",
+		"workout_plans", "freestyle_logs", "body_weight_logs",
+		"cardio_logs", "gym_logs", "user_macros_final",
+		"daily_meals", "food_catalog", "sleep_logs",
+		"checkins", "goals", "shop_catalog",
 	}
 
 	for _, table := range tables {
@@ -118,7 +118,7 @@ func HandleDeleteAllData(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	
+
 	// Reset stats but keep the user record
 	_, err = tx.Exec("UPDATE user_stats SET bmi=0, height=0, neck=0, belly=0, arms=0, calf=0, age=25, goal_weight=0, total_coins=0, current_streak=0 WHERE user_id = $1", userID)
 	if err != nil {

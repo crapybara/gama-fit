@@ -42,10 +42,10 @@ func main() {
 	// User Settings
 	http.HandleFunc("/api/settings", handlers.AuthMiddleware(handlers.HandleSettings))
 	http.HandleFunc("/api/settings/theme", handlers.AuthMiddleware(handlers.HandleTheme))
-	http.HandleFunc("/api/settings/pomo", handlers.AuthMiddleware(handlers.GetPomoSettings))
 
 	// Gym Logs
 	http.HandleFunc("/api/logs", handlers.AuthMiddleware(handlers.HandleGymLogs))
+	http.HandleFunc("/api/logs/dates", handlers.AuthMiddleware(handlers.HandleGymLogDates))
 	http.HandleFunc("/api/logs/export", handlers.AuthMiddleware(handlers.HandleExportGymLogs))
 
 	// Core HTMX Endpoints (Protected)
@@ -68,19 +68,16 @@ func main() {
 
 	// Nutrition & Macro Endpoints (Protected)
 	http.HandleFunc("/api/macros/summary", handlers.AuthMiddleware(handlers.HandleMacrosSummary))
+	http.HandleFunc("/api/macros/speeds", handlers.AuthMiddleware(handlers.HandleMacroTargets))
 	http.HandleFunc("/api/macros/targets", handlers.AuthMiddleware(handlers.HandleSetTargets))
 	http.HandleFunc("/api/meals", handlers.AuthMiddleware(handlers.HandleMeals))
 	http.HandleFunc("/api/foods/catalog", handlers.AuthMiddleware(handlers.HandleFoodCatalogJSON))
-
-	// Focus Tasks (Study Mode)
-	http.HandleFunc("/api/focus", handlers.AuthMiddleware(handlers.HandleFocusTasks))
-	http.HandleFunc("/api/focus/log", handlers.AuthMiddleware(handlers.HandleFocusLog))
-	http.HandleFunc("/api/focus/", handlers.AuthMiddleware(handlers.HandleFocusTaskActions))
 
 	// Sleep Endpoints (Protected)
 	http.HandleFunc("/api/sleep/summary", handlers.AuthMiddleware(handlers.HandleSleepSummary))
 	http.HandleFunc("/api/sleep", handlers.AuthMiddleware(handlers.HandleSleep))
 	http.HandleFunc("/api/sleep/history", handlers.AuthMiddleware(handlers.HandleSleepHistory))
+	http.HandleFunc("/api/recovery/dashboard", handlers.AuthMiddleware(handlers.HandleRecoveryDashboard))
 
 	// Analytics Endpoints (Protected)
 	http.HandleFunc("/analytics.html", handlers.AuthMiddleware(analytics.HandleAnalytics))

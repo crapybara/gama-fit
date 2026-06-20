@@ -4,21 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"gama-fit/database"
 )
-
-func GetPomoSettings(w http.ResponseWriter, r *http.Request) {
-	userID, _ := GetUserID(r)
-	var pomo, short, long int
-	err := database.DB.QueryRow("SELECT pomo_duration, short_break, long_break FROM user_stats WHERE user_id = $1", userID).Scan(&pomo, &short, &long)
-	if err != nil {
-		pomo, short, long = 25, 5, 15
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, `{"pomo": %d, "short": %d, "long": %d}`, pomo, short, long)
-}
 
 func HandleTheme(w http.ResponseWriter, r *http.Request) {
 	userID, _ := GetUserID(r)
@@ -48,13 +37,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		_ = r.ParseForm()
-		if r.FormValue("action") == "pomo" {
-			pomo, _ := strconv.Atoi(r.FormValue("pomo_duration"))
-			short, _ := strconv.Atoi(r.FormValue("short_break"))
-			long, _ := strconv.Atoi(r.FormValue("long_break"))
-			_, _ = database.DB.Exec("UPDATE user_stats SET pomo_duration = $1, short_break = $2, long_break = $3 WHERE user_id = $4", pomo, short, long, userID)
-			w.Header().Set("HX-Trigger", "pomoUpdated")
-		} else if r.FormValue("action") == "macros" {
+		if r.FormValue("action") == "macros" {
 			pro, _ := strconv.ParseFloat(r.FormValue("protein"), 64)
 			carb, _ := strconv.ParseFloat(r.FormValue("carbs"), 64)
 			fat, _ := strconv.ParseFloat(r.FormValue("fats"), 64)
@@ -69,7 +52,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 		} else {
 			metric := r.FormValue("metric")
 			valueStr := r.FormValue("value")
-			
+
 			if metric == "gender" {
 				_, _ = database.DB.Exec("UPDATE user_stats SET gender = $1 WHERE user_id = $2", valueStr, userID)
 			} else {
@@ -88,16 +71,16 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 	var bmi, height, neck, belly, arms, calf, goalWeight float64
 	var age int
 	var gender, theme string
-	var pomoDuration, shortBreak, longBreak int
-	err := database.DB.QueryRow("SELECT bmi, height, neck, belly, arms, calf, age, gender, theme, pomo_duration, short_break, long_break, goal_weight FROM user_stats WHERE user_id = $1", userID).Scan(&bmi, &height, &neck, &belly, &arms, &calf, &age, &gender, &theme, &pomoDuration, &shortBreak, &longBreak, &goalWeight)
+	err := database.DB.QueryRow("SELECT bmi, height, neck, belly, arms, calf, age, gender, theme, goal_weight FROM user_stats WHERE user_id = $1", userID).Scan(&bmi, &height, &neck, &belly, &arms, &calf, &age, &gender, &theme, &goalWeight)
 	if err != nil {
 		bmi, height, neck, belly, arms, calf, goalWeight = 0, 0, 0, 0, 0, 0, 0
 		age = 25
 		gender = "male"
 		theme = "default"
-		pomoDuration, shortBreak, longBreak = 25, 5, 15
 	}
-	if gender == "" { gender = "male" }
+	if gender == "" {
+		gender = "male"
+	}
 
 	var tPro, tCarb, tFat float64
 	_ = database.DB.QueryRow("SELECT protein, carbs, fats FROM user_macros_final WHERE user_id = $1", userID).Scan(&tPro, &tCarb, &tFat)
@@ -136,48 +119,6 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 				</form>
 			</div>
 
-			<!-- Pomodoro Settings -->
-			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden border-blue-500/20">
-				<div class="flex items-center justify-between mb-6">
-					<h3 class="text-blue-400 font-black uppercase tracking-wider text-sm">Pomodoro Timer</h3>
-				</div>
-				<form hx-post="/api/settings" hx-target="#settings-container" hx-swap="innerHTML" class="space-y-6">
-					<input type="hidden" name="action" value="pomo">
-					<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-						<button type="button" onclick="setPomo(20, 5, 15)" class="p-4 rounded-2xl border border-white/5 bg-app-surface hover:border-blue-500 transition-all text-left">
-							<span class="block text-xs font-bold text-white mb-1">Popular</span>
-							<span class="text-[10px] text-zinc-500 uppercase tracking-tight">20m / 5m / 15m</span>
-						</button>
-						<button type="button" onclick="setPomo(40, 8, 20)" class="p-4 rounded-2xl border border-white/5 bg-app-surface hover:border-blue-500 transition-all text-left">
-							<span class="block text-xs font-bold text-white mb-1">Medium</span>
-							<span class="text-[10px] text-zinc-500 uppercase tracking-tight">40m / 8m / 20m</span>
-						</button>
-						<button type="button" onclick="setPomo(60, 10, 25)" class="p-4 rounded-2xl border border-white/5 bg-app-surface hover:border-blue-500 transition-all text-left">
-							<span class="block text-xs font-bold text-white mb-1">Extended</span>
-							<span class="text-[10px] text-zinc-500 uppercase tracking-tight">60m / 10m / 25m</span>
-						</button>
-					</div>
-
-					<div class="space-y-4">
-						<div>
-							<div class="flex justify-between mb-2"><label class="text-[10px] uppercase font-bold text-zinc-500">Pomodoro (min)</label><span id="pomo-val" class="text-xs font-mono text-blue-400 font-bold">%d</span></div>
-							<input type="range" name="pomo_duration" min="1" max="90" value="%d" oninput="document.getElementById('pomo-val').innerText = this.value" class="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
-						</div>
-						<div class="grid grid-cols-2 gap-4">
-							<div>
-								<div class="flex justify-between mb-2"><label class="text-[10px] uppercase font-bold text-zinc-500">Short Break</label><span id="short-val" class="text-xs font-mono text-blue-400 font-bold">%d</span></div>
-								<input type="range" name="short_break" min="1" max="30" value="%d" oninput="document.getElementById('short-val').innerText = this.value" class="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
-							</div>
-							<div>
-								<div class="flex justify-between mb-2"><label class="text-[10px] uppercase font-bold text-zinc-500">Long Break</label><span id="long-val" class="text-xs font-mono text-blue-400 font-bold">%d</span></div>
-								<input type="range" name="long_break" min="1" max="60" value="%d" oninput="document.getElementById('long-val').innerText = this.value" class="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500">
-							</div>
-						</div>
-					</div>
-					<button type="submit" class="w-full bg-blue-500 text-white font-black py-4 rounded-xl hover:bg-blue-400 transition-all uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20">Update Timer Settings</button>
-				</form>
-			</div>
-
 			<!-- Theme Selector -->
 			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden">
 				<div class="flex items-center justify-between mb-6">
@@ -193,37 +134,7 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 				</div>
 			</div>
 
-			<!-- GYM Logs Section -->
-			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden">
-				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-					<h3 class="text-white font-black uppercase tracking-wider text-sm">GYM Logs</h3>
-					<div class="flex items-center gap-2 bg-app-surface/80 backdrop-blur-md border border-white/5 p-1 rounded-xl">
-						<button onclick="changeLogDate(-1)" class="p-2 text-zinc-500 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
-						<span id="log-date-display" class="text-xs font-mono font-bold text-white px-2">2026-05-29</span>
-						<button onclick="changeLogDate(1)" class="p-2 text-zinc-500 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
-					</div>
-				</div>
 
-				<div class="mb-4 flex gap-2">
-					<button id="btn-edit" onclick="toggleLogMode('edit')" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-app-pink text-white shadow-lg">Edit</button>
-					<button id="btn-preview" onclick="toggleLogMode('preview')" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-app-card text-zinc-400">Preview</button>
-				</div>
-
-				<div id="log-edit-container">
-					<textarea id="log-content" class="w-full h-64 bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-100 outline-none focus:border-app-pink transition-colors font-mono resize-none" placeholder="Type your gym notes here... (Markdown supported)"></textarea>
-				</div>
-				<div id="log-preview-container" class="hidden w-full min-h-[16rem] bg-zinc-900/30 border border-zinc-800/50 rounded-xl px-4 py-3 prose prose-invert prose-sm max-w-none text-zinc-100">
-					<!-- Preview Content -->
-				</div>
-
-				<div class="flex flex-wrap gap-3 mt-6">
-					<button onclick="saveGymLog()" class="flex-1 min-w-[140px] bg-app-pink text-white font-bold px-6 py-3 rounded-xl hover:bg-app-pink/80 transition-all shadow-[0_0_12px_rgba(255,0,160,0.25)] text-[10px] uppercase tracking-wider">Save Log</button>
-					<button onclick="exportCurrentLog()" class="flex-1 min-w-[140px] bg-app-card text-white font-bold px-6 py-3 rounded-xl hover:bg-zinc-700 transition-all text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-2">
-						<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-						Export (.md)
-					</button>
-				</div>
-			</div>
 
 			<!-- Body Metrics Form -->
 			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden">
@@ -327,8 +238,71 @@ func HandleSettings(w http.ResponseWriter, r *http.Request) {
 					</div>
 				</div>
 			</div>
-	`, tPro, tCarb, tFat, pomoDuration, pomoDuration, shortBreak, shortBreak, longBreak, longBreak, age, gender, formatVal(height), formatVal(goalWeight), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf))
 
+			<!-- GYM Logs Section -->
+			<div class="glass-panel rounded-[2rem] p-6 lg:p-8 relative overflow-hidden mt-8">
+				<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+					<h3 class="text-white font-black uppercase tracking-wider text-sm">GYM Logs</h3>
+					<div class="flex items-center gap-2 bg-app-surface/80 backdrop-blur-md border border-white/5 p-1 rounded-xl relative">
+						<button onclick="changeLogDate(-1)" class="p-2 text-zinc-500 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+						<span id="log-date-display" class="text-xs font-mono font-bold text-white px-2 cursor-pointer hover:text-app-pink transition-colors" onclick="toggleCalendarPopup()">%s</span>
+						<button onclick="changeLogDate(1)" class="p-2 text-zinc-500 hover:text-white transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+
+
+					</div>
+				</div>
+
+				<div class="mb-4 flex gap-2">
+					<button id="btn-edit" onclick="toggleLogMode('edit')" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-app-pink text-white shadow-lg">Edit</button>
+					<button id="btn-preview" onclick="toggleLogMode('preview')" class="px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all bg-app-card text-zinc-400">Preview</button>
+				</div>
+
+				<div id="log-edit-container">
+					<textarea id="log-content" style="height: 600px; min-height: 600px;" class="w-full bg-app-surface/50 border border-zinc-700 rounded-xl px-4 py-4 text-sm text-zinc-100 outline-none focus:border-app-pink transition-colors font-mono resize-none shadow-inner" placeholder="Type your gym notes here... (Markdown supported)"></textarea>
+				</div>
+				<div id="log-preview-container" style="height: 600px; min-height: 600px;" class="hidden w-full bg-zinc-900/30 border border-zinc-800/50 rounded-xl px-6 py-4 prose prose-invert prose-sm max-w-none text-zinc-100 overflow-y-auto shadow-inner">
+					<!-- Preview Content -->
+				</div>
+
+				<div class="flex flex-wrap gap-3 mt-6">
+					<button onclick="saveGymLog()" class="flex-1 min-w-[140px] bg-app-pink text-white font-bold px-6 py-3 rounded-xl hover:bg-app-pink/80 transition-all shadow-[0_0_12px_rgba(255,0,160,0.25)] text-[10px] uppercase tracking-wider">Save Log</button>
+					<button onclick="exportCurrentLog()" class="flex-1 min-w-[140px] bg-app-card text-white font-bold px-6 py-3 rounded-xl hover:bg-zinc-700 transition-all text-[10px] uppercase tracking-wider text-center flex items-center justify-center gap-2">
+						<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+						Export (.md)
+					</button>
+				</div>
+			</div>
+
+			<!-- Calendar Popup (Fixed Modal) -->
+			<div id="calendar-popup" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onclick="toggleCalendarPopup()" style="position: fixed;">
+				<div class="bg-zinc-900 border border-white/10 rounded-[2rem] p-6 sm:p-8 shadow-2xl w-full max-w-sm relative" onclick="event.stopPropagation()">
+					<button onclick="toggleCalendarPopup()" class="absolute top-4 right-4 text-zinc-500 hover:text-white bg-white/5 hover:bg-white/10 rounded-full p-2 transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+					</button>
+					<div class="flex items-center justify-center gap-6 mb-6 mt-2">
+						<button onclick="changeCalendarMonth(-1)" class="p-2 flex items-center justify-center text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+						</button>
+						<span id="calendar-month-display" class="text-sm font-black uppercase tracking-widest text-white text-center w-32">MAY 2026</span>
+						<button onclick="changeCalendarMonth(1)" class="p-2 flex items-center justify-center text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+						</button>
+					</div>
+					<div class="grid grid-cols-7 gap-2 mb-3">
+						<div class="text-[10px] text-center text-zinc-500 font-bold uppercase">Su</div>
+						<div class="text-[10px] text-center text-zinc-500 font-bold uppercase">Mo</div>
+						<div class="text-[10px] text-center text-zinc-500 font-bold uppercase">Tu</div>
+						<div class="text-[10px] text-center text-zinc-500 font-bold uppercase">We</div>
+						<div class="text-[10px] text-center text-zinc-500 font-bold uppercase">Th</div>
+						<div class="text-[10px] text-center text-zinc-500 font-bold uppercase">Fr</div>
+						<div class="text-[10px] text-center text-zinc-500 font-bold uppercase">Sa</div>
+					</div>
+					<div id="calendar-days" class="grid grid-cols-7 gap-2">
+						<!-- Days injected by JS -->
+					</div>
+				</div>
+			</div>
+	`, tPro, tCarb, tFat, age, gender, formatVal(height), formatVal(goalWeight), formatVal(neck), formatVal(belly), formatVal(arms), formatVal(calf), time.Now().Format("2006-01-02"))
 
 	w.Write([]byte(html))
 }
