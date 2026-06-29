@@ -364,8 +364,8 @@
           if (!shell) return;
 
           window.originalChartData = {
-              exercisePoints: JSON.parse(shell.getAttribute('data-exercise-points') || '[]'),
-              bodyWeightPoints: JSON.parse(shell.getAttribute('data-bodyweight-points') || '[]')
+              exercisePoints: JSON.parse(shell.getAttribute('data-exercise-points') || '[]') || [],
+              bodyWeightPoints: JSON.parse(shell.getAttribute('data-bodyweight-points') || '[]') || []
           };
           
           if (exChartInst) exChartInst.destroy();

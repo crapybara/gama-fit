@@ -1,0 +1,31 @@
+# Binaries
+/internal/gamafit-server
+/gamafit-server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# User Assets
+/quotes/*
+!/quotes/.gitkeep
+/external/assets/videos/*
+!/external/assets/videos/.gitkeep
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Docker volumes (if any local bindings are used)
+/postgres_data/
